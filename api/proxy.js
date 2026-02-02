@@ -70,7 +70,19 @@ export default async function handler(req, res) {
     return res.end();
   }
 
-  const url = req.url;
+  // Vercel rewrites /api/foo → /api/proxy?path=foo, so reconstruct the original URL.
+  // Also check x-matched-path header as a fallback.
+  let url = req.url;
+  if (url.startsWith('/api/proxy')) {
+    const parsed = new URL(url, 'http://localhost');
+    const pathParam = parsed.searchParams.get('path');
+    if (pathParam) {
+      // Remove 'path' from query params and reconstruct
+      parsed.searchParams.delete('path');
+      const remaining = parsed.searchParams.toString();
+      url = `/api/${pathParam}${remaining ? '?' + remaining : ''}`;
+    }
+  }
 
   // Health check
   if (url === '/api/health') {
