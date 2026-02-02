@@ -27,7 +27,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ products }) => {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl"
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-2xl"
     >
       {products.map((product) => (
         <motion.div key={product.id} variants={itemVariants}>

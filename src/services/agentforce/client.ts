@@ -72,6 +72,7 @@ export class AgentforceClient {
 
       sessionBody.variables = [
         { name: 'customerId', type: 'Text', value: toStr(customerContext.customerId) },
+        { name: 'customerEmail', type: 'Text', value: toStr(customerContext.email) },
         { name: 'sessionId', type: 'Text', value: toStr(customerContext.customerId) }, // placeholder; Agentforce may also use its internal session ID
         { name: 'customerName', type: 'Text', value: toStr(customerContext.name) },
         { name: 'identityTier', type: 'Text', value: toStr(customerContext.identityTier || 'anonymous') },
@@ -221,6 +222,14 @@ export class AgentforceClient {
         displayMessage = 'Let me start the checkout process.';
       } else {
         displayMessage = "Here's what I found for you.";
+      }
+    }
+
+    // Warn when agent mentions products but no directive was parsed
+    if (!uiDirective && displayMessage) {
+      const lower = displayMessage.toLowerCase();
+      if (lower.includes('recommend') || lower.includes('here are') || lower.includes('product')) {
+        console.warn('[agentforce] Agent mentioned products but no uiDirective was parsed. The agent may not be returning the JSON directive block. Full text:', fullText.substring(0, 500));
       }
     }
 

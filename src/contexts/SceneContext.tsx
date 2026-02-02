@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useCallback } from 'react';
+import React, { createContext, useContext, useReducer, useCallback, useRef } from 'react';
 import type { SceneState, SceneLayout, SceneSetting, SceneBackground, WelcomeData } from '@/types/scene';
 import type { Product } from '@/types/product';
 import type { UIDirective } from '@/types/agent';
@@ -119,6 +119,8 @@ const SceneContext = createContext<SceneContextValue | null>(null);
 
 export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [scene, dispatch] = useReducer(sceneReducer, initialScene);
+  const sceneRef = useRef(scene);
+  sceneRef.current = scene;
   const { generateBackground } = useGenerativeBackground();
 
   const transitionTo = useCallback((layout: SceneLayout, products?: Product[]) => {
@@ -150,16 +152,18 @@ export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const shouldGenerate = payload.sceneContext?.generateBackground !== false;
 
         // Auto-generate a backgroundPrompt if the agent didn't provide one
+        // but respect the agent's generateBackground flag
         const sceneCtx: UIDirective['payload']['sceneContext'] = payload.sceneContext || { setting };
         if (!sceneCtx.backgroundPrompt && payload.products?.length) {
           const names = payload.products.slice(0, 3).map(p => p.name).join(', ');
           sceneCtx.backgroundPrompt = `A luxurious ${setting} setting perfect for showcasing beauty products like ${names}. Elegant, soft lighting, high-end atmosphere.`;
           sceneCtx.setting = setting;
-          sceneCtx.generateBackground = true;
         }
 
         // Skip regeneration if we already have a generated image for the same setting
-        const alreadyHasImage = scene.setting === setting && scene.background.type === 'image' && scene.background.value;
+        // Use ref to avoid stale closure reading initial state
+        const cur = sceneRef.current;
+        const alreadyHasImage = cur.setting === setting && cur.background.type === 'image' && cur.background.value;
 
         dispatch({ type: 'SET_SETTING', setting });
 
@@ -205,7 +209,8 @@ export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
 
         // Skip regeneration if same setting + already have image + agent didn't request a specific prompt
-        const alreadyHasSceneImage = scene.setting === sceneSetting && scene.background.type === 'image' && scene.background.value && !agentProvidedPrompt;
+        const curScene = sceneRef.current;
+        const alreadyHasSceneImage = curScene.setting === sceneSetting && curScene.background.type === 'image' && curScene.background.value && !agentProvidedPrompt;
 
         dispatch({ type: 'SET_SETTING', setting: sceneSetting });
 

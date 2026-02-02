@@ -18,7 +18,7 @@ export const SuggestedActions: React.FC<SuggestedActionsProps> = ({ actions, onS
         <button
           key={action}
           onClick={() => onSelect(action)}
-          className="px-4 py-2 rounded-full text-sm bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 transition-colors"
+          className="px-3 py-1.5 rounded-full text-xs bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 transition-colors"
         >
           {action}
         </button>

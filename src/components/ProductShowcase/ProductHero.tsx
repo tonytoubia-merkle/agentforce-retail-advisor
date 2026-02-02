@@ -22,14 +22,14 @@ export const ProductHero: React.FC<ProductHeroProps> = ({ product }) => {
   );
 
   return (
-    <div className="flex flex-col md:flex-row items-center gap-12 max-w-5xl">
+    <div className="flex flex-col md:flex-row items-center gap-6 max-w-2xl">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.2 }}
         className="relative"
       >
-        <div className="w-80 h-80 rounded-3xl overflow-hidden shadow-2xl relative">
+        <div className="w-48 h-48 rounded-2xl overflow-hidden shadow-xl relative">
           {isStaging && (
             <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/20 backdrop-blur-sm">
               <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -65,13 +65,13 @@ export const ProductHero: React.FC<ProductHeroProps> = ({ product }) => {
         transition={{ delay: 0.3 }}
         className="flex flex-col gap-4 text-white max-w-md"
       >
-        <span className="text-white/60 uppercase tracking-wider text-sm">
+        <span className="text-white/60 uppercase tracking-wider text-xs">
           {product.brand}
         </span>
-        <h2 className="text-3xl font-semibold">
+        <h2 className="text-xl font-semibold">
           {product.name}
         </h2>
-        <p className="text-white/80 text-lg leading-relaxed">
+        <p className="text-white/80 text-sm leading-relaxed">
           {product.description}
         </p>
 
@@ -87,7 +87,7 @@ export const ProductHero: React.FC<ProductHeroProps> = ({ product }) => {
         </div>
 
         <div className="flex items-center gap-6 mt-4">
-          <span className="text-3xl font-light">
+          <span className="text-xl font-light">
             ${(product.price ?? 0).toFixed(2)}
           </span>
           <Button

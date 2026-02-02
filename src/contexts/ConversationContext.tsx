@@ -89,6 +89,7 @@ function buildSessionContext(customer: CustomerProfile): CustomerSessionContext 
   return {
     customerId: customer.id,
     name: customer.name,
+    email: customer.email,
     identityTier: customer.merkuryIdentity?.identityTier || 'anonymous',
     skinType: customer.beautyProfile.skinType,
     concerns: customer.beautyProfile.concerns,
@@ -107,7 +108,25 @@ function buildSessionContext(customer: CustomerProfile): CustomerSessionContext 
 
 /** Build a welcome message that embeds customer context so the agent can personalize. */
 function buildWelcomeMessage(ctx: CustomerSessionContext): string {
-  const lines: string[] = ['[WELCOME]', `Customer: ${ctx.name} (greet by first name)`, `Identity: ${ctx.identityTier}`];
+  const isAppended = ctx.identityTier === 'appended';
+  const isAnonymous = ctx.identityTier === 'anonymous';
+
+  const lines: string[] = ['[WELCOME]'];
+
+  if (isAppended) {
+    // Appended: we resolved identity via Merkury but they never gave us their info directly.
+    // DO NOT use their name or reference appended data directly — it would feel invasive.
+    lines.push(`Customer: First-time visitor (identity resolved via Merkury, NOT a hand-raiser)`);
+    lines.push(`Identity: appended`);
+    lines.push(`[INSTRUCTION] Do NOT greet by name. Do NOT reference specific demographic or interest data directly. Instead, use appended signals to subtly curate product selections and scene choices. Frame recommendations as "popular picks", "trending", or "you might enjoy" — never "based on your profile" or "we know you like X".`);
+  } else if (isAnonymous) {
+    lines.push(`Customer: Anonymous visitor`);
+    lines.push(`Identity: anonymous`);
+  } else {
+    lines.push(`Customer: ${ctx.name} (greet by first name)`, `Email: ${ctx.email || 'unknown'}`, `Identity: ${ctx.identityTier}`);
+    if (ctx.email) lines.push(`[INSTRUCTION] The customer has been identified via their email address (${ctx.email}). Call Identify Customer By Email with this address to resolve their contactId before performing any profile updates or event captures.`);
+  }
+
   if (ctx.skinType) lines.push(`Skin type: ${ctx.skinType}`);
   if (ctx.concerns?.length) lines.push(`Concerns: ${ctx.concerns.join(', ')}`);
   if (ctx.loyaltyTier) {
@@ -118,7 +137,13 @@ function buildWelcomeMessage(ctx: CustomerSessionContext): string {
   if (ctx.chatContext?.length) lines.push(`Past conversations: ${ctx.chatContext.join('; ')}`);
   if (ctx.meaningfulEvents?.length) lines.push(`Key events: ${ctx.meaningfulEvents.join('; ')}`);
   if (ctx.browseInterests?.length) lines.push(`Recent browsing: ${ctx.browseInterests.join('; ')}`);
-  if (ctx.appendedInterests?.length) lines.push(`Interests (Merkury): ${ctx.appendedInterests.join(', ')}`);
+  if (ctx.appendedInterests?.length) {
+    if (isAppended) {
+      lines.push(`[SUBTLE CURATION SIGNALS — do NOT reference directly]: ${ctx.appendedInterests.join(', ')}`);
+    } else {
+      lines.push(`Interests (Merkury): ${ctx.appendedInterests.join(', ')}`);
+    }
+  }
   if (ctx.capturedProfile?.length) lines.push(`Known about this customer: ${ctx.capturedProfile.join('; ')}`);
   if (ctx.missingProfileFields?.length) lines.push(`[ENRICHMENT OPPORTUNITY] Try to naturally learn: ${ctx.missingProfileFields.join(', ')}`);
   return lines.join('\n');
@@ -189,7 +214,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     'I need travel products',
     'What do you recommend?',
   ]);
-  const { processUIDirective } = useScene();
+  const { processUIDirective, resetScene } = useScene();
   const { customer } = useCustomer();
   const messagesRef = useRef<AgentMessage[]>([]);
   const prevCustomerIdRef = useRef<string | null>(null);
@@ -221,7 +246,8 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       sessionInitialized = false;
     }
 
-    // Clear conversation and trigger welcome
+    // Clear conversation, scene state, and trigger welcome
+    resetScene();
     setMessages([]);
     setSuggestedActions([]);
     setIsLoadingWelcome(true);
@@ -297,6 +323,9 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       };
       setMessages((prev) => [...prev, agentMessage]);
       setSuggestedActions(response.suggestedActions || []);
+      // Stop typing indicator before processing directive so background
+      // transitions don't show a second typing bubble.
+      setIsAgentTyping(false);
 
       if (response.uiDirective) {
         await processUIDirective(response.uiDirective);
@@ -310,7 +339,6 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
-    } finally {
       setIsAgentTyping(false);
     }
   }, [processUIDirective]);

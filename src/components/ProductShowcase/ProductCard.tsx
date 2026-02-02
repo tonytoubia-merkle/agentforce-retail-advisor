@@ -43,24 +43,24 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         )}
       </div>
 
-      <div className="p-4 text-white">
-        <span className="text-white/60 text-xs uppercase tracking-wider">
+      <div className="p-3 text-white">
+        <span className="text-white/60 text-[10px] uppercase tracking-wider">
           {product.brand}
         </span>
-        <h3 className="font-medium mt-1 line-clamp-2">
+        <h3 className="font-medium text-sm mt-0.5 line-clamp-2">
           {product.name}
         </h3>
-        <p className="text-white/70 text-sm mt-2 line-clamp-2">
+        <p className="text-white/70 text-xs mt-1 line-clamp-2">
           {product.shortDescription}
         </p>
-        
-        <div className="flex items-center justify-between mt-4">
-          <span className="text-xl font-light">
+
+        <div className="flex items-center justify-between mt-2">
+          <span className="text-base font-light">
             ${(product.price ?? 0).toFixed(2)}
           </span>
           <button
             onClick={() => openCheckout()}
-            className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-full text-sm transition-colors"
+            className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded-full text-xs transition-colors"
           >
             Add
           </button>

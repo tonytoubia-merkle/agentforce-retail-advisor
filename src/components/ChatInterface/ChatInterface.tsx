@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/utils/cn';
 import { ChatInput } from './ChatInput';
@@ -6,6 +6,7 @@ import { ChatMessages } from './ChatMessages';
 import { TypingIndicator } from './TypingIndicator';
 import { SuggestedActions } from './SuggestedActions';
 import type { AgentMessage } from '@/types/agent';
+import type { SceneLayout } from '@/types/scene';
 
 interface ChatInterfaceProps {
   position: 'center' | 'bottom' | 'minimized';
@@ -14,8 +15,7 @@ interface ChatInterfaceProps {
   isAgentTyping: boolean;
   isMinimized?: boolean;
   suggestedActions?: string[];
-  /** Slot rendered between messages and chat input (e.g. product showcase) */
-  productSlot?: React.ReactNode;
+  sceneLayout: SceneLayout;
 }
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({
@@ -25,10 +25,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   isAgentTyping,
   isMinimized = false,
   suggestedActions = [],
-  productSlot,
+  sceneLayout,
 }) => {
   const [inputValue, setInputValue] = useState('');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const handleSubmit = () => {
     if (inputValue.trim()) {
@@ -36,10 +35,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       setInputValue('');
     }
   };
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
 
   if (isMinimized) {
     return (
@@ -55,51 +50,74 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     );
   }
 
-  return (
-    <motion.div
-      layout
-      className={cn(
-        'flex flex-col w-full max-w-2xl mx-auto px-4',
-        position === 'center' && 'flex-1 justify-center',
-        position === 'bottom' && 'mt-auto pb-8'
-      )}
-    >
-      {position === 'center' && messages.length === 0 && (
+  const hasConversation = messages.length > 0 || isAgentTyping;
+
+  // Initial state: vertically centered welcome + input
+  if (position === 'center' && !hasConversation) {
+    return (
+      <motion.div
+        layout
+        className="flex flex-col items-center justify-center w-full max-w-2xl mx-auto px-4 flex-1"
+      >
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
+          className="text-center mb-6"
         >
-          <h1 className="text-4xl font-light text-white mb-2">
+          <h1 className="text-3xl font-light text-white mb-1">
             I'm your beauty concierge
           </h1>
-          <p className="text-white/70 text-lg">
+          <p className="text-white/70 text-base">
             How can I help you today?
           </p>
         </motion.div>
-      )}
 
-      {messages.length > 0 && (
-        <ChatMessages messages={messages} />
-      )}
+        {suggestedActions.length > 0 && (
+          <SuggestedActions actions={suggestedActions} onSelect={onSendMessage} />
+        )}
 
-      {isAgentTyping && <TypingIndicator />}
+        <div className="w-full mt-4">
+          <ChatInput
+            value={inputValue}
+            onChange={setInputValue}
+            onSubmit={handleSubmit}
+            placeholder="Ask me anything..."
+            isCentered
+          />
+        </div>
+      </motion.div>
+    );
+  }
 
-      {productSlot}
+  // Active conversation: scrollable messages + fixed input at bottom
+  return (
+    <motion.div
+      layout
+      className="flex flex-col w-full max-w-2xl mx-auto px-4 h-screen"
+    >
+      {/* Scrollable chat pane — mt-auto pushes content to bottom when short, scrolls when tall */}
+      <div className="flex-1 overflow-y-auto min-h-0 pb-2">
+        <div className="min-h-full flex flex-col justify-end">
+          <ChatMessages messages={messages} sceneLayout={sceneLayout} />
 
-      <div ref={messagesEndRef} />
+          {isAgentTyping && <TypingIndicator />}
 
-      {!isAgentTyping && suggestedActions.length > 0 && (
-        <SuggestedActions actions={suggestedActions} onSelect={onSendMessage} />
-      )}
+          {!isAgentTyping && suggestedActions.length > 0 && (
+            <SuggestedActions actions={suggestedActions} onSelect={onSendMessage} />
+          )}
+        </div>
+      </div>
 
-      <ChatInput
-        value={inputValue}
-        onChange={setInputValue}
-        onSubmit={handleSubmit}
-        placeholder="Ask me anything..."
-        isCentered={position === 'center'}
-      />
+      {/* Fixed input — never scrolls away */}
+      <div className="shrink-0 pb-4 pt-2">
+        <ChatInput
+          value={inputValue}
+          onChange={setInputValue}
+          onSubmit={handleSubmit}
+          placeholder="Ask me anything..."
+          isCentered={false}
+        />
+      </div>
     </motion.div>
   );
 };

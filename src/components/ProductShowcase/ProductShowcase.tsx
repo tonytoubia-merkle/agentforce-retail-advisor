@@ -20,7 +20,7 @@ export const ProductShowcase: React.FC<ProductShowcaseProps> = ({
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: 'easeOut' }}
-      className="flex-1 flex items-center justify-center p-8"
+      className="flex items-center justify-center py-4 px-2"
     >
       {layout === 'product-hero' && products.length === 1 ? (
         <ProductHero product={products[0]} />

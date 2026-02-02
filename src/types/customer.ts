@@ -221,6 +221,7 @@ export interface RecentActivity {
 export interface CustomerSessionContext {
   customerId: string;
   name: string;
+  email?: string;
   identityTier: IdentityTier;
   skinType?: string;
   concerns?: string[];

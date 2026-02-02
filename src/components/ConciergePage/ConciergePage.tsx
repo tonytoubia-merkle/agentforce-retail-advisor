@@ -3,7 +3,6 @@ import { useScene } from '@/contexts/SceneContext';
 import { useConversation } from '@/contexts/ConversationContext';
 import { GenerativeBackground } from '@/components/GenerativeBackground';
 import { ChatInterface } from '@/components/ChatInterface';
-import { ProductShowcase } from '@/components/ProductShowcase';
 import { CheckoutOverlay } from '@/components/CheckoutOverlay';
 import { WelcomeScreen } from '@/components/WelcomeScreen/WelcomeScreen';
 import { WelcomeLoader } from '@/components/WelcomeScreen/WelcomeLoader';
@@ -29,11 +28,10 @@ export const ConciergePage: React.FC = () => {
           <WelcomeScreen key="welcome" />
         ) : (
           <motion.div
-            key={scene.transitionKey}
-            variants={sceneAnimationVariants[scene.layout]}
-            initial="initial"
-            animate="animate"
-            exit="exit"
+            key="main-chat"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             className="relative z-10 min-h-screen flex flex-col"
           >
             <ChatInterface
@@ -43,14 +41,7 @@ export const ConciergePage: React.FC = () => {
               isAgentTyping={isAgentTyping}
               isMinimized={scene.layout === 'checkout'}
               suggestedActions={suggestedActions}
-              productSlot={
-                scene.layout !== 'conversation-centered' && scene.products.length > 0 ? (
-                  <ProductShowcase
-                    products={scene.products}
-                    layout={scene.layout}
-                  />
-                ) : undefined
-              }
+              sceneLayout={scene.layout}
             />
           </motion.div>
         )}

@@ -234,22 +234,31 @@ function generateWelcomeResponse(): AgentResponse | null {
   }
 
   if (tier === 'appended') {
+    // Appended tier: Merkury resolved identity and appended demographic/interest data,
+    // but this person never gave us their info directly. We must NOT:
+    //   - Greet by name (they didn't tell us their name)
+    //   - Reference specific interests directly ("I see you like wellness")
+    //   - Reveal we know anything about them
+    // We CAN subtly use appended signals to:
+    //   - Curate which products we lead with
+    //   - Choose an appropriate scene/mood
+    //   - Tailor suggested actions toward likely interests
     const interests = customerCtx.appendedInterests || [];
     const isWellness = interests.some((i) => i.includes('wellness') || i.includes('yoga'));
     const isClean = interests.some((i) => i.includes('clean'));
     const isAntiAging = interests.some((i) => i.includes('anti-aging') || i.includes('spa'));
     const isLuxury = interests.some((i) => i.includes('luxury'));
 
-    // Priya-like: anti-aging + luxury + spa
+    // Priya-like: anti-aging + luxury + spa — lead with premium, don't say why
     if (isAntiAging && isLuxury) {
       return {
         sessionId: 'mock-session',
-        message: "Welcome! I'd love to introduce you to our premium skincare collection — we have some exceptional anti-aging treatments.",
+        message: "Welcome! We have some incredible new arrivals this season. I'd love to help you find something perfect.",
         uiDirective: {
           action: 'WELCOME_SCENE' as UIAction,
           payload: {
             welcomeMessage: 'Welcome!',
-            welcomeSubtext: "Our luxury skincare line features clinically proven anti-aging formulas. Let me show you our best.",
+            welcomeSubtext: "Discover our latest collection — from targeted treatments to everyday essentials.",
             sceneContext: {
               setting: 'lifestyle',
               mood: 'luxury-spa',
@@ -258,26 +267,23 @@ function generateWelcomeResponse(): AgentResponse | null {
             },
           },
         },
-        suggestedActions: ['Show me anti-aging serums', 'What are your bestsellers?', 'Build me a luxury routine'],
+        // Subtly surface anti-aging and premium options without saying "we know you want this"
+        suggestedActions: ['Show me your bestsellers', "What's trending in skincare?", 'Help me build a routine'],
         confidence: 0.9,
       };
     }
 
-    // Aisha-like: clean beauty + wellness
-    let subtext = "I'd love to help you find something perfect.";
-    if (isClean && isWellness) {
-      subtext = "I can see you appreciate clean beauty and wellness. Let me curate something special for you.";
-    }
-
+    // Aisha-like: clean beauty + wellness — set a calming tone, don't reference interests
     return {
       sessionId: 'mock-session',
-      message: "Welcome! I'd love to help you discover your perfect beauty routine.",
+      message: "Welcome! I'm here to help you discover something you'll love. What are you looking for today?",
       uiDirective: {
         action: 'WELCOME_SCENE' as UIAction,
         payload: {
           welcomeMessage: 'Welcome!',
-          welcomeSubtext: subtext,
+          welcomeSubtext: "Your personal beauty concierge — let's find your perfect match.",
           sceneContext: {
+            // Use signals to pick the right mood, but don't explain why
             setting: isWellness ? 'lifestyle' : 'neutral',
             mood: isWellness ? 'calm-wellness' : 'elegant-discovery',
             generateBackground: true,
@@ -287,9 +293,10 @@ function generateWelcomeResponse(): AgentResponse | null {
           },
         },
       },
+      // Subtly steer toward likely interests without being explicit
       suggestedActions: [
-        isClean ? 'Show me clean beauty' : 'Show me skincare',
-        isWellness ? 'Build me a wellness routine' : 'What do you recommend?',
+        isClean ? 'Show me clean beauty brands' : 'Show me skincare',
+        isWellness ? 'Help me build a routine' : 'What do you recommend?',
         'Show me bestsellers',
       ],
       confidence: 0.9,
