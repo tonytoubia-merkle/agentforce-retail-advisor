@@ -89,15 +89,19 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     );
   }
 
-  // Active conversation: scrollable messages + fixed input at bottom
+  // Active conversation: centered when short, scrollable when tall.
+  // The outer container is full-height flex. The scroll area uses
+  // justify-center so short conversations sit in the middle, but once
+  // content overflows it naturally scrolls and the input stays pinned.
   return (
     <motion.div
       layout
       className="flex flex-col w-full max-w-2xl mx-auto px-4 h-screen"
     >
-      {/* Scrollable chat pane — mt-auto pushes content to bottom when short, scrolls when tall */}
-      <div className="flex-1 overflow-y-auto min-h-0 pb-2">
-        <div className="min-h-full flex flex-col justify-end">
+      {/* Scrollable chat pane — spacers center content when short, collapse when tall */}
+      <div className="flex-1 overflow-y-auto min-h-0 pb-2 scrollbar-hide">
+        <div className="min-h-full flex flex-col">
+          <div className="flex-1" />
           <ChatMessages messages={messages} sceneLayout={sceneLayout} />
 
           {isAgentTyping && <TypingIndicator />}
@@ -105,6 +109,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           {!isAgentTyping && suggestedActions.length > 0 && (
             <SuggestedActions actions={suggestedActions} onSelect={onSendMessage} />
           )}
+          <div className="flex-1" />
         </div>
       </div>
 
