@@ -322,7 +322,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     'What do you recommend?',
   ]);
   const { processUIDirective, resetScene, setBackground, getSceneSnapshot, restoreSceneSnapshot } = useScene();
-  const { customer, selectedPersonaId, identifyByEmail, _isRefreshRef, _onSessionReset } = useCustomer();
+  const { customer, selectedPersonaId, isResolving, identifyByEmail, _isRefreshRef, _onSessionReset } = useCustomer();
   const { showCapture } = useActivityToast();
   const messagesRef = useRef<AgentMessage[]>([]);
   const suggestedActionsRef = useRef<string[]>([]);
@@ -375,6 +375,14 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   // When persona changes, reset conversation and trigger welcome
   useEffect(() => {
+    // Wait for identity resolution to complete before acting on persona changes
+    // This prevents clearing messages when selectedPersonaId changes but customer
+    // hasn't resolved yet (race condition during persona switch)
+    if (isResolving) {
+      console.log('[session] Identity resolution in progress — waiting...');
+      return;
+    }
+
     // If this is a profile refresh (not a persona switch), skip session reset
     if (_isRefreshRef.current) {
       console.log('[session] Profile refresh — keeping conversation intact');
@@ -513,7 +521,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [customer, selectedPersonaId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [customer, selectedPersonaId, isResolving]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sendMessage = useCallback(async (content: string) => {
     const userMessage: AgentMessage = {
