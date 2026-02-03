@@ -136,7 +136,7 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   useEffect(() => {
     if (!initializedRef.current) {
       initializedRef.current = true;
-      selectPersona('persona-anonymous');
+      selectPersona('anonymous');
     }
   }, [selectPersona]);
 
