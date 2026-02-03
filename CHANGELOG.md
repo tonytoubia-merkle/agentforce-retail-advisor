@@ -57,6 +57,25 @@ Added the ability for anonymous visitors to identify themselves mid-conversation
 
 ---
 
-## Pending / Fix (`HEAD`, uncommitted)
+## Fix: Anonymous Persona ID Mismatch (`9bcd878`)
 
-- Fixed persona ID mismatch: auto-select was passing `'persona-anonymous'` but `PERSONA_STUBS` uses `'anonymous'` — IdentityPanel now correctly shows anonymous as active on startup
+- Fixed auto-select passing `'persona-anonymous'` instead of `'anonymous'` — `PERSONA_STUBS` uses the short ID, so `IdentityPanel` was showing "Select Identity" instead of "Anonymous Visitor" on startup
+
+---
+
+## Refine Topic Directive Instructions (`b8094f6`)
+
+Addressed issues observed in live testing where the agent was not returning structured JSON directives correctly.
+
+### Problem: Agent re-showing same product on follow-up questions
+- The `CRITICAL — RESPONSE FORMAT` rule was too strict, requiring JSON in every response
+- When a user asked a follow-up like "will that work in dry climates?", the agent re-rendered the same product card instead of answering conversationally
+- **Fix:** Relaxed the rule — plain-text responses are now explicitly allowed for follow-up questions about already-shown products. If the follow-up implies a new context/destination, the agent should use a `CHANGE_SCENE` directive instead
+
+### Problem: Identity capture returning plain text instead of JSON
+- When a user shared their email, the agent responded with "Thanks for sharing your email!" as plain text — no `IDENTIFY_CUSTOMER` directive, so `identifyByEmail()` never ran and no toast appeared
+- **Fix:** Added `CRITICAL — RESPONSE FORMAT` section to IdentityCapture topic explicitly stating that without the JSON block, the frontend cannot identify the customer
+
+### Topics updated
+- ProductRecommendation, ProductDiscovery, TravelConsultation — nuanced directive format rules
+- IdentityCapture — mandatory JSON on email capture
