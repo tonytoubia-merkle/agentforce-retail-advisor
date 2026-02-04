@@ -85,9 +85,12 @@ global with sharing class ProductCatalogService {
             // Convert to Title Case to match picklist values like 'Lipstick', 'Moisturizer', etc.
             category = category.toLowerCase();
             category = category.substring(0, 1).toUpperCase() + category.substring(1);
-            // Handle special cases
+            // Handle special cases for multi-word categories
             if (category == 'Eye care') category = 'Eye Care';
             if (category == 'Spot treatment') category = 'Spot Treatment';
+            // Handle category synonyms - agent may use different terms than picklist values
+            if (category == 'Lip care' || category == 'Lip' || category == 'Lips') category = 'Lipstick';
+            if (category == 'Face' || category == 'Facial') category = 'Moisturizer';
             conditions.add('Category__c = :category');
         }
         if (String.isNotBlank(request.skinType)) {
