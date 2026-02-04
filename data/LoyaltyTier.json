@@ -1,0 +1,26 @@
+[
+  {
+    "Name": "Bronze",
+    "Description": "Entry level tier",
+    "MinPoints": 0,
+    "Program": "Beauty Rewards"
+  },
+  {
+    "Name": "Silver",
+    "Description": "Mid-tier benefits",
+    "MinPoints": 1000,
+    "Program": "Beauty Rewards"
+  },
+  {
+    "Name": "Gold",
+    "Description": "Premium benefits",
+    "MinPoints": 2500,
+    "Program": "Beauty Rewards"
+  },
+  {
+    "Name": "Platinum",
+    "Description": "Exclusive benefits",
+    "MinPoints": 5000,
+    "Program": "Premium Beauty Club"
+  }
+]

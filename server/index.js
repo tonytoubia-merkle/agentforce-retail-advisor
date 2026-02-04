@@ -957,6 +957,444 @@ const server = http.createServer((req, res) => {
   }
 });
 
+// --- Loyalty Management Endpoints ---
+// POST /api/loyalty/enroll - Enroll a customer in a loyalty program
+if (req.url === '/api/loyalty/enroll' && req.method === 'POST') {
+  const chunks = [];
+  req.on('data', (c) => chunks.push(c));
+  req.on('end', () => {
+    try {
+      const { accountId, programName } = JSON.parse(Buffer.concat(chunks).toString());
+      if (!accountId || !programName) {
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ error: 'Missing accountId or programName' }));
+        return;
+      }
+      
+      // Get server token for Salesforce operations
+      withServerToken(req.headers.authorization, (token) => {
+        if (!token) {
+          res.writeHead(401, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ error: 'Unauthorized' }));
+          return;
+        }
+        
+        // First, find the program by name
+        const soqlProgram = `SELECT Id FROM LoyaltyProgram__c WHERE Name__c = '${programName.replace(/'/g, "\\'")}' LIMIT 1`;
+        const sfUrl = new URL(SF_INSTANCE);
+        const programOpts = {
+          hostname: sfUrl.hostname,
+          port: 443,
+          path: `/services/data/v60.0/query?q=${encodeURIComponent(soqlProgram)}`,
+          method: 'GET',
+          headers: { host: sfUrl.hostname, authorization: `Bearer ${token}`, accept: 'application/json' },
+        };
+        
+        const programReq = https.request(programOpts, (programRes) => {
+          const programChunks = [];
+          programRes.on('data', (c) => programChunks.push(c));
+          programRes.on('end', () => {
+            try {
+              const programData = JSON.parse(Buffer.concat(programChunks).toString());
+              const programId = programData.records?.[0]?.Id;
+              
+              if (!programId) {
+                res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+                res.end(JSON.stringify({ error: 'Program not found' }));
+                return;
+              }
+              
+              // Create the loyalty member record
+              const memberFields = {
+                AccountId__c: accountId,
+                PointsBalance__c: 0,
+                Program__c: programId,
+                Enrolled__c: true
+              };
+              
+              const memberBody = JSON.stringify(memberFields);
+              const memberOpts = {
+                hostname: sfUrl.hostname,
+                port: 443,
+                path: '/services/data/v60.0/sobjects/LoyaltyMember__c',
+                method: 'POST',
+                headers: {
+                  host: sfUrl.hostname,
+                  'content-type': 'application/json',
+                  'content-length': Buffer.byteLength(memberBody),
+                  authorization: `Bearer ${token}`,
+                  accept: 'application/json',
+                },
+              };
+              
+              const memberReq = https.request(memberOpts, (memberRes) => {
+                const memberChunks = [];
+                memberRes.on('data', (c) => memberChunks.push(c));
+                memberRes.on('end', () => {
+                  const memberBody = Buffer.concat(memberChunks);
+                  res.writeHead(memberRes.statusCode, { 'content-type': 'application/json', 'access-control-allow-origin': '*', 'content-length': memberBody.length });
+                  res.end(memberBody);
+                });
+              });
+              
+              memberReq.on('error', (err) => {
+                if (!res.headersSent) {
+                  res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+                  res.end(JSON.stringify({ error: err.message }));
+                }
+              });
+              
+              memberReq.end(memberBody);
+            } catch (e) {
+              res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+              res.end(JSON.stringify({ error: 'Failed to process program lookup' }));
+            }
+          });
+        });
+        
+        programReq.on('error', (err) => {
+          if (!res.headersSent) {
+            res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            res.end(JSON.stringify({ error: err.message }));
+          }
+        });
+        
+        programReq.end();
+      });
+    } catch (err) {
+      res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ error: 'Invalid request body' }));
+    }
+  });
+  return;
+}
+
+// GET /api/loyalty/member/:accountId - Get loyalty member info by account ID
+if (req.url.startsWith('/api/loyalty/member/') && req.method === 'GET') {
+  const accountId = req.url.split('/api/loyalty/member/')[1]?.split('?')[0];
+  if (!accountId) {
+    res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+    res.end(JSON.stringify({ error: 'Missing accountId' }));
+    return;
+  }
+  
+  // Get server token for Salesforce operations
+  withServerToken(req.headers.authorization, (token) => {
+    if (!token) {
+      res.writeHead(401, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ error: 'Unauthorized' }));
+      return;
+    }
+    
+    const soql = `SELECT Id, AccountId__c, PointsBalance__c, Tier__c, Program__c, Enrolled__c FROM LoyaltyMember__c WHERE AccountId__c = '${accountId.replace(/'/g, "\\'")}' LIMIT 1`;
+    const sfUrl = new URL(SF_INSTANCE);
+    const opts = {
+      hostname: sfUrl.hostname,
+      port: 443,
+      path: `/services/data/v60.0/query?q=${encodeURIComponent(soql)}`,
+      method: 'GET',
+      headers: { host: sfUrl.hostname, authorization: `Bearer ${token}`, accept: 'application/json' },
+    };
+    
+    const proxyReq = https.request(opts, (proxyRes) => {
+      const resChunks = [];
+      proxyRes.on('data', (c) => resChunks.push(c));
+      proxyRes.on('end', () => {
+        const body = Buffer.concat(resChunks);
+        res.writeHead(proxyRes.statusCode, {
+          'content-type': 'application/json',
+          'access-control-allow-origin': '*',
+          'content-length': body.length,
+        });
+        res.end(body);
+      });
+    });
+    
+    proxyReq.on('error', (err) => {
+      console.error('[loyalty-member] Error:', err.message);
+      if (!res.headersSent) {
+        res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+    
+    proxyReq.end();
+  });
+  return;
+}
+
+// GET /api/loyalty/balance/:accountId - Get loyalty points balance
+if (req.url.startsWith('/api/loyalty/balance/') && req.method === 'GET') {
+  const accountId = req.url.split('/api/loyalty/balance/')[1]?.split('?')[0];
+  if (!accountId) {
+    res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+    res.end(JSON.stringify({ error: 'Missing accountId' }));
+    return;
+  }
+  
+  // Get server token for Salesforce operations
+  withServerToken(req.headers.authorization, (token) => {
+    if (!token) {
+      res.writeHead(401, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ error: 'Unauthorized' }));
+      return;
+    }
+    
+    const soql = `SELECT PointsBalance__c FROM LoyaltyMember__c WHERE AccountId__c = '${accountId.replace(/'/g, "\\'")}' LIMIT 1`;
+    const sfUrl = new URL(SF_INSTANCE);
+    const opts = {
+      hostname: sfUrl.hostname,
+      port: 443,
+      path: `/services/data/v60.0/query?q=${encodeURIComponent(soql)}`,
+      method: 'GET',
+      headers: { host: sfUrl.hostname, authorization: `Bearer ${token}`, accept: 'application/json' },
+    };
+    
+    const proxyReq = https.request(opts, (proxyRes) => {
+      const resChunks = [];
+      proxyRes.on('data', (c) => resChunks.push(c));
+      proxyRes.on('end', () => {
+        const body = Buffer.concat(resChunks);
+        res.writeHead(proxyRes.statusCode, {
+          'content-type': 'application/json',
+          'access-control-allow-origin': '*',
+          'content-length': body.length,
+        });
+        res.end(body);
+      });
+    });
+    
+    proxyReq.on('error', (err) => {
+      console.error('[loyalty-balance] Error:', err.message);
+      if (!res.headersSent) {
+        res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+    
+    proxyReq.end();
+  });
+  return;
+}
+
+// POST /api/loyalty/accrue - Accrue points for a purchase
+if (req.url === '/api/loyalty/accrue' && req.method === 'POST') {
+  const chunks = [];
+  req.on('data', (c) => chunks.push(c));
+  req.on('end', () => {
+    try {
+      const { accountId, points } = JSON.parse(Buffer.concat(chunks).toString());
+      if (!accountId || !points) {
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ error: 'Missing accountId or points' }));
+        return;
+      }
+      
+      // Get server token for Salesforce operations
+      withServerToken(req.headers.authorization, (token) => {
+        if (!token) {
+          res.writeHead(401, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ error: 'Unauthorized' }));
+          return;
+        }
+        
+        // Update the loyalty member's points balance
+        const soql = `SELECT Id, PointsBalance__c FROM LoyaltyMember__c WHERE AccountId__c = '${accountId.replace(/'/g, "\\'")}' LIMIT 1`;
+        const sfUrl = new URL(SF_INSTANCE);
+        const queryOpts = {
+          hostname: sfUrl.hostname,
+          port: 443,
+          path: `/services/data/v60.0/query?q=${encodeURIComponent(soql)}`,
+          method: 'GET',
+          headers: { host: sfUrl.hostname, authorization: `Bearer ${token}`, accept: 'application/json' },
+        };
+        
+        const queryReq = https.request(queryOpts, (queryRes) => {
+          const queryChunks = [];
+          queryRes.on('data', (c) => queryChunks.push(c));
+          queryRes.on('end', () => {
+            try {
+              const queryData = JSON.parse(Buffer.concat(queryChunks).toString());
+              const memberId = queryData.records?.[0]?.Id;
+              const currentPoints = queryData.records?.[0]?.PointsBalance__c || 0;
+              
+              if (!memberId) {
+                res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+                res.end(JSON.stringify({ error: 'Member not found' }));
+                return;
+              }
+              
+              const newPoints = currentPoints + points;
+              const updateFields = { PointsBalance__c: newPoints };
+              const updateBody = JSON.stringify(updateFields);
+              const updateOpts = {
+                hostname: sfUrl.hostname,
+                port: 443,
+                path: `/services/data/v60.0/sobjects/LoyaltyMember__c/${memberId}`,
+                method: 'PATCH',
+                headers: {
+                  host: sfUrl.hostname,
+                  'content-type': 'application/json',
+                  'content-length': Buffer.byteLength(updateBody),
+                  authorization: `Bearer ${token}`,
+                  accept: 'application/json',
+                },
+              };
+              
+              const updateReq = https.request(updateOpts, (updateRes) => {
+                const updateChunks = [];
+                updateRes.on('data', (c) => updateChunks.push(c));
+                updateRes.on('end', () => {
+                  const updateBody = Buffer.concat(updateChunks);
+                  res.writeHead(updateRes.statusCode, { 'content-type': 'application/json', 'access-control-allow-origin': '*', 'content-length': updateBody.length });
+                  res.end(updateBody);
+                });
+              });
+              
+              updateReq.on('error', (err) => {
+                if (!res.headersSent) {
+                  res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+                  res.end(JSON.stringify({ error: err.message }));
+                }
+              });
+              
+              updateReq.end(updateBody);
+            } catch (e) {
+              res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+              res.end(JSON.stringify({ error: 'Failed to process points accrual' }));
+            }
+          });
+        });
+        
+        queryReq.on('error', (err) => {
+          if (!res.headersSent) {
+            res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            res.end(JSON.stringify({ error: err.message }));
+          }
+        });
+        
+        queryReq.end();
+      });
+    } catch (err) {
+      res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ error: 'Invalid request body' }));
+    }
+  });
+  return;
+}
+
+// POST /api/loyalty/redeem - Redeem points for a discount
+if (req.url === '/api/loyalty/redeem' && req.method === 'POST') {
+  const chunks = [];
+  req.on('data', (c) => chunks.push(c));
+  req.on('end', () => {
+    try {
+      const { accountId, points } = JSON.parse(Buffer.concat(chunks).toString());
+      if (!accountId || !points) {
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ error: 'Missing accountId or points' }));
+        return;
+      }
+      
+      // Get server token for Salesforce operations
+      withServerToken(req.headers.authorization, (token) => {
+        if (!token) {
+          res.writeHead(401, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ error: 'Unauthorized' }));
+          return;
+        }
+        
+        // Update the loyalty member's points balance
+        const soql = `SELECT Id, PointsBalance__c FROM LoyaltyMember__c WHERE AccountId__c = '${accountId.replace(/'/g, "\\'")}' LIMIT 1`;
+        const sfUrl = new URL(SF_INSTANCE);
+        const queryOpts = {
+          hostname: sfUrl.hostname,
+          port: 443,
+          path: `/services/data/v60.0/query?q=${encodeURIComponent(soql)}`,
+          method: 'GET',
+          headers: { host: sfUrl.hostname, authorization: `Bearer ${token}`, accept: 'application/json' },
+        };
+        
+        const queryReq = https.request(queryOpts, (queryRes) => {
+          const queryChunks = [];
+          queryRes.on('data', (c) => queryChunks.push(c));
+          queryRes.on('end', () => {
+            try {
+              const queryData = JSON.parse(Buffer.concat(queryChunks).toString());
+              const memberId = queryData.records?.[0]?.Id;
+              const currentPoints = queryData.records?.[0]?.PointsBalance__c || 0;
+              
+              if (!memberId) {
+                res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+                res.end(JSON.stringify({ error: 'Member not found' }));
+                return;
+              }
+              
+              if (currentPoints < points) {
+                res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+                res.end(JSON.stringify({ error: 'Insufficient points' }));
+                return;
+              }
+              
+              const newPoints = currentPoints - points;
+              const updateFields = { PointsBalance__c: newPoints };
+              const updateBody = JSON.stringify(updateFields);
+              const updateOpts = {
+                hostname: sfUrl.hostname,
+                port: 443,
+                path: `/services/data/v60.0/sobjects/LoyaltyMember__c/${memberId}`,
+                method: 'PATCH',
+                headers: {
+                  host: sfUrl.hostname,
+                  'content-type': 'application/json',
+                  'content-length': Buffer.byteLength(updateBody),
+                  authorization: `Bearer ${token}`,
+                  accept: 'application/json',
+                },
+              };
+              
+              const updateReq = https.request(updateOpts, (updateRes) => {
+                const updateChunks = [];
+                updateRes.on('data', (c) => updateChunks.push(c));
+                updateRes.on('end', () => {
+                  const updateBody = Buffer.concat(updateChunks);
+                  res.writeHead(updateRes.statusCode, { 'content-type': 'application/json', 'access-control-allow-origin': '*', 'content-length': updateBody.length });
+                  res.end(updateBody);
+                });
+              });
+              
+              updateReq.on('error', (err) => {
+                if (!res.headersSent) {
+                  res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+                  res.end(JSON.stringify({ error: err.message }));
+                }
+              });
+              
+              updateReq.end(updateBody);
+            } catch (e) {
+              res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+              res.end(JSON.stringify({ error: 'Failed to process points redemption' }));
+            }
+          });
+        });
+        
+        queryReq.on('error', (err) => {
+          if (!res.headersSent) {
+            res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            res.end(JSON.stringify({ error: err.message }));
+          }
+        });
+        
+        queryReq.end();
+      });
+    } catch (err) {
+      res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ error: 'Invalid request body' }));
+    }
+  });
+  return;
+}
+
 // Allow large uploads and long-running proxy requests
 server.timeout = 120000;
 server.keepAliveTimeout = 120000;

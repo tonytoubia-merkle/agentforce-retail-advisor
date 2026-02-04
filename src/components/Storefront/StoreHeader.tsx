@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
 import { ProfileDropdown } from './ProfileDropdown';
+import { LoyaltyPanel } from '@/components/LoyaltyPanel';
 import type { ProductCategory } from '@/types/product';
 
 const CATEGORIES: { label: string; value: ProductCategory }[] = [

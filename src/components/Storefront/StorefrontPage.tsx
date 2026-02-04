@@ -8,6 +8,7 @@ import { CartPage } from './CartPage';
 import { CheckoutPage } from './CheckoutPage';
 import { OrderConfirmationPage } from './OrderConfirmationPage';
 import { useStore } from '@/contexts/StoreContext';
+import { LoyaltyWidget } from '@/components/LoyaltyWidget';
 import type { Product, ProductCategory } from '@/types/product';
 
 interface StorefrontPageProps {
