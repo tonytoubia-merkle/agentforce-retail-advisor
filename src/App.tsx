@@ -1,39 +1,35 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { SceneProvider } from '@/contexts/SceneContext';
 import { ConversationProvider } from '@/contexts/ConversationContext';
 import { CustomerProvider } from '@/contexts/CustomerContext';
+import { CartProvider } from '@/contexts/CartContext';
+import { StoreProvider } from '@/contexts/StoreContext';
 import { ActivityToastProvider } from '@/components/ActivityToast';
 import { AdvisorPage } from '@/components/AdvisorPage';
-import { ProductShowcase } from '@/components/ProductShowcase';
+import { StorefrontPage } from '@/components/Storefront';
 import type { Product } from '@/types/product';
 import { MOCK_PRODUCTS } from '@/mocks/products';
 
 /**
- * Simple storefront shell that preserves the existing Beauty Advisor experience.
- * - Default route remains the Beauty Advisor
- * - A toggle button allows switching to the Storefront view, which lists products
- *   from the new Node BFF endpoints with a safe local fallback.
+ * Unified commerce experience with:
+ * - Traditional storefront as the default experience
+ * - Conversational "Beauty Advisor" accessible via button
+ * - Profile dropdown with persona selector for demos
  */
 function App() {
-  const [mode, setMode] = useState<'advisor' | 'storefront'>('advisor');
+  const [mode, setMode] = useState<'storefront' | 'advisor'>('storefront');
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Basic fetcher that calls our Node BFF endpoints and falls back to local assets/mocks
+  // Load products on mount
   useEffect(() => {
-    if (mode !== 'storefront') return;
     let cancelled = false;
-    async function load() {
+    async function loadProducts() {
       setLoading(true);
-      setError(null);
       try {
-        // Try hitting our new BFF endpoint. Authorization header is optional;
-        // if omitted, server returns empty set and we fall back to local mocks.
-        const res = await fetch('/api/products?limit=24', {
-          headers: {
-            accept: 'application/json',
-          },
+        const res = await fetch('/api/products?limit=100', {
+          headers: { accept: 'application/json' },
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
@@ -52,72 +48,98 @@ function App() {
           rating: p.rating || 0,
           reviewCount: p.reviewCount || 0,
           inStock: p.inStock ?? true,
+          personalizationScore: p.personalizationScore,
         }));
         if (!cancelled) {
-          // If empty (no auth), fall back to local mocks to preserve UX
-          if (list.length === 0) {
-            if (!cancelled) setProducts(MOCK_PRODUCTS);
-          } else {
-            setProducts(list);
-          }
+          setProducts(list.length > 0 ? list : MOCK_PRODUCTS);
         }
-      } catch (e: any) {
-        // Fallback on error as well
-        try {
-          if (!cancelled) setProducts(MOCK_PRODUCTS);
-        } catch {
-          if (!cancelled) setError(e?.message || 'Failed to load products');
-        }
+      } catch {
+        if (!cancelled) setProducts(MOCK_PRODUCTS);
       } finally {
         if (!cancelled) setLoading(false);
       }
     }
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [mode]);
+    loadProducts();
+    return () => { cancelled = true; };
+  }, []);
 
-  const header = useMemo(() => (
-    <div className="w-full flex items-center justify-between px-4 py-3 border-b border-gray-200/30">
-      <div className="text-xl font-semibold">Retail Advisor</div>
-      <div className="flex gap-2">
-        <button
-          className={`px-3 py-1 rounded ${mode === 'advisor' ? 'bg-black text-white' : 'bg-gray-200'}`}
-          onClick={() => setMode('advisor')}
-          aria-pressed={mode === 'advisor'}
-        >
-          Beauty Advisor
-        </button>
-        <button
-          className={`px-3 py-1 rounded ${mode === 'storefront' ? 'bg-black text-white' : 'bg-gray-200'}`}
-          onClick={() => setMode('storefront')}
-          aria-pressed={mode === 'storefront'}
-        >
-          Storefront
-        </button>
+  const handleOpenAdvisor = useCallback(() => {
+    setMode('advisor');
+  }, []);
+
+  const handleCloseAdvisor = useCallback(() => {
+    setMode('storefront');
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 mx-auto mb-4">
+            <svg className="animate-spin w-full h-full text-rose-500" viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          </div>
+          <p className="text-stone-500">Loading...</p>
+        </div>
       </div>
-    </div>
-  ), [mode]);
+    );
+  }
 
   return (
     <CustomerProvider>
-      <SceneProvider>
-        <ActivityToastProvider>
-          {header}
-          {mode === 'advisor' ? (
-            <ConversationProvider>
-              <AdvisorPage />
-            </ConversationProvider>
-          ) : (
-            <div className="p-4">
-              {loading && <div>Loading products…</div>}
-              {error && <div className="text-red-600">Error: {error}</div>}
-              {!loading && !error && <ProductShowcase products={products} layout="product-grid" />}
-            </div>
-          )}
-        </ActivityToastProvider>
-      </SceneProvider>
+      <CartProvider>
+        <StoreProvider>
+          <SceneProvider>
+            <ActivityToastProvider>
+              <AnimatePresence mode="wait">
+                {mode === 'storefront' ? (
+                  <motion.div
+                    key="storefront"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <StorefrontPage
+                      products={products}
+                      onBeautyAdvisorClick={handleOpenAdvisor}
+                    />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="advisor"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="relative"
+                  >
+                    <ConversationProvider>
+                      <AdvisorPage />
+                    </ConversationProvider>
+
+                    {/* Back to Store button */}
+                    <motion.button
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.3 }}
+                      onClick={handleCloseAdvisor}
+                      className="fixed top-4 left-4 z-50 flex items-center gap-2 px-4 py-2 bg-white/90 backdrop-blur-sm text-stone-700 text-sm font-medium rounded-full shadow-lg border border-stone-200 hover:bg-white hover:shadow-xl transition-all"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                      Back to Store
+                    </motion.button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </ActivityToastProvider>
+          </SceneProvider>
+        </StoreProvider>
+      </CartProvider>
     </CustomerProvider>
   );
 }
