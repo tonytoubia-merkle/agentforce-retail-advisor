@@ -23,6 +23,9 @@ function loadEnv() {
 
 const env = loadEnv();
 const SF_INSTANCE = env.VITE_AGENTFORCE_INSTANCE_URL || 'https://me1769724439764.my.salesforce.com';
+const CLIENT_ID = env.VITE_AGENTFORCE_CLIENT_ID || process.env.VITE_AGENTFORCE_CLIENT_ID;
+const CLIENT_SECRET = env.VITE_AGENTFORCE_CLIENT_SECRET || process.env.VITE_AGENTFORCE_CLIENT_SECRET;
+const BASE_URL = env.VITE_AGENTFORCE_BASE_URL || process.env.VITE_AGENTFORCE_BASE_URL;
 const PORT = process.env.API_PORT || 3001;
 
 const routes = [
@@ -34,7 +37,8 @@ const routes = [
   { prefix: '/api/gemini/generateContent', target: 'https://generativelanguage.googleapis.com', rewrite: '/v1beta/models/gemini-2.5-flash-image:generateContent' },
   { prefix: '/api/firefly/token',          target: 'https://ims-na1.adobelogin.com',            rewrite: '/ims/token/v3' },
   { prefix: '/api/firefly/generate',       target: 'https://firefly-api.adobe.io',              rewrite: '/v3/images/generate' },
-  { prefix: '/api/datacloud',             target: SF_INSTANCE,                                 rewrite: '/services/data/v60.0' },
+  { prefix: '/api/datacloud',              target: SF_INSTANCE,                                 rewrite: '/services/data/v60.0' },
+  // GraphQL endpoint (org-dependent) will be proxied via custom handlers below rather than static proxy
 ];
 
 function findRoute(url) {
@@ -69,6 +73,492 @@ const server = http.createServer((req, res) => {
   if (req.url === '/api/health') {
     res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
     res.end(JSON.stringify({ status: 'ok' }));
+    return;
+  }
+
+  // --- OAuth 2.0 Client Credentials token using Agentforce Connected App ---
+  // POST /api/sf/token  -> { access_token, instance_url }
+  if (req.url === '/api/sf/token' && req.method === 'POST') {
+    try {
+      if (!CLIENT_ID || !CLIENT_SECRET || !SF_INSTANCE) {
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ error: 'Missing CLIENT_ID/CLIENT_SECRET/SF_INSTANCE' }));
+        return;
+      }
+      const body = 'grant_type=client_credentials';
+      const sfUrl = new URL(SF_INSTANCE);
+      const opts = {
+        hostname: sfUrl.hostname,
+        port: 443,
+        path: '/services/oauth2/token',
+        method: 'POST',
+        headers: {
+          host: sfUrl.hostname,
+          'content-type': 'application/x-www-form-urlencoded',
+          'content-length': Buffer.byteLength(body),
+          authorization: 'Basic ' + Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64'),
+          accept: 'application/json',
+        },
+      };
+      const tokenReq = https.request(opts, (tokenRes) => {
+        const chunks = [];
+        tokenRes.on('data', (c) => chunks.push(c));
+        tokenRes.on('end', () => {
+          const buf = Buffer.concat(chunks);
+          res.writeHead(tokenRes.statusCode, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Content-Length': buf.length });
+          res.end(buf);
+        });
+      });
+      tokenReq.on('error', (err) => {
+        if (!res.headersSent) {
+          res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ error: err.message }));
+        }
+      });
+      tokenReq.end(body);
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ error: 'Token request failed' }));
+    }
+    return;
+  }
+
+  // --- Salesforce GraphQL Product endpoints (Node BFF) ---
+  // POST /api/sf-graphql — generic passthrough for GraphQL queries (server-to-server)
+  if (req.url === '/api/sf-graphql' && req.method === 'POST') {
+    const chunks = [];
+    req.on('data', (c) => chunks.push(c));
+    req.on('end', () => {
+      try {
+        const { query, variables, token } = JSON.parse(Buffer.concat(chunks).toString());
+        if (!query || !token) {
+          res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ error: 'Missing query or token' }));
+          return;
+        }
+        const sfUrl = new URL(SF_INSTANCE);
+        const gPath = '/services/data/v60.0/graphql';
+        const body = JSON.stringify({ query, variables: variables || {} });
+        const opts = {
+          hostname: sfUrl.hostname,
+          port: 443,
+          path: gPath,
+          method: 'POST',
+          headers: {
+            host: sfUrl.hostname,
+            'content-type': 'application/json',
+            'content-length': Buffer.byteLength(body),
+            authorization: `Bearer ${token}`,
+            accept: 'application/json',
+          },
+        };
+        const proxyReq = https.request(opts, (proxyRes) => {
+          const resChunks = [];
+          proxyRes.on('data', (c) => resChunks.push(c));
+          proxyRes.on('end', () => {
+            const bodyBuf = Buffer.concat(resChunks);
+            res.writeHead(proxyRes.statusCode, { 'content-type': 'application/json', 'access-control-allow-origin': '*', 'content-length': bodyBuf.length });
+            res.end(bodyBuf);
+          });
+        });
+        proxyReq.on('error', (err) => {
+          if (!res.headersSent) {
+            res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            res.end(JSON.stringify({ error: err.message }));
+          }
+        });
+        proxyReq.end(body);
+      } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ error: 'Invalid request body' }));
+      }
+    });
+    return;
+  }
+
+  // Helper: obtain server-side token via Client Credentials if Authorization not supplied
+  function withServerToken(authHeader, cb) {
+    if (authHeader) {
+      cb(authHeader.replace(/^Bearer\s+/i, ''));
+      return;
+    }
+    if (!CLIENT_ID || !CLIENT_SECRET) {
+      cb(null);
+      return;
+    }
+    const sfUrl = new URL(SF_INSTANCE);
+    const body = 'grant_type=client_credentials';
+    const opts = {
+      hostname: sfUrl.hostname,
+      port: 443,
+      path: '/services/oauth2/token',
+      method: 'POST',
+      headers: {
+        host: sfUrl.hostname,
+        'content-type': 'application/x-www-form-urlencoded',
+        'content-length': Buffer.byteLength(body),
+        authorization: 'Basic ' + Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64'),
+        accept: 'application/json',
+      },
+    };
+    const tReq = https.request(opts, (tRes) => {
+      const chunks = [];
+      tRes.on('data', (c) => chunks.push(c));
+      tRes.on('end', () => {
+        try {
+          const json = JSON.parse(Buffer.concat(chunks).toString());
+          const tok = json.access_token;
+          cb(tok || null);
+        } catch {
+          cb(null);
+        }
+      });
+    });
+    tReq.on('error', () => cb(null));
+    tReq.end(body);
+  }
+
+  // GET /api/products — headless storefront product list sourced from Product2 + PricebookEntry
+  if (req.url.startsWith('/api/products') && req.method === 'GET') {
+    // Parse query params
+    const urlObj = new URL(req.url, 'http://localhost');
+    const q = urlObj.searchParams.get('q') || '';
+    const limit = Math.min(parseInt(urlObj.searchParams.get('limit') || '24', 10), 50);
+    const offset = Math.max(parseInt(urlObj.searchParams.get('offset') || '0', 10), 0);
+    const pricebookName = urlObj.searchParams.get('pricebook') || 'Standard Price Book';
+
+    const authHeader = req.headers.authorization;
+
+    // Try to use provided Authorization; else, fetch a server-side token via Client Credentials
+    return withServerToken(authHeader, (token) => {
+      if (!token) {
+        // No token available — return empty set so UI falls back to mocks
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ products: [], total: 0, offset, limit, source: 'fallback' }));
+        return;
+      }
+
+    // GraphQL to fetch Product2s with pricing from PricebookEntry via pricebook name
+    const query = `
+      query ProductList($q: String, $limit: Int, $offset: Int, $pricebookName: String!) {
+        uiapi {
+          query {
+            Pricebook2(where: { Name: { eq: $pricebookName } }, first: 1) {
+              edges { node { Id } }
+            }
+            Product2(
+              where: {
+                ${/* simple name/description contains */''}
+                OR: [
+                  { Name: { like: $q } },
+                  { Description: { like: $q } }
+                ]
+              },
+              first: $limit,
+              offset: $offset,
+              orderBy: { Name: { order: ASC } }
+            ) {
+              totalCount
+              edges {
+                node {
+                  Id
+                  Name
+                  ProductCode
+                  Description
+                  Family
+                  Fields {
+                    Id { value }
+                  }
+                  // image field optional if you have custom field mapping
+                }
+              }
+            }
+            // Pricebook entries by product
+          }
+        }
+      }
+    `;
+
+    // For simplicity in this first pass, we'll call REST SOQL for price linkage after GraphQL returns
+    const chunks = [];
+    const sfUrl = new URL(SF_INSTANCE);
+
+    // First: GraphQL request to get products and pricebook id
+    const gqlBody = JSON.stringify({
+      query,
+      variables: {
+        q: q ? `%${q}%` : null,
+        limit,
+        offset,
+        pricebookName,
+      },
+    });
+    const gqlOpts = {
+      hostname: sfUrl.hostname,
+      port: 443,
+      path: '/services/data/v60.0/graphql',
+      method: 'POST',
+      headers: {
+        host: sfUrl.hostname,
+        'content-type': 'application/json',
+        'content-length': Buffer.byteLength(gqlBody),
+        authorization: `Bearer ${token}`,
+        accept: 'application/json',
+      },
+    };
+
+    const gqlReq = https.request(gqlOpts, (gqlRes) => {
+      const gqlChunks = [];
+      gqlRes.on('data', (c) => gqlChunks.push(c));
+      gqlRes.on('end', () => {
+        try {
+          const gqlData = JSON.parse(Buffer.concat(gqlChunks).toString());
+          const ui = gqlData.data?.uiapi;
+          const productsEdges = ui?.query?.Product2?.edges || [];
+          const total = ui?.query?.Product2?.totalCount || 0;
+
+          // Collect product Ids
+          const productIds = productsEdges.map((e) => e.node?.Id).filter(Boolean);
+          if (productIds.length === 0) {
+            const result = JSON.stringify({ products: [], total, offset, limit, source: 'salesforce-graph' });
+            res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Content-Length': Buffer.byteLength(result) });
+            res.end(result);
+            return;
+          }
+
+          // Fetch Standard Pricebook Id
+          const soqlPb = `SELECT Id FROM Pricebook2 WHERE Name = '${pricebookName.replace(/'/g, "\\'")}' LIMIT 1`;
+          const pbOpts = {
+            hostname: sfUrl.hostname,
+            port: 443,
+            path: `/services/data/v60.0/query?q=${encodeURIComponent(soqlPb)}`,
+            method: 'GET',
+            headers: { host: sfUrl.hostname, authorization: `Bearer ${token}`, accept: 'application/json' },
+          };
+          const pbReq = https.request(pbOpts, (pbRes) => {
+            const pbChunks = [];
+            pbRes.on('data', (c) => pbChunks.push(c));
+            pbRes.on('end', () => {
+              try {
+                const pbData = JSON.parse(Buffer.concat(pbChunks).toString());
+                const pricebookId = pbData.records?.[0]?.Id;
+
+                // Fetch price entries for these products
+                const soql = `SELECT Id, UnitPrice, CurrencyIsoCode, Product2Id FROM PricebookEntry WHERE Pricebook2Id = '${pricebookId}' AND Product2Id IN (${productIds.map((id) => `'${id}'`).join(',')}) AND IsActive = true`;
+                const opts = {
+                  hostname: sfUrl.hostname,
+                  port: 443,
+                  path: `/services/data/v60.0/query?q=${encodeURIComponent(soql)}`,
+                  method: 'GET',
+                  headers: { host: sfUrl.hostname, authorization: `Bearer ${token}`, accept: 'application/json' },
+                };
+                const pReq = https.request(opts, (pRes) => {
+                  const pChunks = [];
+                  pRes.on('data', (c) => pChunks.push(c));
+                  pRes.on('end', () => {
+                    try {
+                      const pData = JSON.parse(Buffer.concat(pChunks).toString());
+                      const pricesByProduct = {};
+                      for (const rec of pData.records || []) {
+                        pricesByProduct[rec.Product2Id] = { price: rec.UnitPrice, currency: rec.CurrencyIsoCode || 'USD' };
+                      }
+
+                      // Map to UI product shape minimal for now
+                      const mapped = productsEdges.map((e) => {
+                        const n = e.node;
+                        const priceInfo = pricesByProduct[n.Id] || { price: 0, currency: 'USD' };
+                        return {
+                          id: n.Id,
+                          name: n.Name,
+                          brand: 'Unknown',
+                          category: n.Family || 'uncategorized',
+                          price: priceInfo.price || 0,
+                          currency: priceInfo.currency || 'USD',
+                          description: n.Description || '',
+                          shortDescription: '',
+                          imageUrl: '',
+                          images: [],
+                          attributes: {},
+                          rating: 0,
+                          reviewCount: 0,
+                          inStock: true,
+                        };
+                      });
+
+                      const result = JSON.stringify({ products: mapped, total, offset, limit, source: 'salesforce' });
+                      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Content-Length': Buffer.byteLength(result) });
+                      res.end(result);
+                    } catch (e) {
+                      res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+                      res.end(JSON.stringify({ error: 'Failed to parse price response' }));
+                    }
+                  });
+                });
+                pReq.on('error', (err) => {
+                  if (!res.headersSent) {
+                    res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+                    res.end(JSON.stringify({ error: err.message }));
+                  }
+                });
+                pReq.end();
+              } catch {
+                res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+                res.end(JSON.stringify({ error: 'Failed to resolve pricebook' }));
+              }
+            });
+          });
+          pbReq.on('error', (err) => {
+            if (!res.headersSent) {
+              res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+              res.end(JSON.stringify({ error: err.message }));
+            }
+          });
+          pbReq.end();
+        } catch {
+          res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ error: 'Failed to parse GraphQL response' }));
+        }
+      });
+    });
+    gqlReq.on('error', (err) => {
+      if (!res.headersSent) {
+        res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+    gqlReq.end(gqlBody);
+    });
+    return;
+  }
+
+  // GET /api/product/:id — headless storefront product detail
+  if (req.url.startsWith('/api/product/') && req.method === 'GET') {
+    const productId = req.url.split('/api/product/')[1]?.split('?')[0];
+    if (!productId) {
+      res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ error: 'Missing productId' }));
+      return;
+    }
+    const authHeader = req.headers.authorization;
+
+    return withServerToken(authHeader, (token) => {
+      if (!token) {
+        res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ error: 'Not found' }));
+        return;
+      }
+    const sfUrl = new URL(SF_INSTANCE);
+
+    // GraphQL product fields
+    const query = `
+      query ProductDetail($id: ID!, $pricebookName: String!) {
+        uiapi {
+          query {
+            Pricebook2(where: { Name: { eq: $pricebookName } }, first: 1) { edges { node { Id } } }
+            Product2(where: { Id: { eq: $id } }, first: 1) {
+              edges {
+                node {
+                  Id
+                  Name
+                  ProductCode
+                  Description
+                  Family
+                }
+              }
+            }
+          }
+        }
+      }
+    `;
+    const pricebookName = 'Standard Price Book';
+    const gqlBody = JSON.stringify({ query, variables: { id: productId, pricebookName } });
+    const gqlOpts = {
+      hostname: sfUrl.hostname,
+      port: 443,
+      path: '/services/data/v60.0/graphql',
+      method: 'POST',
+      headers: {
+        host: sfUrl.hostname,
+        'content-type': 'application/json',
+        'content-length': Buffer.byteLength(gqlBody),
+        authorization: `Bearer ${token}`,
+        accept: 'application/json',
+      },
+    };
+    const gqlReq = https.request(gqlOpts, (gqlRes) => {
+      const gqlChunks = [];
+      gqlRes.on('data', (c) => gqlChunks.push(c));
+      gqlRes.on('end', () => {
+        try {
+          const gqlData = JSON.parse(Buffer.concat(gqlChunks).toString());
+          const node = gqlData.data?.uiapi?.query?.Product2?.edges?.[0]?.node;
+          if (!node) {
+            res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            res.end(JSON.stringify({ error: 'Product not found' }));
+            return;
+          }
+          // Fetch price by SOQL
+          const soql = `SELECT UnitPrice, CurrencyIsoCode FROM PricebookEntry WHERE Pricebook2.Name = '${pricebookName.replace(/'/g, "\\'")}' AND Product2Id = '${productId}' AND IsActive = true LIMIT 1`;
+          const priceOpts = {
+            hostname: sfUrl.hostname,
+            port: 443,
+            path: `/services/data/v60.0/query?q=${encodeURIComponent(soql)}`,
+            method: 'GET',
+            headers: { host: sfUrl.hostname, authorization: `Bearer ${token}`, accept: 'application/json' },
+          };
+          const pReq = https.request(priceOpts, (pRes) => {
+            const pChunks = [];
+            pRes.on('data', (c) => pChunks.push(c));
+            pRes.on('end', () => {
+              try {
+                const pData = JSON.parse(Buffer.concat(pChunks).toString());
+                const rec = pData.records?.[0] || {};
+                const resultObj = {
+                  id: node.Id,
+                  name: node.Name,
+                  brand: 'Unknown',
+                  category: node.Family || 'uncategorized',
+                  price: rec.UnitPrice || 0,
+                  currency: rec.CurrencyIsoCode || 'USD',
+                  description: node.Description || '',
+                  shortDescription: '',
+                  imageUrl: '',
+                  images: [],
+                  attributes: {},
+                  rating: 0,
+                  reviewCount: 0,
+                  inStock: true,
+                };
+                const result = JSON.stringify(resultObj);
+                res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Content-Length': Buffer.byteLength(result) });
+                res.end(result);
+              } catch {
+                res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+                res.end(JSON.stringify({ error: 'Failed to parse price response' }));
+              }
+            });
+          });
+          pReq.on('error', (err) => {
+            if (!res.headersSent) {
+              res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+              res.end(JSON.stringify({ error: err.message }));
+            }
+          });
+          pReq.end();
+        } catch {
+          res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ error: 'Failed to parse GraphQL response' }));
+        }
+      });
+    });
+    gqlReq.on('error', (err) => {
+      if (!res.headersSent) {
+        res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+    gqlReq.end(gqlBody);
+    });
     return;
   }
 
