@@ -2,21 +2,31 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCustomer } from '@/contexts/CustomerContext';
 import { PERSONA_STUBS } from '@/mocks/customerPersonas';
-import type { PersonaStub } from '@/mocks/customerPersonas';
 
 export const ProfileDropdown: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { customer, selectedPersonaId, selectPersona, isResolving, isLoading } = useCustomer();
+  const [showDemoProfiles, setShowDemoProfiles] = useState(false);
+  const { customer, selectedPersonaId, isAuthenticated, selectPersona, signIn, signOut, isResolving, isLoading } = useCustomer();
 
-  const activeStub = PERSONA_STUBS.find((s) => s.id === selectedPersonaId);
   const isKnown = customer?.merkuryIdentity?.identityTier === 'known';
+  const isAppended = customer?.merkuryIdentity?.identityTier === 'appended';
+  const isPseudonymous = (isKnown || isAppended) && !isAuthenticated;
   const firstName = customer?.name?.split(' ')[0] || 'Guest';
 
   const handleSelect = async (personaId: string) => {
     await selectPersona(personaId);
   };
 
-  const handleLogout = () => {
+  const handleSignIn = () => {
+    signIn();
+    setIsOpen(false);
+  };
+
+  const handleSignOut = () => {
+    signOut();
+  };
+
+  const handleNotMe = () => {
     selectPersona('anonymous');
     setIsOpen(false);
   };
@@ -32,9 +42,11 @@ export const ProfileDropdown: React.FC = () => {
         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium ${
           isKnown
             ? 'bg-gradient-to-br from-rose-400 to-purple-500'
-            : 'bg-stone-400'
+            : isAppended
+              ? 'bg-gradient-to-br from-amber-400 to-orange-400'
+              : 'bg-stone-400'
         }`}>
-          {isKnown ? firstName.charAt(0).toUpperCase() : (
+          {(isKnown || isAppended) && customer?.name !== 'Guest' ? firstName.charAt(0).toUpperCase() : (
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
@@ -59,22 +71,49 @@ export const ProfileDropdown: React.FC = () => {
               transition={{ duration: 0.15 }}
               className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50"
             >
-              {/* Greeting section */}
+              {/* ─── REAL PROFILE SECTION ─── */}
               <div className="px-4 py-4 bg-gradient-to-br from-stone-50 to-rose-50 border-b border-gray-100">
-                {isKnown ? (
+                {isAuthenticated && isKnown ? (
                   <>
                     <p className="text-lg font-medium text-stone-900">
                       Hello, {firstName}
                     </p>
                     <p className="text-sm text-stone-500 mt-0.5">
                       {customer?.loyalty?.tier && (
-                        <span className="capitalize">{customer.loyalty.tier} Member</span>
-                      )}
-                      {customer?.loyalty?.pointsBalance && (
-                        <span> · {customer.loyalty.pointsBalance.toLocaleString()} pts</span>
+                        <span className="inline-flex items-center gap-1">
+                          <span className="capitalize">{customer.loyalty.tier} Member</span>
+                          {customer.loyalty.pointsBalance != null && (
+                            <span> · {customer.loyalty.pointsBalance.toLocaleString()} pts</span>
+                          )}
+                        </span>
                       )}
                       {!customer?.loyalty && 'Welcome back'}
                     </p>
+                  </>
+                ) : isPseudonymous ? (
+                  <>
+                    <p className="text-lg font-medium text-stone-900">
+                      Welcome{isKnown ? `, ${firstName}` : ''}
+                    </p>
+                    <p className="text-sm text-stone-500 mt-1">
+                      Sign in to access your account
+                    </p>
+                    <div className="flex items-center gap-3 mt-3">
+                      <button
+                        onClick={handleSignIn}
+                        className="px-4 py-1.5 text-sm font-medium bg-stone-900 text-white rounded-full hover:bg-stone-800 transition-colors"
+                      >
+                        Sign In
+                      </button>
+                      {isKnown && (
+                        <button
+                          onClick={handleNotMe}
+                          className="text-sm text-stone-500 hover:text-stone-700 transition-colors"
+                        >
+                          Not you?
+                        </button>
+                      )}
+                    </div>
                   </>
                 ) : (
                   <>
@@ -86,8 +125,8 @@ export const ProfileDropdown: React.FC = () => {
                 )}
               </div>
 
-              {/* Quick links - only for known customers */}
-              {isKnown && (
+              {/* Quick links - only for authenticated known customers */}
+              {isAuthenticated && isKnown && (
                 <div className="px-4 py-3 border-b border-gray-100">
                   <div className="space-y-1">
                     <button className="w-full flex items-center gap-3 px-3 py-2 text-sm text-stone-700 hover:bg-stone-50 rounded-lg transition-colors">
@@ -95,12 +134,6 @@ export const ProfileDropdown: React.FC = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                       </svg>
                       Order History
-                    </button>
-                    <button className="w-full flex items-center gap-3 px-3 py-2 text-sm text-stone-700 hover:bg-stone-50 rounded-lg transition-colors">
-                      <svg className="w-4 h-4 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                      </svg>
-                      Saved Items
                     </button>
                     <button className="w-full flex items-center gap-3 px-3 py-2 text-sm text-stone-700 hover:bg-stone-50 rounded-lg transition-colors">
                       <svg className="w-4 h-4 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -113,72 +146,98 @@ export const ProfileDropdown: React.FC = () => {
                 </div>
               )}
 
-              {/* Demo persona switcher section */}
-              <div className="px-4 py-3">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-stone-500 uppercase tracking-wider">
-                    Demo Profiles
-                  </span>
-                  <span className="text-[10px] text-stone-400 bg-stone-100 px-2 py-0.5 rounded">
-                    Testing
-                  </span>
-                </div>
-                <div className="space-y-1 max-h-48 overflow-y-auto">
-                  {PERSONA_STUBS.map((stub) => {
-                    const isActive = stub.id === activeStub?.id;
-                    const stubFirstName = stub.defaultLabel.split(' ')[0];
-                    return (
-                      <button
-                        key={stub.id}
-                        onClick={() => handleSelect(stub.id)}
-                        disabled={isResolving || isLoading}
-                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${
-                          isActive
-                            ? 'bg-rose-50 border border-rose-200'
-                            : 'hover:bg-stone-50 border border-transparent'
-                        } ${(isResolving || isLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      >
-                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0 ${
-                          stub.identityTier === 'anonymous'
-                            ? 'bg-stone-400'
-                            : stub.identityTier === 'appended'
-                              ? 'bg-gradient-to-br from-amber-400 to-orange-400'
-                              : 'bg-gradient-to-br from-rose-400 to-purple-500'
-                        }`}>
-                          {stub.identityTier === 'anonymous' ? '?' : stubFirstName.charAt(0)}
-                        </div>
-                        <div className="flex-1 text-left min-w-0">
-                          <div className="text-sm font-medium text-stone-900 truncate">
-                            {stub.defaultLabel}
-                          </div>
-                          <div className="text-xs text-stone-500 truncate">
-                            {stub.identityTier === 'anonymous'
-                              ? 'New visitor'
-                              : stub.identityTier === 'appended'
-                                ? '3rd party data only'
-                                : 'Known customer'}
-                          </div>
-                        </div>
-                        {isActive && (
-                          <span className="w-2 h-2 rounded-full bg-rose-500 flex-shrink-0" />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Logout */}
-              {isKnown && (
-                <div className="px-4 py-3 border-t border-gray-100 bg-stone-50">
+              {/* Sign out - only for authenticated users */}
+              {isAuthenticated && isKnown && (
+                <div className="px-4 py-2 border-b border-gray-100">
                   <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-100 rounded-lg transition-colors"
+                    onClick={handleSignOut}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 rounded-lg transition-colors"
                   >
-                    <span>Not {firstName}? Log out</span>
+                    Sign Out
                   </button>
                 </div>
               )}
+
+              {/* ─── DEMO SWITCHER SECTION ─── */}
+              <div className="bg-stone-50 border-t-2 border-dashed border-stone-200">
+                <button
+                  onClick={() => setShowDemoProfiles(!showDemoProfiles)}
+                  className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-stone-100 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-stone-500 uppercase tracking-wider">
+                      Demo Profiles
+                    </span>
+                    <span className="text-[10px] text-stone-400 bg-stone-200 px-2 py-0.5 rounded">
+                      Testing
+                    </span>
+                  </div>
+                  <svg
+                    className={`w-4 h-4 text-stone-400 transition-transform ${showDemoProfiles ? 'rotate-180' : ''}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                <AnimatePresence>
+                  {showDemoProfiles && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.15 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="px-4 pb-3 space-y-1 max-h-48 overflow-y-auto">
+                        {PERSONA_STUBS.map((stub) => {
+                          const isActive = stub.id === selectedPersonaId;
+                          const stubFirstName = stub.defaultLabel.split(' ')[0];
+                          return (
+                            <button
+                              key={stub.id}
+                              onClick={() => handleSelect(stub.id)}
+                              disabled={isResolving || isLoading}
+                              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${
+                                isActive
+                                  ? 'bg-white border border-rose-200 shadow-sm'
+                                  : 'hover:bg-stone-100 border border-transparent'
+                              } ${(isResolving || isLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0 ${
+                                stub.identityTier === 'anonymous'
+                                  ? 'bg-stone-400'
+                                  : stub.identityTier === 'appended'
+                                    ? 'bg-gradient-to-br from-amber-400 to-orange-400'
+                                    : 'bg-gradient-to-br from-rose-400 to-purple-500'
+                              }`}>
+                                {stub.identityTier === 'anonymous' ? '?' : stubFirstName.charAt(0)}
+                              </div>
+                              <div className="flex-1 text-left min-w-0">
+                                <div className="text-sm font-medium text-stone-900 truncate">
+                                  {stub.defaultLabel}
+                                </div>
+                                <div className="text-xs text-stone-500 truncate">
+                                  {stub.identityTier === 'anonymous'
+                                    ? 'New visitor'
+                                    : stub.identityTier === 'appended'
+                                      ? '3rd party data only'
+                                      : 'Known customer'}
+                                </div>
+                              </div>
+                              {isActive && (
+                                <span className="w-2 h-2 rounded-full bg-rose-500 flex-shrink-0" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </motion.div>
           </>
         )}

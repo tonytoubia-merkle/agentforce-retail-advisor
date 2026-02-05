@@ -8,7 +8,7 @@ import { CartPage } from './CartPage';
 import { CheckoutPage } from './CheckoutPage';
 import { OrderConfirmationPage } from './OrderConfirmationPage';
 import { useStore } from '@/contexts/StoreContext';
-import { LoyaltyWidget } from '@/components/LoyaltyWidget';
+import { useCustomer } from '@/contexts/CustomerContext';
 import type { Product, ProductCategory } from '@/types/product';
 
 interface StorefrontPageProps {
@@ -21,6 +21,7 @@ export const StorefrontPage: React.FC<StorefrontPageProps> = ({
   onBeautyAdvisorClick,
 }) => {
   const { view, selectedCategory, selectedProduct, navigateHome, navigateToCategory } = useStore();
+  const { customer, isAuthenticated } = useCustomer();
 
   // Group products by category for home page sections
   const productGroups = useMemo(() => {
@@ -93,7 +94,27 @@ export const StorefrontPage: React.FC<StorefrontPageProps> = ({
             <HeroBanner
               onShopNow={() => navigateToCategory('moisturizer' as ProductCategory)}
               onBeautyAdvisor={onBeautyAdvisorClick}
+              customer={customer}
+              isAuthenticated={isAuthenticated}
             />
+
+            {/* Loyalty banner for authenticated members */}
+            {isAuthenticated && customer?.loyalty && (
+              <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-center gap-3 text-sm">
+                  <span className="text-amber-800 font-medium">
+                    You have {customer.loyalty.pointsBalance?.toLocaleString()} points, {customer.name?.split(' ')[0]}!
+                  </span>
+                  <span className="text-amber-600 capitalize">
+                    {customer.loyalty.tier} Member
+                  </span>
+                  <span className="text-amber-600">—</span>
+                  <span className="text-amber-700">
+                    Redeem for up to ${Math.floor((customer.loyalty.pointsBalance || 0) / 100)} off
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Featured/Best Sellers */}
             {featuredProducts.length > 0 && (

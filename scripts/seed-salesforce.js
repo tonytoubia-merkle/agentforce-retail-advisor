@@ -294,32 +294,82 @@ const personas = [
 ];
 
 // ─── Seed Logic ─────────────────────────────────────────────────
+async function deleteRelatedRecords(token, contactId, sobject) {
+  const data = await sfQuery(token, `SELECT Id FROM ${sobject} WHERE Customer_Id__c = '${contactId}'`);
+  for (const record of data.records || []) {
+    const res = await fetch(`${API_BASE}/api/datacloud/sobjects/${sobject}/${record.Id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok || res.status === 204) {
+      console.log(`    ✓ Deleted old ${sobject}: ${record.Id}`);
+    }
+  }
+}
+
+async function deleteAccountOrders(token, accountId) {
+  const data = await sfQuery(token, `SELECT Id, Status FROM Order WHERE AccountId = '${accountId}'`);
+  for (const record of data.records || []) {
+    // Activated orders must be set to Draft before deletion
+    if (record.Status === 'Activated') {
+      await sfUpdate(token, 'Order', record.Id, { Status: 'Draft' });
+    }
+    const res = await fetch(`${API_BASE}/api/datacloud/sobjects/Order/${record.Id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok || res.status === 204) {
+      console.log(`    ✓ Deleted old Order: ${record.Id}`);
+    }
+  }
+}
+
 async function seedPersona(token, persona, productMap) {
   console.log(`\n══════════════════════════════════════`);
   console.log(`Seeding: ${persona.name.first} ${persona.name.last} (${persona.merkuryId})`);
   console.log(`══════════════════════════════════════`);
 
-  // 1. Create Account
-  const accountId = await sfCreate(token, 'Account', {
-    Name: `${persona.name.first} ${persona.name.last} Household`,
-  });
-  if (!accountId) return;
+  // 1. Check if Contact already exists (from previous seed run)
+  let contactId = null;
+  let accountId = null;
+  const existing = await sfQuery(token, `SELECT Id, AccountId FROM Contact WHERE Email = '${persona.email}' LIMIT 1`);
+  if (existing.records?.length > 0) {
+    contactId = existing.records[0].Id;
+    accountId = existing.records[0].AccountId;
+    console.log(`  ↻ Found existing Contact: ${contactId} (Account: ${accountId})`);
 
-  // 2. Create Contact (standard fields only — custom fields can be populated manually in Setup)
-  const contactFields = {
-    FirstName: persona.name.first,
-    LastName: persona.name.last,
-    Email: persona.email,
-    AccountId: accountId,
-    MailingStreet: persona.address.street,
-    MailingCity: persona.address.city,
-    MailingState: persona.address.state,
-    MailingPostalCode: persona.address.zip,
-    MailingCountry: persona.address.country,
-  };
+    // Clean up old related records to avoid duplicates on re-seed
+    console.log('  🧹 Cleaning up old related records...');
+    await deleteRelatedRecords(token, contactId, 'Chat_Summary__c');
+    await deleteRelatedRecords(token, contactId, 'Meaningful_Event__c');
+    await deleteRelatedRecords(token, contactId, 'Agent_Captured_Profile__c');
+    await deleteRelatedRecords(token, contactId, 'Browse_Session__c');
+    if (accountId) {
+      await deleteAccountOrders(token, accountId);
+    }
+  } else {
+    // Create Account
+    accountId = await sfCreate(token, 'Account', {
+      Name: `${persona.name.first} ${persona.name.last} Household`,
+    });
+    if (!accountId) return;
 
-  const contactId = await sfCreate(token, 'Contact', contactFields);
-  if (!contactId) return;
+    // Create Contact
+    const contactFields = {
+      FirstName: persona.name.first,
+      LastName: persona.name.last,
+      Email: persona.email,
+      AccountId: accountId,
+      MailingStreet: persona.address.street,
+      MailingCity: persona.address.city,
+      MailingState: persona.address.state,
+      MailingPostalCode: persona.address.zip,
+      MailingCountry: persona.address.country,
+    };
+
+    contactId = await sfCreate(token, 'Contact', contactFields);
+    if (!contactId) return;
+  }
 
   // 3. Create Orders (with OrderItems)
   for (const order of persona.orders) {
@@ -454,9 +504,6 @@ async function main() {
   console.log('🔐 Authenticating with Salesforce...');
   const token = await getAccessToken();
   console.log('  ✓ Token acquired');
-
-  // Clean up orphaned Accounts from previous failed runs
-  await cleanupOrphanedAccounts(token);
 
   console.log('\n📦 Loading Product2 catalog...');
   const productMap = await buildProductMap(token);

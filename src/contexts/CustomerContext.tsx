@@ -9,10 +9,13 @@ const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
 interface CustomerContextValue {
   customer: CustomerProfile | null;
   selectedPersonaId: string | null;
+  isAuthenticated: boolean;
   isLoading: boolean;
   isResolving: boolean;
   error: Error | null;
   selectPersona: (personaId: string) => Promise<void>;
+  signIn: () => void;
+  signOut: () => void;
   identifyByEmail: (email: string) => Promise<boolean>;
   refreshProfile: () => Promise<void>;
   resetPersonaSession: (personaId: string) => void;
@@ -27,6 +30,7 @@ const CustomerContext = createContext<CustomerContextValue | null>(null);
 export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [customer, setCustomer] = useState<CustomerProfile | null>(null);
   const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isResolving, setIsResolving] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -41,8 +45,12 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return () => { sessionResetCallbacksRef.current.delete(cb); };
   }, []);
 
+  const signIn = useCallback(() => setIsAuthenticated(true), []);
+  const signOut = useCallback(() => setIsAuthenticated(false), []);
+
   const selectPersona = useCallback(async (personaId: string) => {
     setSelectedPersonaId(personaId);
+    setIsAuthenticated(false);
     setIsResolving(true);
     setError(null);
 
@@ -207,6 +215,7 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // Mark as refresh so conversation is NOT reset
       isRefreshRef.current = true;
       setCustomer(profile);
+      setIsAuthenticated(true);
       // Reset refresh flag on next tick
       setTimeout(() => { isRefreshRef.current = false; }, 0);
       return true;
@@ -238,8 +247,8 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   return (
     <CustomerContext.Provider value={{
-      customer, selectedPersonaId, isLoading, isResolving, error,
-      selectPersona, identifyByEmail, refreshProfile, resetPersonaSession,
+      customer, selectedPersonaId, isAuthenticated, isLoading, isResolving, error,
+      selectPersona, signIn, signOut, identifyByEmail, refreshProfile, resetPersonaSession,
       _isRefreshRef: isRefreshRef, _onSessionReset: onSessionReset,
     }}>
       {children}

@@ -172,6 +172,43 @@
         <editable>true</editable>
         <readable>true</readable>
     </fieldPermissions>
+    <!-- Order tracking fields -->
+    <fieldPermissions>
+        <field>Order.Carrier__c</field>
+        <editable>true</editable>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Order.Delivered_Date__c</field>
+        <editable>true</editable>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Order.Estimated_Delivery__c</field>
+        <editable>true</editable>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Order.Payment_Method__c</field>
+        <editable>true</editable>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Order.Shipped_Date__c</field>
+        <editable>true</editable>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Order.Shipping_Status__c</field>
+        <editable>true</editable>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Order.Tracking_Number__c</field>
+        <editable>true</editable>
+        <readable>true</readable>
+    </fieldPermissions>
+
     <fieldPermissions>
         <field>Meaningful_Event__c.Agent_Note__c</field>
         <editable>true</editable>

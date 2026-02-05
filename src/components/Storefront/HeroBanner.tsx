@@ -1,11 +1,90 @@
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
+import type { CustomerProfile } from '@/types/customer';
 
 interface HeroBannerProps {
   onShopNow: () => void;
   onBeautyAdvisor: () => void;
+  customer?: CustomerProfile | null;
+  isAuthenticated?: boolean;
 }
 
-export const HeroBanner: React.FC<HeroBannerProps> = ({ onShopNow, onBeautyAdvisor }) => {
+function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boolean) {
+  const tier = customer?.merkuryIdentity?.identityTier;
+  const firstName = customer?.name?.split(' ')[0];
+
+  // Authenticated known customer
+  if (isAuthenticated && tier === 'known' && firstName) {
+    const loyaltyLine = customer?.loyalty
+      ? `${customer.loyalty.tier.charAt(0).toUpperCase() + customer.loyalty.tier.slice(1)} Member · ${customer.loyalty.pointsBalance?.toLocaleString()} pts`
+      : null;
+    return {
+      badge: 'For You',
+      headlineTop: `Your Beauty Edit,`,
+      headlineBottom: firstName,
+      subtitle: loyaltyLine
+        ? `Curated picks for you. ${loyaltyLine}.`
+        : 'Curated skincare and beauty essentials, just for you.',
+    };
+  }
+
+  // Pseudonymous known customer (not signed in)
+  if (tier === 'known' && firstName) {
+    const skinType = customer?.beautyProfile?.skinType;
+    const subtitleParts: string[] = [];
+    if (skinType && skinType !== 'normal') {
+      subtitleParts.push(`Picks for your ${skinType} skin.`);
+    }
+    subtitleParts.push('Sign in for the full personalized experience.');
+    return {
+      badge: 'Picked for You',
+      headlineTop: `Welcome back,`,
+      headlineBottom: firstName,
+      subtitle: subtitleParts.join(' '),
+    };
+  }
+
+  // Appended (3P Merkury data)
+  if (tier === 'appended' && customer?.appendedProfile?.interests) {
+    const interests = customer.appendedProfile.interests.map((i) => i.toLowerCase());
+    if (interests.some((i) => i.includes('clean') || i.includes('natural'))) {
+      return {
+        badge: 'Trending in Clean Beauty',
+        headlineTop: 'Clean Beauty,',
+        headlineBottom: 'Naturally You',
+        subtitle: 'Curated clean and natural beauty essentials for a conscious routine.',
+      };
+    }
+    if (interests.some((i) => i.includes('luxury') || i.includes('premium'))) {
+      return {
+        badge: 'Luxury Picks',
+        headlineTop: 'Luxury Essentials,',
+        headlineBottom: 'Curated for You',
+        subtitle: 'Premium skincare and beauty from the brands you love.',
+      };
+    }
+    if (interests.some((i) => i.includes('wellness') || i.includes('yoga') || i.includes('fitness'))) {
+      return {
+        badge: 'Beauty Meets Wellness',
+        headlineTop: 'Beauty Meets',
+        headlineBottom: 'Wellness',
+        subtitle: 'Skincare and beauty that complements your active lifestyle.',
+      };
+    }
+  }
+
+  // Anonymous / default
+  return {
+    badge: 'New Season Collection',
+    headlineTop: 'Discover Your',
+    headlineBottom: 'Perfect Glow',
+    subtitle: 'Curated skincare and beauty essentials, personalized to your unique needs. Experience the future of beauty with our AI-powered recommendations.',
+  };
+}
+
+export const HeroBanner: React.FC<HeroBannerProps> = ({ onShopNow, onBeautyAdvisor, customer, isAuthenticated }) => {
+  const variant = useMemo(() => getHeroVariant(customer, isAuthenticated), [customer, isAuthenticated]);
+
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-stone-100 via-rose-50 to-purple-50">
       {/* Background pattern */}
@@ -14,7 +93,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onShopNow, onBeautyAdvis
         <div className="absolute bottom-10 right-20 w-96 h-96 bg-purple-200 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24 lg:py-32">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 lg:py-16">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Text content */}
           <motion.div
@@ -23,17 +102,16 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onShopNow, onBeautyAdvis
             transition={{ duration: 0.6 }}
           >
             <span className="inline-block px-3 py-1 bg-rose-100 text-rose-600 text-xs font-medium rounded-full mb-6">
-              New Season Collection
+              {variant.badge}
             </span>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-light text-stone-900 leading-tight mb-6">
-              Discover Your
+              {variant.headlineTop}
               <span className="block font-medium bg-gradient-to-r from-rose-500 to-purple-500 bg-clip-text text-transparent">
-                Perfect Glow
+                {variant.headlineBottom}
               </span>
             </h1>
             <p className="text-lg text-stone-600 mb-8 max-w-md">
-              Curated skincare and beauty essentials, personalized to your unique needs.
-              Experience the future of beauty with our AI-powered recommendations.
+              {variant.subtitle}
             </p>
             <div className="flex flex-wrap gap-4">
               <button

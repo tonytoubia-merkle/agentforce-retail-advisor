@@ -9,7 +9,7 @@ const API_BASE = 'http://localhost:3001';
 export const CheckoutPage: React.FC = () => {
   const { navigateToOrderConfirmation, goBack } = useStore();
   const { items, subtotal, clearCart } = useCart();
-  const { customer } = useCustomer();
+  const { customer, isAuthenticated, signIn } = useCustomer();
 
   const [step, setStep] = useState<'info' | 'shipping' | 'payment' | 'processing'>('info');
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
@@ -59,7 +59,12 @@ export const CheckoutPage: React.FC = () => {
         return;
       }
 
-      // Real Salesforce checkout
+      // Real Salesforce checkout — require valid customer ID
+      if (!customer?.id) {
+        setCheckoutError('Please sign in to complete your purchase.');
+        setStep('payment');
+        return;
+      }
       const last4 = formData.cardNumber.replace(/\s/g, '').slice(-4);
       const paymentMethod = `Visa ending in ${last4}`;
       const payload = {
@@ -104,12 +109,54 @@ export const CheckoutPage: React.FC = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const firstName = customer?.name?.split(' ')[0];
+  const isKnown = customer?.merkuryIdentity?.identityTier === 'known';
+  const loyaltyPoints = customer?.loyalty ? Math.floor(total) : 0;
+
   if (items.length === 0 && step !== 'processing') {
     return (
       <div className="min-h-screen bg-stone-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-stone-500">Your cart is empty.</p>
         </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center py-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-md w-full mx-4"
+        >
+          <div className="bg-white rounded-3xl p-8 shadow-xl text-center">
+            <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-rose-100 to-purple-100 rounded-full flex items-center justify-center">
+              <svg className="w-8 h-8 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-semibold text-stone-900 mb-2">
+              {isKnown && firstName ? `Almost there, ${firstName}!` : 'Sign in to checkout'}
+            </h2>
+            <p className="text-stone-500 mb-6">
+              Sign in to complete your purchase and earn rewards.
+            </p>
+            <button
+              onClick={signIn}
+              className="w-full px-6 py-3 bg-stone-900 text-white font-medium rounded-full hover:bg-stone-800 transition-colors mb-3"
+            >
+              Sign In
+            </button>
+            <button
+              onClick={goBack}
+              className="text-sm text-stone-500 hover:text-stone-700 transition-colors"
+            >
+              Back to cart
+            </button>
+          </div>
+        </motion.div>
       </div>
     );
   }
@@ -430,6 +477,21 @@ export const CheckoutPage: React.FC = () => {
                     <span className="text-stone-900">${total.toFixed(2)}</span>
                   </div>
                 </div>
+
+                {/* Loyalty points preview */}
+                {customer?.loyalty && loyaltyPoints > 0 && (
+                  <div className="mt-4 p-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl">
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-amber-700 font-medium">
+                        Earn ~{loyaltyPoints} points
+                      </span>
+                      <span className="text-amber-600">with this purchase</span>
+                    </div>
+                    <p className="text-xs text-amber-600 mt-0.5 capitalize">
+                      {customer.loyalty.tier} Member · {customer.loyalty.pointsBalance?.toLocaleString()} pts balance
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

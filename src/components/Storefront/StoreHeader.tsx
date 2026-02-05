@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
 import { ProfileDropdown } from './ProfileDropdown';
-import { LoyaltyPanel } from '@/components/LoyaltyPanel';
+import { WelcomeBar } from './WelcomeBar';
 import type { ProductCategory } from '@/types/product';
 
 const CATEGORIES: { label: string; value: ProductCategory }[] = [
@@ -39,6 +39,9 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ onBeautyAdvisorClick }
           Try our AI Beauty Advisor
         </button>
       </div>
+
+      {/* Pseudonymous welcome bar */}
+      <WelcomeBar />
 
       {/* Main header */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
