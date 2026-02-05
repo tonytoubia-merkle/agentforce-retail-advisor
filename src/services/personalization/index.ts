@@ -52,8 +52,8 @@ interface NavState {
 }
 
 // ── Config from env ──────────────────────────────────────────────────────────
-const SFP_BEACON_URL = import.meta.env.VITE_SFP_BEACON_URL || '';
-const SFP_DATASET = import.meta.env.VITE_SFP_DATASET || '';
+const SFP_BEACON_URL = (import.meta.env.VITE_SFP_BEACON_URL || '').trim();
+const SFP_DATASET = (import.meta.env.VITE_SFP_DATASET || '').trim();
 
 let initialized = false;
 let sdkReady: Promise<boolean> | null = null;

@@ -1,6 +1,6 @@
 import type { DemoContact } from '@/types/customer';
 
-const API_BASE = 'http://localhost:3001';
+const API_BASE = '';
 
 export async function fetchDemoContacts(): Promise<DemoContact[]> {
   try {

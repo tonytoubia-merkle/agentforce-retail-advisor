@@ -5,7 +5,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useCustomer } from '@/contexts/CustomerContext';
 import { MerkuryProfilePicker } from './MerkuryProfilePicker';
 
-const API_BASE = 'http://localhost:3001';
+const API_BASE = '';
 
 export const CheckoutPage: React.FC = () => {
   const { navigateToOrderConfirmation, goBack } = useStore();

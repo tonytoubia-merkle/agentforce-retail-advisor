@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useStore } from '@/contexts/StoreContext';
 import { useCustomer } from '@/contexts/CustomerContext';
 
-const API_BASE = 'http://localhost:3001';
+const API_BASE = '';
 
 interface OrderConfirmationPageProps {
   onBeautyAdvisor: () => void;
