@@ -110,6 +110,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     notifyNavigation(view, {
       categoryId: selectedCategory || undefined,
       productId: selectedProduct?.id,
+      productSalesforceId: selectedProduct?.salesforceId,
       productName: selectedProduct?.name,
       productCategory: selectedProduct?.category,
     });

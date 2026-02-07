@@ -23,7 +23,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product, o
     addItem(product, quantity);
     // SF Personalization / Data Cloud: track add-to-cart event
     if (isPersonalizationConfigured()) {
-      trackAddToCart(product.id, product.name, product.price);
+      trackAddToCart(product.id, product.name, product.price, product.salesforceId);
     }
   };
 

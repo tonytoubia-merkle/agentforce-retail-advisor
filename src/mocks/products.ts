@@ -4,6 +4,7 @@ export const MOCK_PRODUCTS: Product[] = [
   // ─── SERENE (Skincare) ───────────────────────────────────────────
   {
     id: 'moisturizer-sensitive',
+    salesforceId: '01tKa0000098Y4wIAE',
     name: 'Hydra-Calm Sensitive Moisturizer',
     brand: 'SERENE',
     category: 'moisturizer',
@@ -26,6 +27,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'sunscreen-lightweight',
+    salesforceId: '01tKa0000098Y4xIAE',
     name: 'Invisible Shield SPF 50',
     brand: 'SERENE',
     category: 'sunscreen',
@@ -48,6 +50,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'mist-refreshing',
+    salesforceId: '01tKa0000098Y4yIAE',
     name: 'Cooling Facial Mist',
     brand: 'SERENE',
     category: 'toner',
@@ -70,6 +73,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'blotting-sheets',
+    salesforceId: '01tKa0000098Y4zIAE',
     name: 'Oil Control Blotting Papers',
     brand: 'SERENE',
     category: 'travel-kit',
@@ -92,6 +96,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'cleanser-gentle',
+    salesforceId: '01tKa0000098Y50IAE',
     name: 'Cloud Cream Cleanser',
     brand: 'SERENE',
     category: 'cleanser',
@@ -114,6 +119,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'mask-hydrating',
+    salesforceId: '01tKa0000098Y51IAE',
     name: 'Deep Dew Hydrating Mask',
     brand: 'SERENE',
     category: 'mask',
@@ -136,6 +142,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'toner-aha',
+    salesforceId: '01tKa0000098Y52IAE',
     name: 'Glow Tonic AHA Toner',
     brand: 'SERENE',
     category: 'toner',
@@ -158,6 +165,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'eye-cream',
+    salesforceId: '01tKa0000098Y53IAE',
     name: 'Bright Eyes Caffeine Cream',
     brand: 'SERENE',
     category: 'eye-cream',
@@ -182,6 +190,7 @@ export const MOCK_PRODUCTS: Product[] = [
   // ─── LUMIERE (Serums + Makeup) ──────────────────────────────────
   {
     id: 'serum-vitamin-c',
+    salesforceId: '01tKa0000098Y5PIAU',
     name: 'Glow Boost Vitamin C Serum',
     brand: 'LUMIERE',
     category: 'serum',
@@ -204,6 +213,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'serum-retinol',
+    salesforceId: '01tKa0000098Y5QIAU',
     name: 'Midnight Renewal Retinol Serum',
     brand: 'LUMIERE',
     category: 'serum',
@@ -226,6 +236,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'serum-anti-aging',
+    salesforceId: '01tKa0000098Y5RIAU',
     name: 'Peptide Lift Pro Serum',
     brand: 'LUMIERE',
     category: 'serum',
@@ -248,6 +259,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'foundation-dewy',
+    salesforceId: '01tKa0000098Y5SIAU',
     name: 'Skin Glow Serum Foundation',
     brand: 'LUMIERE',
     category: 'foundation',
@@ -270,6 +282,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'lipstick-velvet',
+    salesforceId: '01tKa0000098Y5TIAU',
     name: 'Velvet Matte Lip Color',
     brand: 'LUMIERE',
     category: 'lipstick',
@@ -290,6 +303,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'mascara-volume',
+    salesforceId: '01tKa0000098Y5UIAU',
     name: 'Lash Drama Volume Mascara',
     brand: 'LUMIERE',
     category: 'mascara',
@@ -310,6 +324,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'blush-silk',
+    salesforceId: '01tKa0000098Y5VIAU',
     name: 'Silk Petal Blush',
     brand: 'LUMIERE',
     category: 'blush',
@@ -332,6 +347,7 @@ export const MOCK_PRODUCTS: Product[] = [
   // ─── DERMAFIX (Clinical / Targeted) ─────────────────────────────
   {
     id: 'cleanser-acne',
+    salesforceId: '01tKa0000098Y5zIAE',
     name: 'Clear Start Salicylic Cleanser',
     brand: 'DERMAFIX',
     category: 'cleanser',
@@ -354,6 +370,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'serum-niacinamide',
+    salesforceId: '01tKa0000098Y60IAE',
     name: 'Pore Refine Niacinamide Serum',
     brand: 'DERMAFIX',
     category: 'serum',
@@ -376,6 +393,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'spot-treatment',
+    salesforceId: '01tKa0000098Y61IAE',
     name: 'SOS Blemish Patch',
     brand: 'DERMAFIX',
     category: 'spot-treatment',
@@ -399,6 +417,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'sunscreen-mineral',
+    salesforceId: '01tKa0000098Y62IAE',
     name: 'Barrier Shield Mineral SPF 40',
     brand: 'DERMAFIX',
     category: 'sunscreen',
@@ -423,6 +442,7 @@ export const MOCK_PRODUCTS: Product[] = [
   // ─── MAISON (Fragrance + Hair Care) ─────────────────────────────
   {
     id: 'fragrance-floral',
+    salesforceId: '01tKa0000098Y6GIAU',
     name: 'Jardin de Nuit Eau de Parfum',
     brand: 'MAISON',
     category: 'fragrance',
@@ -444,6 +464,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'fragrance-woody',
+    salesforceId: '01tKa0000098Y6HIAU',
     name: 'Bois Sauvage Eau de Toilette',
     brand: 'MAISON',
     category: 'fragrance',
@@ -466,6 +487,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'shampoo-repair',
+    salesforceId: '01tKa0000098Y6IIAU',
     name: 'Bond Repair Shampoo',
     brand: 'MAISON',
     category: 'shampoo',
@@ -487,6 +509,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'conditioner-hydrating',
+    salesforceId: '01tKa0000098Y6JIAU',
     name: 'Silk Hydration Conditioner',
     brand: 'MAISON',
     category: 'conditioner',
@@ -515,6 +538,7 @@ export const MOCK_PRODUCTS: Product[] = [
 
   {
     id: 'moisturizer-oil-free',
+    salesforceId: '01tKa0000098Y54IAE',
     name: 'Oil-Free Hydra Gel',
     brand: 'SERENE',
     category: 'moisturizer',
@@ -537,6 +561,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'moisturizer-rich',
+    salesforceId: '01tKa0000098Y55IAE',
     name: 'Ultra Rich Barrier Cream',
     brand: 'SERENE',
     category: 'moisturizer',
@@ -559,6 +584,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'moisturizer-spf',
+    salesforceId: '01tKa0000098Y56IAE',
     name: 'Daily Defense Moisturizer SPF 30',
     brand: 'SERENE',
     category: 'moisturizer',
@@ -581,6 +607,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'moisturizer-night',
+    salesforceId: '01tKa0000098Y57IAE',
     name: 'Overnight Recovery Cream',
     brand: 'SERENE',
     category: 'moisturizer',
@@ -603,6 +630,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'cleanser-micellar',
+    salesforceId: '01tKa0000098Y58IAE',
     name: 'Micellar Cleansing Water',
     brand: 'SERENE',
     category: 'cleanser',
@@ -626,6 +654,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'cleanser-oil',
+    salesforceId: '01tKa0000098Y59IAE',
     name: 'Pure Cleansing Oil',
     brand: 'SERENE',
     category: 'cleanser',
@@ -648,6 +677,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'cleanser-foam',
+    salesforceId: '01tKa0000098Y5AIAU',
     name: 'Gentle Foaming Cleanser',
     brand: 'SERENE',
     category: 'cleanser',
@@ -670,6 +700,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'cleanser-exfoliating',
+    salesforceId: '01tKa0000098Y5BIAU',
     name: 'Daily Micro-Exfoliating Cleanser',
     brand: 'SERENE',
     category: 'cleanser',
@@ -692,6 +723,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'sunscreen-tinted',
+    salesforceId: '01tKa0000098Y5CIAU',
     name: 'Tinted Glow Screen SPF 45',
     brand: 'SERENE',
     category: 'sunscreen',
@@ -715,6 +747,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'sunscreen-stick',
+    salesforceId: '01tKa0000098Y5DIAU',
     name: 'On-the-Go Sun Stick SPF 50',
     brand: 'SERENE',
     category: 'sunscreen',
@@ -738,6 +771,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'sunscreen-body',
+    salesforceId: '01tKa0000098Y5EIAU',
     name: 'Body Shield Sunscreen SPF 50',
     brand: 'SERENE',
     category: 'sunscreen',
@@ -760,6 +794,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'toner-hydrating',
+    salesforceId: '01tKa0000098Y5FIAU',
     name: 'Essence Hydrating Toner',
     brand: 'SERENE',
     category: 'toner',
@@ -782,6 +817,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'toner-calming',
+    salesforceId: '01tKa0000098Y5GIAU',
     name: 'Centella Calming Toner',
     brand: 'SERENE',
     category: 'toner',
@@ -804,6 +840,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'mask-clay',
+    salesforceId: '01tKa0000098Y5HIAU',
     name: 'Pore Purifying Clay Mask',
     brand: 'SERENE',
     category: 'mask',
@@ -826,6 +863,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'mask-sheet-hydrating',
+    salesforceId: '01tKa0000098Y5IIAU',
     name: 'Hydra-Boost Sheet Mask (5-Pack)',
     brand: 'SERENE',
     category: 'mask',
@@ -849,6 +887,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'mask-exfoliating',
+    salesforceId: '01tKa0000098Y5JIAU',
     name: 'Enzyme Renewal Mask',
     brand: 'SERENE',
     category: 'mask',
@@ -871,6 +910,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'eye-cream-brightening',
+    salesforceId: '01tKa0000098Y5KIAU',
     name: 'Vitamin C Eye Brightener',
     brand: 'SERENE',
     category: 'eye-cream',
@@ -893,6 +933,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'eye-cream-firming',
+    salesforceId: '01tKa0000098Y5LIAU',
     name: 'Peptide Lift Eye Cream',
     brand: 'SERENE',
     category: 'eye-cream',
@@ -915,6 +956,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'travel-kit-essentials',
+    salesforceId: '01tKa0000098Y5MIAU',
     name: 'Travel Essentials Kit',
     brand: 'SERENE',
     category: 'travel-kit',
@@ -938,6 +980,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'travel-kit-hydration',
+    salesforceId: '01tKa0000098Y5NIAU',
     name: 'Hydration Hero Travel Set',
     brand: 'SERENE',
     category: 'travel-kit',
@@ -961,6 +1004,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'lip-balm-spf',
+    salesforceId: '01tKa0000098Y5OIAU',
     name: 'Protective Lip Balm SPF 25',
     brand: 'SERENE',
     category: 'travel-kit',
@@ -987,6 +1031,7 @@ export const MOCK_PRODUCTS: Product[] = [
 
   {
     id: 'serum-hyaluronic',
+    salesforceId: '01tKa0000098Y5WIAU',
     name: 'Pure Hyaluronic Acid Serum',
     brand: 'LUMIERE',
     category: 'serum',
@@ -1009,6 +1054,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'serum-bakuchiol',
+    salesforceId: '01tKa0000098Y5XIAU',
     name: 'Gentle Retinol Alternative Serum',
     brand: 'LUMIERE',
     category: 'serum',
@@ -1031,6 +1077,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'serum-brightening',
+    salesforceId: '01tKa0000098Y5YIAU',
     name: 'Dark Spot Correcting Serum',
     brand: 'LUMIERE',
     category: 'serum',
@@ -1053,6 +1100,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'serum-barrier',
+    salesforceId: '01tKa0000098Y5ZIAU',
     name: 'Ceramide Barrier Repair Serum',
     brand: 'LUMIERE',
     category: 'serum',
@@ -1075,6 +1123,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'serum-glow',
+    salesforceId: '01tKa0000098Y5aIAE',
     name: 'Instant Glow Priming Serum',
     brand: 'LUMIERE',
     category: 'serum',
@@ -1097,6 +1146,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'serum-acne',
+    salesforceId: '01tKa0000098Y5bIAE',
     name: 'Clarifying BHA Serum',
     brand: 'LUMIERE',
     category: 'serum',
@@ -1119,6 +1169,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'foundation-matte',
+    salesforceId: '01tKa0000098Y5cIAE',
     name: 'Velvet Matte Foundation',
     brand: 'LUMIERE',
     category: 'foundation',
@@ -1141,6 +1192,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'foundation-stick',
+    salesforceId: '01tKa0000098Y5dIAE',
     name: 'Cover & Go Stick Foundation',
     brand: 'LUMIERE',
     category: 'foundation',
@@ -1164,6 +1216,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'concealer-brightening',
+    salesforceId: '01tKa0000098Y5eIAE',
     name: 'Brightening Under-Eye Concealer',
     brand: 'LUMIERE',
     category: 'foundation',
@@ -1186,6 +1239,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'concealer-full',
+    salesforceId: '01tKa0000098Y5fIAE',
     name: 'Full Coverage Concealer',
     brand: 'LUMIERE',
     category: 'foundation',
@@ -1208,6 +1262,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'lipstick-satin',
+    salesforceId: '01tKa0000098Y5gIAE',
     name: 'Silk Satin Lipstick',
     brand: 'LUMIERE',
     category: 'lipstick',
@@ -1228,6 +1283,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'lipstick-liquid',
+    salesforceId: '01tKa0000098Y5hIAE',
     name: 'Liquid Lip Color',
     brand: 'LUMIERE',
     category: 'lipstick',
@@ -1248,6 +1304,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'lip-gloss',
+    salesforceId: '01tKa0000098Y5iIAE',
     name: 'High Shine Lip Gloss',
     brand: 'LUMIERE',
     category: 'lipstick',
@@ -1268,6 +1325,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'lip-liner',
+    salesforceId: '01tKa0000098Y5jIAE',
     name: 'Precision Lip Liner',
     brand: 'LUMIERE',
     category: 'lipstick',
@@ -1288,6 +1346,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'mascara-lengthening',
+    salesforceId: '01tKa0000098Y5kIAE',
     name: 'Lash Extend Lengthening Mascara',
     brand: 'LUMIERE',
     category: 'mascara',
@@ -1308,6 +1367,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'mascara-waterproof',
+    salesforceId: '01tKa0000098Y5lIAE',
     name: 'All-Day Waterproof Mascara',
     brand: 'LUMIERE',
     category: 'mascara',
@@ -1329,6 +1389,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'mascara-tubing',
+    salesforceId: '01tKa0000098Y5mIAE',
     name: 'Easy-Off Tubing Mascara',
     brand: 'LUMIERE',
     category: 'mascara',
@@ -1349,6 +1410,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'blush-powder',
+    salesforceId: '01tKa0000098Y5nIAE',
     name: 'Soft Focus Powder Blush',
     brand: 'LUMIERE',
     category: 'blush',
@@ -1369,6 +1431,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'blush-liquid',
+    salesforceId: '01tKa0000098Y5oIAE',
     name: 'Dewy Liquid Blush',
     brand: 'LUMIERE',
     category: 'blush',
@@ -1389,6 +1452,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'highlighter-cream',
+    salesforceId: '01tKa0000098Y5pIAE',
     name: 'Lit From Within Highlighter',
     brand: 'LUMIERE',
     category: 'blush',
@@ -1409,6 +1473,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'bronzer-matte',
+    salesforceId: '01tKa0000098Y5qIAE',
     name: 'Sun-Kissed Matte Bronzer',
     brand: 'LUMIERE',
     category: 'blush',
@@ -1429,6 +1494,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'setting-powder',
+    salesforceId: '01tKa0000098Y5rIAE',
     name: 'Invisible Set Finishing Powder',
     brand: 'LUMIERE',
     category: 'foundation',
@@ -1451,6 +1517,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'setting-spray',
+    salesforceId: '01tKa0000098Y5sIAE',
     name: 'All-Day Lock Setting Spray',
     brand: 'LUMIERE',
     category: 'foundation',
@@ -1474,6 +1541,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'primer-pore',
+    salesforceId: '01tKa0000098Y5tIAE',
     name: 'Pore Blur Primer',
     brand: 'LUMIERE',
     category: 'foundation',
@@ -1496,6 +1564,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'primer-hydrating',
+    salesforceId: '01tKa0000098Y5uIAE',
     name: 'Hydra Glow Primer',
     brand: 'LUMIERE',
     category: 'foundation',
@@ -1518,6 +1587,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'eyeshadow-palette-neutral',
+    salesforceId: '01tKa0000098Y5vIAE',
     name: 'Everyday Neutrals Eyeshadow Palette',
     brand: 'LUMIERE',
     category: 'blush',
@@ -1538,6 +1608,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'eyeshadow-palette-warm',
+    salesforceId: '01tKa0000098Y5wIAE',
     name: 'Sunset Glow Eyeshadow Palette',
     brand: 'LUMIERE',
     category: 'blush',
@@ -1558,6 +1629,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'brow-pencil',
+    salesforceId: '01tKa0000098Y5xIAE',
     name: 'Micro Brow Pencil',
     brand: 'LUMIERE',
     category: 'mascara',
@@ -1578,6 +1650,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'brow-gel',
+    salesforceId: '01tKa0000098Y5yIAE',
     name: 'Tinted Brow Gel',
     brand: 'LUMIERE',
     category: 'mascara',
@@ -1601,6 +1674,7 @@ export const MOCK_PRODUCTS: Product[] = [
 
   {
     id: 'serum-azelaic',
+    salesforceId: '01tKa0000098Y63IAE',
     name: 'Azelaic Acid 10% Serum',
     brand: 'DERMAFIX',
     category: 'serum',
@@ -1623,6 +1697,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'serum-aha-bha',
+    salesforceId: '01tKa0000098Y64IAE',
     name: 'AHA/BHA Exfoliating Serum',
     brand: 'DERMAFIX',
     category: 'serum',
@@ -1645,6 +1720,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'serum-zinc',
+    salesforceId: '01tKa0000098Y65IAE',
     name: 'Oil Control Zinc Serum',
     brand: 'DERMAFIX',
     category: 'serum',
@@ -1667,6 +1743,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'treatment-retinoid',
+    salesforceId: '01tKa0000098Y66IAE',
     name: 'Retinoid 0.3% Treatment',
     brand: 'DERMAFIX',
     category: 'serum',
@@ -1689,6 +1766,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'treatment-benzoyl',
+    salesforceId: '01tKa0000098Y67IAE',
     name: 'Benzoyl Peroxide 2.5% Gel',
     brand: 'DERMAFIX',
     category: 'spot-treatment',
@@ -1711,6 +1789,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'treatment-sulfur',
+    salesforceId: '01tKa0000098Y68IAE',
     name: 'Sulfur Acne Drying Treatment',
     brand: 'DERMAFIX',
     category: 'spot-treatment',
@@ -1733,6 +1812,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'moisturizer-acne',
+    salesforceId: '01tKa0000098Y69IAE',
     name: 'Acne-Safe Oil-Free Moisturizer',
     brand: 'DERMAFIX',
     category: 'moisturizer',
@@ -1755,6 +1835,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'cleanser-benzoyl',
+    salesforceId: '01tKa0000098Y6AIAU',
     name: 'Benzoyl Peroxide Wash 4%',
     brand: 'DERMAFIX',
     category: 'cleanser',
@@ -1777,6 +1858,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'peel-glycolic',
+    salesforceId: '01tKa0000098Y6BIAU',
     name: 'Glycolic Acid 10% Peel Pads',
     brand: 'DERMAFIX',
     category: 'toner',
@@ -1799,6 +1881,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'mask-charcoal',
+    salesforceId: '01tKa0000098Y6CIAU',
     name: 'Activated Charcoal Detox Mask',
     brand: 'DERMAFIX',
     category: 'mask',
@@ -1821,6 +1904,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'sunscreen-acne',
+    salesforceId: '01tKa0000098Y6DIAU',
     name: 'Clear Skin SPF 50 Fluid',
     brand: 'DERMAFIX',
     category: 'sunscreen',
@@ -1843,6 +1927,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'treatment-rosacea',
+    salesforceId: '01tKa0000098Y6EIAU',
     name: 'Redness Relief Serum',
     brand: 'DERMAFIX',
     category: 'serum',
@@ -1865,6 +1950,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'treatment-scar',
+    salesforceId: '01tKa0000098Y6FIAU',
     name: 'Scar Fading Gel',
     brand: 'DERMAFIX',
     category: 'serum',
@@ -1890,6 +1976,7 @@ export const MOCK_PRODUCTS: Product[] = [
 
   {
     id: 'fragrance-fresh',
+    salesforceId: '01tKa0000098Y6KIAU',
     name: 'Mer Bleue Eau de Toilette',
     brand: 'MAISON',
     category: 'fragrance',
@@ -1911,6 +1998,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'fragrance-oriental',
+    salesforceId: '01tKa0000098Y6LIAU',
     name: 'Velvet Oud Eau de Parfum',
     brand: 'MAISON',
     category: 'fragrance',
@@ -1932,6 +2020,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'fragrance-citrus',
+    salesforceId: '01tKa0000098Y6MIAU',
     name: 'Citrus Garden Cologne',
     brand: 'MAISON',
     category: 'fragrance',
@@ -1953,6 +2042,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'fragrance-travel',
+    salesforceId: '01tKa0000098Y6NIAU',
     name: 'Discovery Set (4 x 10ml)',
     brand: 'MAISON',
     category: 'fragrance',
@@ -1975,6 +2065,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'fragrance-solid',
+    salesforceId: '01tKa0000098Y6OIAU',
     name: 'Solid Perfume Compact',
     brand: 'MAISON',
     category: 'fragrance',
@@ -1997,6 +2088,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'shampoo-volumizing',
+    salesforceId: '01tKa0000098Y6PIAU',
     name: 'Root Lift Volumizing Shampoo',
     brand: 'MAISON',
     category: 'shampoo',
@@ -2018,6 +2110,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'shampoo-hydrating',
+    salesforceId: '01tKa0000098Y6QIAU',
     name: 'Moisture Drench Shampoo',
     brand: 'MAISON',
     category: 'shampoo',
@@ -2039,6 +2132,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'shampoo-clarifying',
+    salesforceId: '01tKa0000098Y6RIAU',
     name: 'Deep Clean Clarifying Shampoo',
     brand: 'MAISON',
     category: 'shampoo',
@@ -2060,6 +2154,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'shampoo-color',
+    salesforceId: '01tKa0000098Y6SIAU',
     name: 'Color Protect Shampoo',
     brand: 'MAISON',
     category: 'shampoo',
@@ -2081,6 +2176,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'conditioner-volumizing',
+    salesforceId: '01tKa0000098Y6TIAU',
     name: 'Weightless Volume Conditioner',
     brand: 'MAISON',
     category: 'conditioner',
@@ -2102,6 +2198,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'conditioner-repair',
+    salesforceId: '01tKa0000098Y6UIAU',
     name: 'Intensive Repair Conditioner',
     brand: 'MAISON',
     category: 'conditioner',
@@ -2123,6 +2220,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'conditioner-color',
+    salesforceId: '01tKa0000098Y6VIAU',
     name: 'Color Lock Conditioner',
     brand: 'MAISON',
     category: 'conditioner',
@@ -2144,6 +2242,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'hair-mask',
+    salesforceId: '01tKa0000098Y6WIAU',
     name: 'Weekly Repair Hair Mask',
     brand: 'MAISON',
     category: 'hair-treatment',
@@ -2165,6 +2264,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'hair-oil',
+    salesforceId: '01tKa0000098Y6XIAU',
     name: 'Shine & Smooth Hair Oil',
     brand: 'MAISON',
     category: 'hair-treatment',
@@ -2186,6 +2286,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'hair-serum',
+    salesforceId: '01tKa0000098Y6YIAU',
     name: 'Split End Repair Serum',
     brand: 'MAISON',
     category: 'hair-treatment',
@@ -2207,6 +2308,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'hair-spray',
+    salesforceId: '01tKa0000098Y6ZIAU',
     name: 'Flexible Hold Hairspray',
     brand: 'MAISON',
     category: 'hair-treatment',
@@ -2229,6 +2331,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'hair-mousse',
+    salesforceId: '01tKa0000098Y6aIAE',
     name: 'Volume Boost Styling Mousse',
     brand: 'MAISON',
     category: 'hair-treatment',
@@ -2250,6 +2353,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'heat-protectant',
+    salesforceId: '01tKa0000098Y6bIAE',
     name: 'Thermal Shield Heat Protectant',
     brand: 'MAISON',
     category: 'hair-treatment',
@@ -2272,6 +2376,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'dry-shampoo',
+    salesforceId: '01tKa0000098Y6cIAE',
     name: 'Refresh & Go Dry Shampoo',
     brand: 'MAISON',
     category: 'shampoo',
@@ -2294,6 +2399,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'leave-in-conditioner',
+    salesforceId: '01tKa0000098Y6dIAE',
     name: 'Detangling Leave-In Conditioner',
     brand: 'MAISON',
     category: 'conditioner',
@@ -2315,6 +2421,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'scalp-treatment',
+    salesforceId: '01tKa0000098Y6eIAE',
     name: 'Scalp Revitalizing Treatment',
     brand: 'MAISON',
     category: 'hair-treatment',

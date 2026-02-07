@@ -36,6 +36,8 @@ export interface ProductAttributes {
 
 export interface Product {
   id: string;
+  /** Salesforce Product2 record ID for Data Cloud integration */
+  salesforceId?: string;
   name: string;
   brand: string;
   category: ProductCategory;

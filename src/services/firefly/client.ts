@@ -24,7 +24,7 @@ export class FireflyClient {
         grant_type: 'client_credentials',
         client_id: this.config.clientId,
         client_secret: this.config.clientSecret,
-        scope: 'openid,AdobeID,firefly_api',
+        scope: 'openid,AdobeID,firefly_api,ff_apis',
       }),
     });
 

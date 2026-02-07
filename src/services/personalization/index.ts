@@ -47,6 +47,8 @@ interface NavState {
   view: string;
   categoryId?: string;
   productId?: string;
+  /** Salesforce Product2 ID for Data Cloud integration */
+  productSalesforceId?: string;
   productName?: string;
   productCategory?: string;
 }
@@ -150,7 +152,8 @@ function buildSitemapConfig() {
           name: 'View Product',
           catalogObject: {
             type: 'Product',
-            id: () => navState.productId || '',
+            // Prefer salesforceId for Data Cloud product joins, fall back to app slug id
+            id: () => navState.productSalesforceId || navState.productId || '',
             attributes: {
               name: { raw: () => navState.productName || '' },
               category: { raw: () => navState.productCategory || '' },
@@ -271,6 +274,8 @@ export function initPersonalization(userId?: string): void {
 export function notifyNavigation(view: string, data?: {
   categoryId?: string;
   productId?: string;
+  /** Salesforce Product2 ID for Data Cloud integration */
+  productSalesforceId?: string;
   productName?: string;
   productCategory?: string;
 }): void {
@@ -400,8 +405,13 @@ export function syncIdentity(
  * Track an add-to-cart event.
  * This is an explicit user action (not a page navigation), so it uses
  * sendEvent directly rather than going through the sitemap.
+ *
+ * @param productId - App's slug ID (for fallback)
+ * @param productName - Product name for display
+ * @param price - Product price
+ * @param salesforceId - Optional Salesforce Product2 ID for Data Cloud integration
  */
-export function trackAddToCart(productId: string, productName: string, price: number): void {
+export function trackAddToCart(productId: string, productName: string, price: number, salesforceId?: string): void {
   if (!isPersonalizationConfigured() || !initialized) return;
 
   const sfp = getSdk();
@@ -413,7 +423,8 @@ export function trackAddToCart(productId: string, productName: string, price: nu
         name: 'Add To Cart',
         lineItem: {
           catalogObjectType: 'Product',
-          catalogObjectId: productId,
+          // Prefer salesforceId for Data Cloud product joins, fall back to app slug id
+          catalogObjectId: salesforceId || productId,
           price,
           quantity: 1,
         },
