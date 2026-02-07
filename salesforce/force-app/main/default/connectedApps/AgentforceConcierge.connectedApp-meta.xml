@@ -1,18 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ConnectedApp xmlns="http://soap.sforce.com/2006/04/metadata">
+    <contactEmail>admin@example.com</contactEmail>
     <label>Agentforce Concierge</label>
-    <consumerKey>YOUR_CONSUMER_KEY_HERE</consumerKey>
-    <consumerSecret>YOUR_CONSUMER_SECRET_HERE</consumerSecret>
-    <isAdminApproved>true</isAdminApproved>
-    <isClientCredentialApproved>false</isClientCredentialApproved>
-    <isIntrospectAllTokens>false</isIntrospectAllTokens>
-    <isTokenExchangeApproved>false</isTokenExchangeApproved>
     <oauthConfig>
-        <callbackUrl>https://your-domain.com/oauth/callback</callbackUrl>
+        <callbackUrl>https://login.salesforce.com/services/oauth2/callback</callbackUrl>
+        <isAdminApproved>true</isAdminApproved>
         <scopes>Full</scopes>
         <scopes>RefreshToken</scopes>
         <scopes>Api</scopes>
     </oauthConfig>
-    <profileName>System Administrator</profileName>
-    <status>Active</status>
+    <oauthPolicy>
+        <ipRelaxation>ENFORCE</ipRelaxation>
+        <refreshTokenPolicy>infinite</refreshTokenPolicy>
+    </oauthPolicy>
 </ConnectedApp>

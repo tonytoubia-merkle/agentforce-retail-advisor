@@ -4,6 +4,5 @@
     <description>Loyalty Member record for tracking customer points and tier status</description>
     <enableFeeds>false</enableFeeds>
     <label>Loyalty Member</label>
-    <pluralLabel>Loyalty Members</pluralLabel>
     <visibility>Public</visibility>
 </CustomObject>
