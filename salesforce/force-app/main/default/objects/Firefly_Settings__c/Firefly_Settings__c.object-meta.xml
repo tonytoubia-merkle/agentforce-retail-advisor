@@ -4,5 +4,5 @@
     <description>Adobe Firefly API credentials for server-side image generation</description>
     <enableFeeds>false</enableFeeds>
     <label>Firefly Settings</label>
-    <visibility>Protected</visibility>
+    <visibility>Public</visibility>
 </CustomObject>

@@ -361,18 +361,18 @@ public with sharing class CampaignAgentService {
         String eventDescription = '';
 
         if (prompt.contains('EVENT TYPE:')) {
-            Integer start = prompt.indexOf('EVENT TYPE:') + 11;
-            Integer end = prompt.indexOf('\n', start);
-            if (end > start) {
-                eventType = prompt.substring(start, end).trim();
+            Integer startPos = prompt.indexOf('EVENT TYPE:') + 11;
+            Integer endPos = prompt.indexOf('\n', startPos);
+            if (endPos > startPos) {
+                eventType = prompt.substring(startPos, endPos).trim();
             }
         }
 
         if (prompt.contains('EVENT DESCRIPTION:')) {
-            Integer start = prompt.indexOf('EVENT DESCRIPTION:') + 18;
-            Integer end = prompt.indexOf('\n', start);
-            if (end > start) {
-                eventDescription = prompt.substring(start, end).trim();
+            Integer startPos = prompt.indexOf('EVENT DESCRIPTION:') + 18;
+            Integer endPos = prompt.indexOf('\n', startPos);
+            if (endPos > startPos) {
+                eventDescription = prompt.substring(startPos, endPos).trim();
             }
         }
 

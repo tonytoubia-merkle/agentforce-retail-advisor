@@ -215,17 +215,17 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
         String prompt = 'Elegant ';
 
         // Add event-specific context
-        String desc = event.Description__c != null ? event.Description__c.toLowerCase() : '';
+        String descText = event.Description__c != null ? event.Description__c.toLowerCase() : '';
 
-        if (desc.contains('wedding')) {
+        if (descText.contains('wedding')) {
             prompt += 'bridal beauty celebration, wedding day glamour, romantic floral accents, ';
-        } else if (desc.contains('birthday')) {
+        } else if (descText.contains('birthday')) {
             prompt += 'birthday celebration, gift-giving moment, festive elegance, ';
-        } else if (desc.contains('anniversary')) {
+        } else if (descText.contains('anniversary')) {
             prompt += 'romantic anniversary celebration, timeless love, elegant couple, ';
-        } else if (desc.contains('baby') || desc.contains('pregnant')) {
+        } else if (descText.contains('baby') || descText.contains('pregnant')) {
             prompt += 'gentle motherhood moment, soft nursery tones, nurturing atmosphere, ';
-        } else if (desc.contains('travel') || desc.contains('trip') || desc.contains('vacation')) {
+        } else if (descText.contains('travel') || descText.contains('trip') || descText.contains('vacation')) {
             prompt += 'jet-set travel lifestyle, luxury getaway, wanderlust aesthetic, ';
         } else {
             prompt += 'special life moment celebration, personal milestone, ';
@@ -242,17 +242,17 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
      * Build fallback subject line if Campaign Agent is unavailable.
      */
     private String buildFallbackSubject(Meaningful_Event__c event) {
-        String desc = event.Description__c != null ? event.Description__c.toLowerCase() : '';
+        String descText = event.Description__c != null ? event.Description__c.toLowerCase() : '';
 
-        if (desc.contains('wedding')) {
+        if (descText.contains('wedding')) {
             return 'Something beautiful for your special day';
-        } else if (desc.contains('birthday')) {
+        } else if (descText.contains('birthday')) {
             return 'A little something to celebrate you';
-        } else if (desc.contains('anniversary')) {
+        } else if (descText.contains('anniversary')) {
             return 'Celebrating your special milestone';
-        } else if (desc.contains('baby') || desc.contains('pregnant')) {
+        } else if (descText.contains('baby') || descText.contains('pregnant')) {
             return 'Gentle care for this precious time';
-        } else if (desc.contains('travel') || desc.contains('trip')) {
+        } else if (descText.contains('travel') || descText.contains('trip')) {
             return 'Travel-ready beauty for your adventure';
         }
 
@@ -289,7 +289,7 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
 
             // Get notification recipients from Custom Settings
             Marketing_Agent_Settings__c settings = Marketing_Agent_Settings__c.getOrgDefaults();
-            String recipients = settings != null ? settings.get('Notification_Emails__c')?.toString() : null;
+            String recipients = settings != null ? settings.Notification_Emails__c : null;
 
             if (String.isBlank(recipients)) {
                 System.debug('No notification recipients configured');

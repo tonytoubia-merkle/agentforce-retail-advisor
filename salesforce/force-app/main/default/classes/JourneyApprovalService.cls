@@ -294,8 +294,8 @@ public with sharing class JourneyApprovalService {
         // This is a simplified implementation
 
         Marketing_Agent_Settings__c settings = Marketing_Agent_Settings__c.getOrgDefaults();
-        String clientId = settings?.get('MC_Client_Id__c')?.toString();
-        String clientSecret = settings?.get('MC_Client_Secret__c')?.toString();
+        String clientId = settings != null ? settings.MC_Client_Id__c : null;
+        String clientSecret = settings != null ? settings.MC_Client_Secret__c : null;
 
         if (String.isBlank(clientId) || String.isBlank(clientSecret)) {
             throw new JourneyApprovalException('Marketing Cloud credentials not configured');

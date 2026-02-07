@@ -4,5 +4,5 @@
     <description>Settings for Marketing Agent integration including Campaign Creation Agent ID</description>
     <enableFeeds>false</enableFeeds>
     <label>Marketing Agent Settings</label>
-    <visibility>Protected</visibility>
+    <visibility>Public</visibility>
 </CustomObject>
