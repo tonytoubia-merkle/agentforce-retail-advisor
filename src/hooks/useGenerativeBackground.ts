@@ -226,9 +226,12 @@ export function useGenerativeBackground() {
           }
         }
 
-        const NO_PRODUCTS_SUFFIX = ' Do not include any products, bottles, containers, or packaging in the image. Scene only, no objects.';
         const rawPrompt = options?.backgroundPrompt || options?.editPrompt;
-        const generationPrompt = rawPrompt ? rawPrompt + NO_PRODUCTS_SUFFIX : undefined;
+        let generationPrompt: string | undefined;
+        if (rawPrompt) {
+          const { wrapAgentPrompt } = await import('@/services/firefly/prompts');
+          generationPrompt = wrapAgentPrompt(rawPrompt);
+        }
 
         if (provider === 'imagen') {
           const { getImagenClient } = await import('@/services/imagen/client');

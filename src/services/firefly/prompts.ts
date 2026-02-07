@@ -1,5 +1,28 @@
 import type { SceneSetting } from '@/types/scene';
 
+/**
+ * Brand standards for LUMIÈRE beauty brand.
+ * Applied to all generated backgrounds for visual consistency.
+ */
+export const BRAND_CONTEXT = `
+Luxury beauty brand aesthetic. Soft, elegant, aspirational mood.
+Color palette: muted pastels, warm neutrals, soft rose gold accents.
+Lighting: soft diffused natural light, gentle highlights, no harsh shadows.
+Style: high-end editorial photography, magazine-quality, sophisticated.
+`.trim();
+
+/**
+ * Composition guidance for chat/product overlay.
+ * Ensures the generated background leaves space for UI elements.
+ */
+export const COMPOSITION_GUIDANCE = `
+IMPORTANT COMPOSITION: This image will be used as a background behind a chat interface.
+Keep the CENTER of the image relatively simple, muted, and low-contrast.
+Place visual interest, textures, and details toward the EDGES and CORNERS.
+The middle 40% should be subtle enough to allow text and product overlays to remain readable.
+Avoid bright highlights, text, or busy patterns in the center area.
+`.trim();
+
 export const SCENE_PROMPTS: Record<SceneSetting, string> = {
   neutral:
     'Elegant minimalist empty surface with soft bokeh lights in the background, sophisticated neutral tones, studio lighting, clean uncluttered space',
@@ -31,7 +54,27 @@ export const SCENE_PROMPTS: Record<SceneSetting, string> = {
 
 export function buildScenePrompt(setting: SceneSetting): string {
   const base = SCENE_PROMPTS[setting];
-  return `${base}. Empty background scene only, no products, no bottles, no cosmetics, no text or labels. Professional interior photography, elegant and luxurious atmosphere, soft diffused shadows, ultra high quality, photorealistic.`;
+  return `${base}.
+
+${BRAND_CONTEXT}
+
+${COMPOSITION_GUIDANCE}
+
+Empty background scene only, no products, no bottles, no cosmetics, no text or labels. Professional interior photography, ultra high quality, photorealistic.`;
+}
+
+/**
+ * Wrap an agent-provided prompt with brand and composition guidance.
+ * Used for "novel" prompts like specific locations or weather conditions.
+ */
+export function wrapAgentPrompt(rawPrompt: string): string {
+  return `${rawPrompt}.
+
+${BRAND_CONTEXT}
+
+${COMPOSITION_GUIDANCE}
+
+Do not include any products, bottles, containers, or packaging in the image. Scene only, no objects. Ultra high quality, photorealistic.`;
 }
 
 /**
