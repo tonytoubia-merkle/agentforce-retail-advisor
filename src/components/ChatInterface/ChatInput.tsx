@@ -89,7 +89,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           onKeyDown={handleKeyDown}
           placeholder={isListening ? 'Listening...' : placeholder}
           className={cn(
-            'w-full px-5 py-3 rounded-full',
+            'w-full pl-5 pr-24 py-3 rounded-full',
             'bg-white/10 backdrop-blur-md',
             'border border-white/20',
             'text-white placeholder-white/50',
