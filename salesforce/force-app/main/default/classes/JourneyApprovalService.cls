@@ -157,6 +157,8 @@ public with sharing class JourneyApprovalService {
 
     /**
      * Regenerate the Firefly image with a new or modified prompt.
+     * If products are available, uses product composite + Firefly Expand.
+     * Otherwise, falls back to text-only generation.
      */
     private static ApprovalActionResult regenerateImage(Journey_Approval__c approval, ApprovalActionRequest req) {
         ApprovalActionResult result = new ApprovalActionResult();
@@ -164,27 +166,46 @@ public with sharing class JourneyApprovalService {
         String prompt = String.isNotBlank(req.newFireflyPrompt)
             ? req.newFireflyPrompt : approval.Firefly_Prompt__c;
 
-        // Call Firefly service
-        FireflyApexService.ImageGenerationRequest fireflyReq = new FireflyApexService.ImageGenerationRequest();
-        fireflyReq.prompt = prompt;
-        fireflyReq.saveToFiles = true;
+        FireflyApexService.ImageGenerationResult fireflyResult;
 
-        List<FireflyApexService.ImageGenerationResult> fireflyResults =
-            FireflyApexService.generateImages(new List<FireflyApexService.ImageGenerationRequest>{fireflyReq});
+        // Check if we have products to composite
+        if (String.isNotBlank(approval.Recommended_Products__c)) {
+            // Use product composite + Firefly Expand
+            FireflyApexService.ProductImageRequest productReq = new FireflyApexService.ProductImageRequest();
+            productReq.productsJson = approval.Recommended_Products__c;
+            productReq.prompt = prompt;
+            productReq.eventType = approval.Event_Type__c;
+            productReq.saveToFiles = true;
 
-        if (!fireflyResults.isEmpty() && fireflyResults[0].success) {
-            approval.Generated_Image_URL__c = fireflyResults[0].imageUrl;
-            approval.Image_Content_Version_Id__c = fireflyResults[0].contentVersionId;
+            List<FireflyApexService.ImageGenerationResult> fireflyResults =
+                FireflyApexService.generateWithProducts(new List<FireflyApexService.ProductImageRequest>{productReq});
+
+            fireflyResult = fireflyResults.isEmpty() ? null : fireflyResults[0];
+        } else {
+            // Fall back to text-only generation
+            FireflyApexService.ImageGenerationRequest textReq = new FireflyApexService.ImageGenerationRequest();
+            textReq.prompt = prompt;
+            textReq.saveToFiles = true;
+
+            List<FireflyApexService.ImageGenerationResult> fireflyResults =
+                FireflyApexService.generateImages(new List<FireflyApexService.ImageGenerationRequest>{textReq});
+
+            fireflyResult = fireflyResults.isEmpty() ? null : fireflyResults[0];
+        }
+
+        if (fireflyResult != null && fireflyResult.success) {
+            approval.Generated_Image_URL__c = fireflyResult.imageUrl;
+            approval.Image_Content_Version_Id__c = fireflyResult.contentVersionId;
             approval.Firefly_Prompt__c = prompt;
 
             update approval;
 
             result.success = true;
             result.message = 'Image regenerated successfully';
-            result.newImageUrl = fireflyResults[0].imageUrl;
+            result.newImageUrl = fireflyResult.imageUrl;
         } else {
             result.success = false;
-            result.errorMessage = fireflyResults.isEmpty() ? 'No result' : fireflyResults[0].errorMessage;
+            result.errorMessage = fireflyResult == null ? 'No result' : fireflyResult.errorMessage;
         }
 
         return result;

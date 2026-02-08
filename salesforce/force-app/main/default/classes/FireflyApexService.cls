@@ -5,6 +5,10 @@
  * journey content. Images are generated during nightly batch processing
  * and stored in Salesforce Files for use in Marketing Cloud emails.
  *
+ * Two generation modes:
+ *   1. generateImages() - Text-to-image via Firefly Generate API
+ *   2. generateWithProducts() - Product composite + Firefly Expand via Vercel API
+ *
  * Required Custom Metadata or Named Credentials:
  *   - Firefly_Client_Id__c
  *   - Firefly_Client_Secret__c
@@ -15,6 +19,7 @@ public with sharing class FireflyApexService {
 
     private static final String TOKEN_URL = 'https://ims-na1.adobelogin.com/ims/token/v3';
     private static final String GENERATE_URL = 'https://firefly-api.adobe.io/v3/images/generate';
+    private static final String VERCEL_APP_URL = 'https://agentforce-retail-advisor.vercel.app';
 
     // Cache token in static variable (within transaction only)
     private static String cachedToken;
@@ -83,6 +88,126 @@ public with sharing class FireflyApexService {
         }
 
         return results;
+    }
+
+    // ─── Product Composite + Firefly Expand ───────────────────────────
+
+    /**
+     * Input class for product-based image generation.
+     */
+    public class ProductImageRequest {
+        public String productsJson;
+        public String prompt;
+        public String eventType;
+        public Boolean saveToFiles;
+    }
+
+    /**
+     * Generate an image by compositing products and using Firefly Expand.
+     * This creates a scene around the actual product images.
+     *
+     * Called from JourneyApprovalService when regenerating images.
+     * Note: Not an InvocableMethod since we already have one in this class.
+     */
+    public static List<ImageGenerationResult> generateWithProducts(List<ProductImageRequest> requests) {
+        List<ImageGenerationResult> results = new List<ImageGenerationResult>();
+
+        for (ProductImageRequest req : requests) {
+            ImageGenerationResult result = new ImageGenerationResult();
+            try {
+                // Parse products JSON to extract image URLs
+                List<Object> products = (List<Object>) JSON.deserializeUntyped(req.productsJson);
+                List<Map<String, Object>> productList = new List<Map<String, Object>>();
+
+                for (Object obj : products) {
+                    Map<String, Object> prodMap = (Map<String, Object>) obj;
+                    productList.add(new Map<String, Object>{
+                        'imageUrl' => prodMap.get('imageUrl'),
+                        'name' => prodMap.get('name')
+                    });
+                }
+
+                if (productList.isEmpty()) {
+                    throw new FireflyException('No products provided for image generation');
+                }
+
+                // Call Vercel API to composite and expand
+                String imageUrl = callVercelImageApi(productList, req.prompt, req.eventType);
+                result.imageUrl = imageUrl;
+
+                // Optionally save to Salesforce Files
+                if (req.saveToFiles == true && String.isNotBlank(imageUrl)) {
+                    String fileName = 'journey-image-' + System.currentTimeMillis() + '.png';
+                    String cvId = downloadAndSaveImage(imageUrl, fileName);
+                    result.contentVersionId = cvId;
+                }
+
+                result.success = true;
+            } catch (Exception e) {
+                result.success = false;
+                result.errorMessage = e.getMessage();
+                System.debug(LoggingLevel.ERROR, 'Product image generation failed: ' + e.getMessage());
+            }
+            results.add(result);
+        }
+
+        return results;
+    }
+
+    /**
+     * AuraEnabled method for LWC to generate image with products.
+     */
+    @AuraEnabled
+    public static ImageGenerationResult generateImageWithProducts(String productsJson, String prompt, String eventType) {
+        ProductImageRequest req = new ProductImageRequest();
+        req.productsJson = productsJson;
+        req.prompt = prompt;
+        req.eventType = eventType;
+        req.saveToFiles = true;
+
+        List<ImageGenerationResult> results = generateWithProducts(new List<ProductImageRequest>{req});
+        return results[0];
+    }
+
+    /**
+     * Call the Vercel API to composite products and generate expanded image.
+     */
+    private static String callVercelImageApi(List<Map<String, Object>> products, String prompt, String eventType) {
+        HttpRequest req = new HttpRequest();
+        req.setEndpoint(VERCEL_APP_URL + '/api/generate-journey-image');
+        req.setMethod('POST');
+        req.setHeader('Content-Type', 'application/json');
+        req.setTimeout(120000); // 2 minute timeout
+
+        Map<String, Object> requestBody = new Map<String, Object>{
+            'products' => products,
+            'prompt' => prompt,
+            'eventType' => eventType
+        };
+
+        req.setBody(JSON.serialize(requestBody));
+
+        Http http = new Http();
+        HttpResponse res = http.send(req);
+
+        if (res.getStatusCode() != 200) {
+            throw new FireflyException('Vercel image generation failed (' + res.getStatusCode() + '): ' + res.getBody());
+        }
+
+        Map<String, Object> responseData = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+
+        Boolean success = (Boolean) responseData.get('success');
+        if (success != true) {
+            String errorMsg = (String) responseData.get('error');
+            throw new FireflyException('Image generation failed: ' + errorMsg);
+        }
+
+        String imageUrl = (String) responseData.get('imageUrl');
+        if (String.isBlank(imageUrl)) {
+            throw new FireflyException('No image URL in response');
+        }
+
+        return imageUrl;
     }
 
     // ─── Core API Methods ─────────────────────────────────────────────
