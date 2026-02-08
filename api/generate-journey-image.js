@@ -244,7 +244,10 @@ async function expandImage(uploadId, prompt, token, clientId) {
     },
     prompt: prompt,
     placement: {
-      alignment: 'center',
+      alignment: {
+        horizontal: 'center',
+        vertical: 'center',
+      },
     },
   });
 
