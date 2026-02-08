@@ -109,6 +109,8 @@ export default class JourneyApprovalCard extends LightningElement {
     }
 
     dispatchProductUpdate() {
+        console.log('[Card] Dispatching updateProducts action:', this.approval.Id);
+        console.log('[Card] Products:', JSON.stringify(this.localProducts));
         this.dispatchEvent(new CustomEvent('action', {
             detail: {
                 action: 'updateProducts',

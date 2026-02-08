@@ -96,7 +96,9 @@ export default class JourneyApprovalDashboard extends LightningElement {
     }
 
     async handleCardAction(event) {
+        console.log('[Dashboard] handleCardAction triggered:', event.detail);
         const { action, approvalId, data } = event.detail;
+        console.log('[Dashboard] Action:', action, 'ApprovalId:', approvalId);
         this.isLoading = true;
 
         try {
@@ -142,14 +144,17 @@ export default class JourneyApprovalDashboard extends LightningElement {
                     throw new Error('Unknown action: ' + action);
             }
 
+            console.log('[Dashboard] Action result:', JSON.stringify(result));
             if (result.success) {
                 this.showToastMessage(result.message, 'success');
                 await refreshApex(this.wiredApprovalsResult);
             } else {
+                console.error('[Dashboard] Action failed:', result);
                 this.showToastMessage(result.errorMessage || 'Action failed', 'error');
             }
 
         } catch (error) {
+            console.error('[Dashboard] Caught error:', error);
             this.showToastMessage('Error: ' + (error.body?.message || error.message), 'error');
         } finally {
             this.isLoading = false;
