@@ -213,6 +213,7 @@ async function uploadToFirefly(imageBuffer, token, clientId) {
       'Authorization': `Bearer ${token}`,
       'x-api-key': clientId,
       'Content-Type': 'image/png',
+      'Accept': 'application/json',
       'Content-Length': imageBuffer.length,
     },
   }, imageBuffer);
@@ -256,6 +257,7 @@ async function expandImage(uploadId, prompt, token, clientId) {
       'Authorization': `Bearer ${token}`,
       'x-api-key': clientId,
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
       'Content-Length': Buffer.byteLength(requestBody),
     },
   }, requestBody);
