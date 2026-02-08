@@ -75,12 +75,12 @@
     top: 0;
     left: 0;
     right: 0;
-    padding: 32px 24px;
+    padding: 48px 24px 32px 24px;
     text-align: center;
     background: linear-gradient(
         to bottom,
-        rgba(0, 0, 0, 0.35) 0%,
-        rgba(0, 0, 0, 0.2) 60%,
+        rgba(0, 0, 0, 0.45) 0%,
+        rgba(0, 0, 0, 0.25) 50%,
         transparent 100%
     );
 }
@@ -127,11 +127,14 @@
 }
 
 .email-content {
-    padding: 24px;
+    padding: 32px 32px 24px 32px;
     font-family: Georgia, 'Times New Roman', serif;
     font-size: 15px;
-    line-height: 1.6;
+    line-height: 1.7;
     color: #333;
+    text-align: center;
+    max-width: 480px;
+    margin: 0 auto;
 }
 
 .email-content p {
@@ -141,26 +144,48 @@
 .email-content ul, .email-content ol {
     margin: 16px 0;
     padding-left: 24px;
+    text-align: left;
+    display: inline-block;
 }
 
 .email-content li {
     margin-bottom: 8px;
 }
 
+/* Letter-style signature styling */
+.email-content br + br {
+    display: block;
+    margin-top: 8px;
+}
+
 /* Product Section */
 .product-section {
     padding: 32px 24px;
-    background: linear-gradient(to bottom, #fafafa 0%, #ffffff 100%);
-    border-top: 1px solid #e5e5e5;
+    background: #ffffff;
+    border-top: none;
+    position: relative;
+}
+
+.product-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 1px;
+    background: linear-gradient(to right, transparent, #c5a572, transparent);
 }
 
 .product-section-title {
     font-family: 'Playfair Display', Georgia, serif;
-    font-size: 16px;
+    font-size: 14px;
     text-align: center;
     margin-bottom: 20px;
-    color: #1a1a1a;
-    letter-spacing: 0.5px;
+    color: #666;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 400;
 }
 
 .product-grid {

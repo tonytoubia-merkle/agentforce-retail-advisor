@@ -11,28 +11,19 @@ export default class JourneyApprovalCard extends LightningElement {
         return this._approval;
     }
     set approval(value) {
-        const oldValue = this._approval;
         this._approval = value;
 
-        // Always refresh local state when approval data changes (e.g., after refreshApex)
-        // This ensures server-regenerated content (body, prompt) is displayed immediately
+        // Always refresh local state from server data
+        // This ensures server-regenerated content (body, prompt, products) is displayed immediately
         if (value) {
-            // Check if this is new data by comparing key fields that get regenerated server-side
-            const dataChanged = !oldValue ||
-                oldValue.Suggested_Body__c !== value.Suggested_Body__c ||
-                oldValue.Recommended_Products__c !== value.Recommended_Products__c ||
-                oldValue.Firefly_Prompt__c !== value.Firefly_Prompt__c;
-
-            if (dataChanged) {
-                console.log('[JourneyApprovalCard] Data changed, updating local state');
-                this.editedSubject = value.Suggested_Subject__c || '';
-                this.editedBody = value.Suggested_Body__c || '';
-                this.editedSmsBody = value.SMS_Body__c || '';
-                this.newPrompt = value.Firefly_Prompt__c || '';
-                // Sync local products with server state
-                this.localProducts = this.parseProducts(value.Recommended_Products__c);
-                this.productsModified = false; // Reset flag - server now has latest
-            }
+            console.log('[JourneyApprovalCard] Setter called, syncing local state from server');
+            this.editedSubject = value.Suggested_Subject__c || '';
+            this.editedBody = value.Suggested_Body__c || '';
+            this.editedSmsBody = value.SMS_Body__c || '';
+            this.newPrompt = value.Firefly_Prompt__c || '';
+            // Sync local products with server state
+            this.localProducts = this.parseProducts(value.Recommended_Products__c);
+            this.productsModified = false; // Reset flag - server now has latest
         }
     }
 
@@ -41,6 +32,8 @@ export default class JourneyApprovalCard extends LightningElement {
     @track editedSmsBody = '';
     @track showDeclineModal = false;
     @track showRegenerateModal = false;
+    @track showImageModal = false; // Full-size image preview modal
+    @track showSendConfirmModal = false; // Confirmation before sending
     @track showProductPicker = false;
     @track showPreview = false; // Toggle between edit and preview mode
     @track declineReason = '';
@@ -267,6 +260,16 @@ export default class JourneyApprovalCard extends LightningElement {
         if (this.isSmsChannel) return 320;
         if (this.isPushChannel) return 200;
         return 32000;
+    }
+
+    // ─── Send Confirmation ─────────────────────────────────────────────
+
+    get sendConfirmMessage() {
+        const channelText = this.channel.toLowerCase();
+        if (this.isMultiStepJourney) {
+            return `This will immediately send this ${channelText} (Step ${this.stepNumber} of ${this.totalSteps}) to ${this.approval?.contactName || 'the contact'}. The remaining steps in this journey will NOT be sent yet.`;
+        }
+        return `This will immediately send this ${channelText} to ${this.approval?.contactName || 'the contact'}.`;
     }
 
     // ─── Existing Getters ──────────────────────────────────────────────
@@ -500,6 +503,17 @@ export default class JourneyApprovalCard extends LightningElement {
     }
 
     handleApproveAndSend() {
+        // Show confirmation modal before sending
+        this.showSendConfirmModal = true;
+    }
+
+    closeSendConfirmModal() {
+        this.showSendConfirmModal = false;
+    }
+
+    confirmApproveAndSend() {
+        this.showSendConfirmModal = false;
+
         this.dispatchEvent(new CustomEvent('action', {
             detail: {
                 action: 'approve',
@@ -567,6 +581,16 @@ export default class JourneyApprovalCard extends LightningElement {
 
     handleEditPrompt() {
         this.showRegenerateModal = true;
+    }
+
+    // ─── Image Preview Modal ──────────────────────────────────────────
+
+    handleImageClick() {
+        this.showImageModal = true;
+    }
+
+    closeImageModal() {
+        this.showImageModal = false;
     }
 
     closeRegenerateModal() {

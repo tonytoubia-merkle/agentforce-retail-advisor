@@ -148,12 +148,15 @@
                         </template>
                     </div>
 
-                    <!-- Generated Image Display -->
+                    <!-- Generated Image Display (Thumbnail with click to expand) -->
                     <template if:true={approval.Generated_Image_URL__c}>
                         <div class="slds-m-bottom_small">
                             <p class="slds-text-title_caps slds-m-bottom_xx-small">Generated Image</p>
-                            <div class="image-container">
-                                <img src={approval.Generated_Image_URL__c} alt="Generated journey image" class="generated-image"/>
+                            <div class="image-thumbnail-container" onclick={handleImageClick} title="Click to preview full size">
+                                <img src={approval.Generated_Image_URL__c} alt="Generated journey image" class="image-thumbnail"/>
+                                <div class="image-expand-overlay">
+                                    <lightning-icon icon-name="utility:zoomin" size="small" variant="inverse"></lightning-icon>
+                                </div>
                             </div>
                             <div class="slds-m-top_xx-small">
                                 <lightning-button
@@ -212,7 +215,7 @@
                                                     data-code={product.productCode}
                                                     onclick={handleRemoveProduct}
                                                     title="Remove product">
-                                                    <lightning-icon icon-name="utility:close" size="xx-small"></lightning-icon>
+                                                    <span class="remove-x">×</span>
                                                 </button>
                                                 <template if:true={product.imageUrl}>
                                                     <img src={product.imageUrl} alt={product.name} class="product-image"/>
@@ -452,6 +455,51 @@
                 <footer class="slds-modal__footer">
                     <lightning-button label="Cancel" onclick={closeRegenerateModal}></lightning-button>
                     <lightning-button variant="brand" label="Regenerate" onclick={confirmRegenerate}></lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+
+    <!-- Image Preview Modal (Full Size) -->
+    <template if:true={showImageModal}>
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open slds-modal_large">
+            <div class="slds-modal__container image-modal-container">
+                <header class="slds-modal__header slds-modal__header_empty">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" onclick={closeImageModal}>
+                        <lightning-icon icon-name="utility:close" size="small"></lightning-icon>
+                    </button>
+                </header>
+                <div class="slds-modal__content image-modal-content">
+                    <img src={approval.Generated_Image_URL__c} alt="Generated journey image" class="image-modal-full"/>
+                </div>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open" onclick={closeImageModal}></div>
+    </template>
+
+    <!-- Send Confirmation Modal -->
+    <template if:true={showSendConfirmModal}>
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header slds-theme_warning">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" onclick={closeSendConfirmModal}>
+                        <lightning-icon icon-name="utility:close" size="small"></lightning-icon>
+                    </button>
+                    <h2 class="slds-modal__title">
+                        <lightning-icon icon-name="utility:warning" size="small" class="slds-m-right_x-small"></lightning-icon>
+                        Confirm Immediate Send
+                    </h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <p class="slds-text-body_regular">{sendConfirmMessage}</p>
+                    <p class="slds-text-body_small slds-text-color_weak slds-m-top_medium">
+                        This action cannot be undone.
+                    </p>
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning-button label="Cancel" onclick={closeSendConfirmModal}></lightning-button>
+                    <lightning-button variant="brand" label="Send Now" icon-name={channelIcon} onclick={confirmApproveAndSend}></lightning-button>
                 </footer>
             </div>
         </section>

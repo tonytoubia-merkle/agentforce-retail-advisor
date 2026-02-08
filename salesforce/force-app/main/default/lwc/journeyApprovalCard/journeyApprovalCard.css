@@ -91,19 +91,71 @@
     overflow: hidden;
 }
 
-/* ─── Image Container ─────────────────────────────────────────────────── */
+/* ─── Image Thumbnail (Click to Expand) ──────────────────────────────── */
 
-.image-container {
-    max-height: 200px;
-    overflow: hidden;
-    border-radius: 0.25rem;
+.image-thumbnail-container {
+    position: relative;
+    width: 160px;
+    height: 90px;
+    border-radius: 0.5rem;
     border: 1px solid #d8dde6;
+    overflow: hidden;
+    background: #f8f8f8;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
-.generated-image {
+.image-thumbnail-container:hover {
+    border-color: #0176d3;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    transform: scale(1.02);
+}
+
+.image-thumbnail {
     width: 100%;
-    height: auto;
+    height: 100%;
     object-fit: cover;
+    display: block;
+}
+
+.image-expand-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.image-thumbnail-container:hover .image-expand-overlay {
+    opacity: 1;
+}
+
+/* ─── Image Preview Modal ────────────────────────────────────────────── */
+
+.image-modal-container {
+    max-width: 90vw !important;
+    width: auto !important;
+}
+
+.image-modal-content {
+    padding: 0 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #1a1a1a;
+}
+
+.image-modal-full {
+    max-width: 100%;
+    max-height: 80vh;
+    object-fit: contain;
+    display: block;
 }
 
 /* ─── Event Summary ───────────────────────────────────────────────────── */
@@ -178,28 +230,24 @@
     opacity: 1;
 }
 
-/* Dark X icon by default - target the SVG directly */
-.product-remove-btn lightning-icon {
-    --sds-c-icon-color-foreground-default: #3e3e3c;
-    --lwc-colorTextIconDefault: #3e3e3c;
-    --slds-c-icon-color-foreground: #3e3e3c;
-    fill: #3e3e3c;
+/* Dark X text by default */
+.remove-x {
+    font-size: 18px;
+    font-weight: 300;
+    line-height: 1;
     color: #3e3e3c;
+    transition: color 0.15s ease;
 }
 
-/* On hover: red circle background + white X icon */
+/* On hover: red circle background + white X */
 .product-remove-btn:hover {
     background: #c23934;
     transform: scale(1.1);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.product-remove-btn:hover lightning-icon {
-    --sds-c-icon-color-foreground-default: #ffffff !important;
-    --lwc-colorTextIconDefault: #ffffff !important;
-    --slds-c-icon-color-foreground: #ffffff !important;
-    fill: #ffffff !important;
-    color: #ffffff !important;
+.product-remove-btn:hover .remove-x {
+    color: #ffffff;
 }
 
 /* ─── Inline Product Picker ───────────────────────────────────────────── */
