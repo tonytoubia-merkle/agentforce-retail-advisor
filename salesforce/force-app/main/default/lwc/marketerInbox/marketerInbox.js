@@ -1,7 +1,9 @@
 import { LightningElement, wire, track } from 'lwc';
 import { refreshApex } from '@salesforce/apex';
-import getMyPendingApprovals from '@salesforce/apex/PortfolioAssignmentService.getMyPendingApprovals';
-import getMyInboxStats from '@salesforce/apex/PortfolioAssignmentService.getMyInboxStats';
+import getAvailablePortfolios from '@salesforce/apex/PortfolioAssignmentService.getAvailablePortfolios';
+import getApprovalsByPortfolio from '@salesforce/apex/PortfolioAssignmentService.getApprovalsByPortfolio';
+import getStatsByPortfolio from '@salesforce/apex/PortfolioAssignmentService.getStatsByPortfolio';
+import isManager from '@salesforce/apex/PortfolioAssignmentService.isManager';
 import approveJourneyFromLWC from '@salesforce/apex/JourneyApprovalService.approveJourneyFromLWC';
 import declineJourneyFromLWC from '@salesforce/apex/JourneyApprovalService.declineJourneyFromLWC';
 import sendJourneyFromLWC from '@salesforce/apex/JourneyApprovalService.sendJourneyFromLWC';
@@ -34,11 +36,45 @@ export default class MarketerInbox extends LightningElement {
     @track toastVariant = 'success';
     @track expandedJourneys = new Set(); // Track which journey groups are expanded
 
+    // Portfolio filter state
+    @track portfolioOptions = [];
+    @track selectedPortfolio = 'my'; // Default to user's portfolios
+    @track userIsManager = false;
+    @track showPortfolioFilter = false;
+
     currentUserId = Id;
     wiredApprovalsResult;
     wiredStatsResult;
+    wiredPortfoliosResult;
 
-    @wire(getMyPendingApprovals)
+    // Check if user is a manager
+    @wire(isManager)
+    wiredIsManager({ error, data }) {
+        if (data !== undefined) {
+            this.userIsManager = data;
+        }
+    }
+
+    // Get available portfolios for the dropdown
+    @wire(getAvailablePortfolios)
+    wiredPortfolios(result) {
+        this.wiredPortfoliosResult = result;
+        if (result.data) {
+            this.portfolioOptions = result.data.map(p => ({
+                label: p.label,
+                value: p.value
+            }));
+            // Show filter if multiple options
+            this.showPortfolioFilter = this.portfolioOptions.length > 1;
+            // Set default selection
+            if (this.portfolioOptions.length > 0) {
+                this.selectedPortfolio = this.portfolioOptions[0].value;
+            }
+        }
+    }
+
+    // Get approvals filtered by selected portfolio
+    @wire(getApprovalsByPortfolio, { portfolioId: '$selectedPortfolio' })
     wiredApprovals(result) {
         this.wiredApprovalsResult = result;
         this.isLoading = false;
@@ -50,12 +86,20 @@ export default class MarketerInbox extends LightningElement {
         }
     }
 
-    @wire(getMyInboxStats)
+    // Get stats filtered by selected portfolio
+    @wire(getStatsByPortfolio, { portfolioId: '$selectedPortfolio' })
     wiredStats(result) {
         this.wiredStatsResult = result;
         if (result.data) {
             this.stats = result.data;
         }
+    }
+
+    // Handle portfolio filter change
+    handlePortfolioChange(event) {
+        this.selectedPortfolio = event.detail.value;
+        this.isLoading = true;
+        // Wire will automatically refresh with new portfolioId
     }
 
     /**
@@ -216,6 +260,19 @@ export default class MarketerInbox extends LightningElement {
         ];
     }
 
+    // Dynamic title based on selected portfolio
+    get inboxTitle() {
+        if (this.selectedPortfolio === 'all') {
+            return 'All Portfolios';
+        } else if (this.selectedPortfolio === 'my') {
+            return 'My Marketing Inbox';
+        } else {
+            // Find the portfolio name from options
+            const option = this.portfolioOptions.find(p => p.value === this.selectedPortfolio);
+            return option ? option.label : 'Marketing Inbox';
+        }
+    }
+
     // Stats getters
     get hasStats() {
         return this.stats && this.stats.totalPending !== undefined;
@@ -307,7 +364,8 @@ export default class MarketerInbox extends LightningElement {
         this.isLoading = true;
         Promise.all([
             refreshApex(this.wiredApprovalsResult),
-            refreshApex(this.wiredStatsResult)
+            refreshApex(this.wiredStatsResult),
+            refreshApex(this.wiredPortfoliosResult)
         ]).then(() => {
             this.isLoading = false;
             this.showToastMessage('Inbox refreshed', 'success');

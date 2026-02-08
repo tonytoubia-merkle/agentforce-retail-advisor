@@ -1,7 +1,7 @@
 <template>
     <lightning-card icon-name="standard:lead_list">
         <span slot="title">
-            My Marketing Inbox
+            {inboxTitle}
             <template if:true={hasDeadlineWarning}>
                 <lightning-badge
                     label={stats.approachingDeadlineCount}
@@ -12,6 +12,18 @@
         </span>
 
         <div slot="actions" class="slds-grid slds-grid_vertical-align-center">
+            <!-- Portfolio Filter (for managers or users with multiple portfolios) -->
+            <template if:true={showPortfolioFilter}>
+                <lightning-combobox
+                    name="portfolio"
+                    label="Portfolio"
+                    value={selectedPortfolio}
+                    options={portfolioOptions}
+                    onchange={handlePortfolioChange}
+                    variant="label-hidden"
+                    class="slds-m-right_small filter-combo">
+                </lightning-combobox>
+            </template>
             <lightning-combobox
                 name="filter"
                 value={activeFilter}

@@ -561,4 +561,284 @@ public with sharing class PortfolioAssignmentService {
         @AuraEnabled public Integer approachingDeadlineCount = 0;
         @AuraEnabled public Integer portfolioCount = 0;
     }
+
+    /**
+     * Check if current user is a manager (can see all portfolios).
+     * Managers are identified by:
+     * - System Admin profile
+     * - Custom permission 'Marketing_Concierge_Manager'
+     * - Being a primary marketer on 3+ portfolios
+     */
+    @AuraEnabled(cacheable=true)
+    public static Boolean isManager() {
+        Id currentUserId = UserInfo.getUserId();
+
+        // Check profile
+        User currentUser = [SELECT Profile.Name FROM User WHERE Id = :currentUserId LIMIT 1];
+        if (currentUser.Profile.Name == 'System Administrator') {
+            return true;
+        }
+
+        // Check custom permission (if exists)
+        // Note: FeatureManagement.checkPermission() would be used if custom permission exists
+        // For now, we'll use a simpler approach
+
+        // Check if user manages multiple portfolios
+        Integer portfolioCount = [
+            SELECT COUNT()
+            FROM Marketer_Portfolio__c
+            WHERE Primary_Marketer__c = :currentUserId
+            AND Is_Active__c = true
+        ];
+
+        return portfolioCount >= 3;
+    }
+
+    /**
+     * Get list of portfolios available to the current user.
+     * Managers see all portfolios, marketers see only their assigned ones.
+     */
+    @AuraEnabled(cacheable=true)
+    public static List<PortfolioOption> getAvailablePortfolios() {
+        List<PortfolioOption> options = new List<PortfolioOption>();
+        Id currentUserId = UserInfo.getUserId();
+        Boolean userIsManager = isManager();
+
+        if (userIsManager) {
+            // Add "All Portfolios" option for managers
+            options.add(new PortfolioOption('all', 'All Portfolios', true));
+
+            // Add all active portfolios
+            for (Marketer_Portfolio__c p : [
+                SELECT Id, Name, Primary_Marketer__r.Name, Current_Workload__c
+                FROM Marketer_Portfolio__c
+                WHERE Is_Active__c = true
+                ORDER BY Name
+            ]) {
+                String label = p.Name;
+                if (p.Primary_Marketer__r != null) {
+                    label += ' (' + p.Primary_Marketer__r.Name + ')';
+                }
+                options.add(new PortfolioOption(p.Id, label, false));
+            }
+        } else {
+            // Marketers only see their portfolios
+            List<Marketer_Portfolio__c> myPortfolios = [
+                SELECT Id, Name, Current_Workload__c
+                FROM Marketer_Portfolio__c
+                WHERE (Primary_Marketer__c = :currentUserId OR Secondary_Marketer__c = :currentUserId)
+                AND Is_Active__c = true
+                ORDER BY Name
+            ];
+
+            if (myPortfolios.size() == 1) {
+                // Single portfolio - no need for "All" option
+                options.add(new PortfolioOption(myPortfolios[0].Id, myPortfolios[0].Name, false));
+            } else if (myPortfolios.size() > 1) {
+                // Multiple portfolios - add "My Portfolios" option
+                options.add(new PortfolioOption('my', 'My Portfolios', true));
+                for (Marketer_Portfolio__c p : myPortfolios) {
+                    options.add(new PortfolioOption(p.Id, p.Name, false));
+                }
+            }
+        }
+
+        return options;
+    }
+
+    /**
+     * Get approvals filtered by portfolio.
+     * portfolioId can be:
+     * - 'all' for all portfolios (managers only)
+     * - 'my' for current user's portfolios
+     * - A specific portfolio Id
+     */
+    @AuraEnabled(cacheable=true)
+    public static List<Journey_Approval__c> getApprovalsByPortfolio(String portfolioId) {
+        Id currentUserId = UserInfo.getUserId();
+        Set<Id> portfolioIds = new Set<Id>();
+
+        if (portfolioId == 'all') {
+            // Manager view - all portfolios
+            if (!isManager()) {
+                // Non-manager trying to see all - fall back to their portfolios
+                portfolioId = 'my';
+            } else {
+                for (Marketer_Portfolio__c p : [
+                    SELECT Id FROM Marketer_Portfolio__c WHERE Is_Active__c = true
+                ]) {
+                    portfolioIds.add(p.Id);
+                }
+            }
+        }
+
+        if (portfolioId == 'my' || portfolioIds.isEmpty()) {
+            // Get user's portfolios
+            for (Marketer_Portfolio__c p : [
+                SELECT Id FROM Marketer_Portfolio__c
+                WHERE (Primary_Marketer__c = :currentUserId OR Secondary_Marketer__c = :currentUserId)
+                AND Is_Active__c = true
+            ]) {
+                portfolioIds.add(p.Id);
+            }
+        } else if (portfolioId != 'all') {
+            // Specific portfolio - verify access
+            try {
+                Id specificId = Id.valueOf(portfolioId);
+                Boolean userIsManager = isManager();
+
+                // Check if user has access to this portfolio
+                List<Marketer_Portfolio__c> portfolioList;
+                if (userIsManager) {
+                    // Managers can access any portfolio
+                    portfolioList = [
+                        SELECT Id FROM Marketer_Portfolio__c
+                        WHERE Id = :specificId
+                        LIMIT 1
+                    ];
+                } else {
+                    // Non-managers can only access their assigned portfolios
+                    portfolioList = [
+                        SELECT Id FROM Marketer_Portfolio__c
+                        WHERE Id = :specificId
+                        AND (Primary_Marketer__c = :currentUserId
+                             OR Secondary_Marketer__c = :currentUserId)
+                        LIMIT 1
+                    ];
+                }
+
+                if (!portfolioList.isEmpty()) {
+                    portfolioIds.add(portfolioList[0].Id);
+                }
+            } catch (Exception e) {
+                // Invalid portfolio ID - fall back to user's portfolios
+                return getMyPendingApprovals();
+            }
+        }
+
+        if (portfolioIds.isEmpty()) {
+            return new List<Journey_Approval__c>();
+        }
+
+        return [
+            SELECT Id, Name, Status__c, Contact__c, Contact__r.Name, Contact__r.Email,
+                   Meaningful_Event__r.Event_Type__c, Meaningful_Event__r.Event_Date__c,
+                   Suggested_Subject__c, Suggested_Body__c, Channel__c,
+                   Generated_Image_URL__c, Recommended_Products__c, Firefly_Prompt__c,
+                   Confidence_Score__c, Approval_Tier__c, Priority_Score__c,
+                   Customer_Value_Score__c, Auto_Send_Deadline__c,
+                   Assigned_Portfolio__c, Assigned_Portfolio__r.Name,
+                   Journey_Id__c, Step_Number__c, Total_Steps__c, Send_Delay_Days__c,
+                   Journey_Guardrails__c, SMS_Body__c,
+                   Urgency__c, Days_Until_Event__c, CreatedDate
+            FROM Journey_Approval__c
+            WHERE Assigned_Portfolio__c IN :portfolioIds
+            AND Status__c = 'Pending'
+            ORDER BY Priority_Score__c DESC NULLS LAST, CreatedDate ASC
+            LIMIT 200
+        ];
+    }
+
+    /**
+     * Get inbox stats filtered by portfolio.
+     */
+    @AuraEnabled(cacheable=true)
+    public static InboxStats getStatsByPortfolio(String portfolioId) {
+        Id currentUserId = UserInfo.getUserId();
+        InboxStats stats = new InboxStats();
+        Set<Id> portfolioIds = new Set<Id>();
+
+        if (portfolioId == 'all' && isManager()) {
+            for (Marketer_Portfolio__c p : [
+                SELECT Id FROM Marketer_Portfolio__c WHERE Is_Active__c = true
+            ]) {
+                portfolioIds.add(p.Id);
+            }
+        } else if (portfolioId == 'my' || portfolioId == 'all') {
+            for (Marketer_Portfolio__c p : [
+                SELECT Id FROM Marketer_Portfolio__c
+                WHERE (Primary_Marketer__c = :currentUserId OR Secondary_Marketer__c = :currentUserId)
+                AND Is_Active__c = true
+            ]) {
+                portfolioIds.add(p.Id);
+            }
+        } else {
+            try {
+                portfolioIds.add(Id.valueOf(portfolioId));
+            } catch (Exception e) {
+                return stats;
+            }
+        }
+
+        if (portfolioIds.isEmpty()) {
+            return stats;
+        }
+
+        // Count by tier
+        List<AggregateResult> tierCounts = [
+            SELECT Approval_Tier__c tier, COUNT(Id) cnt
+            FROM Journey_Approval__c
+            WHERE Assigned_Portfolio__c IN :portfolioIds
+            AND Status__c = 'Pending'
+            GROUP BY Approval_Tier__c
+        ];
+
+        for (AggregateResult ar : tierCounts) {
+            String tier = (String)ar.get('tier');
+            Integer cnt = (Integer)ar.get('cnt');
+            stats.totalPending += cnt;
+
+            if (tier == 'Auto-Send') stats.autoSendCount = cnt;
+            else if (tier == 'Soft Review') stats.softReviewCount = cnt;
+            else if (tier == 'Review Required') stats.reviewRequiredCount = cnt;
+            else if (tier == 'Escalate') stats.escalateCount = cnt;
+        }
+
+        // Count by urgency
+        List<AggregateResult> urgencyCounts = [
+            SELECT Urgency__c urg, COUNT(Id) cnt
+            FROM Journey_Approval__c
+            WHERE Assigned_Portfolio__c IN :portfolioIds
+            AND Status__c = 'Pending'
+            GROUP BY Urgency__c
+        ];
+
+        for (AggregateResult ar : urgencyCounts) {
+            String urg = (String)ar.get('urg');
+            Integer cnt = (Integer)ar.get('cnt');
+
+            if (urg == 'Immediate') stats.immediateCount = cnt;
+            else if (urg == 'This Week') stats.thisWeekCount = cnt;
+            else if (urg == 'This Month') stats.thisMonthCount = cnt;
+        }
+
+        // Count approaching deadlines
+        stats.approachingDeadlineCount = [
+            SELECT COUNT()
+            FROM Journey_Approval__c
+            WHERE Assigned_Portfolio__c IN :portfolioIds
+            AND Status__c = 'Pending'
+            AND Approval_Tier__c = 'Soft Review'
+            AND Auto_Send_Deadline__c <= :DateTime.now().addHours(1)
+        ];
+
+        stats.portfolioCount = portfolioIds.size();
+
+        return stats;
+    }
+
+    /**
+     * Portfolio option for the dropdown.
+     */
+    public class PortfolioOption {
+        @AuraEnabled public String value;
+        @AuraEnabled public String label;
+        @AuraEnabled public Boolean isAggregate; // true for 'all' or 'my'
+
+        public PortfolioOption(String value, String label, Boolean isAggregate) {
+            this.value = value;
+            this.label = label;
+            this.isAggregate = isAggregate;
+        }
+    }
 }
