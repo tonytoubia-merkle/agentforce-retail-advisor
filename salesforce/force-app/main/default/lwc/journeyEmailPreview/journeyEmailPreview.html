@@ -24,10 +24,15 @@
 
                 <!-- Email Body -->
                 <div class="email-body">
-                    <!-- Hero Image -->
+                    <!-- Hero Image with Text Overlay -->
                     <template if:true={hasHeroImage}>
                         <div class="hero-image-container">
                             <img src={heroImageUrl} alt="Journey hero image" class="hero-image" />
+                            <div class="hero-text-overlay">
+                                <h1 class="hero-headline">{heroHeadline}</h1>
+                                <p class="hero-subheadline">{heroSubheadline}</p>
+                                <a href="#" class="hero-cta">Shop Now</a>
+                            </div>
                         </div>
                     </template>
 

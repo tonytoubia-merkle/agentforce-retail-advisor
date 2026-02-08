@@ -179,9 +179,15 @@ public with sharing class FireflyApexService {
         req.setHeader('Content-Type', 'application/json');
         req.setTimeout(120000); // 2 minute timeout
 
+        // Safety net: Vercel API handles prompt length, but truncate if extremely long
+        String safePrompt = prompt;
+        if (String.isNotBlank(prompt) && prompt.length() > 600) {
+            safePrompt = prompt.substring(0, 600);
+        }
+
         Map<String, Object> requestBody = new Map<String, Object>{
             'products' => products,
-            'prompt' => prompt,
+            'prompt' => safePrompt,
             'eventType' => eventType
         };
 

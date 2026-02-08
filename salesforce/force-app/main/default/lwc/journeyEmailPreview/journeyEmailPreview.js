@@ -37,6 +37,49 @@ export default class JourneyEmailPreview extends LightningElement {
         return !!this.heroImageUrl;
     }
 
+    /**
+     * Hero headline for the image overlay.
+     * Uses the subject line, cleaned up for display.
+     */
+    get heroHeadline() {
+        if (!this.subject) return 'Discover Your Radiance';
+
+        // Remove any contact name prefix (e.g., "Sarah, Your bridal glow awaits")
+        let headline = this.subject;
+        if (headline.includes(',')) {
+            const parts = headline.split(',');
+            if (parts.length > 1 && parts[0].length < 20) {
+                headline = parts.slice(1).join(',').trim();
+            }
+        }
+
+        // Capitalize first letter if needed
+        return headline.charAt(0).toUpperCase() + headline.slice(1);
+    }
+
+    /**
+     * Subheadline for the image overlay.
+     * Generated based on event context or uses a default.
+     */
+    get heroSubheadline() {
+        const subjectLower = (this.subject || '').toLowerCase();
+
+        if (subjectLower.includes('travel') || subjectLower.includes('trip')) {
+            return 'Curated essentials for your journey';
+        }
+        if (subjectLower.includes('wedding') || subjectLower.includes('bridal')) {
+            return 'For your most beautiful day';
+        }
+        if (subjectLower.includes('birthday')) {
+            return 'Celebrate with something special';
+        }
+        if (subjectLower.includes('last chance') || subjectLower.includes('reminder')) {
+            return "Don't miss out on these must-haves";
+        }
+
+        return 'Curated just for you';
+    }
+
     get hasProducts() {
         return this.products && this.products.length > 0;
     }

@@ -2,12 +2,36 @@ import { LightningElement, api, track, wire } from 'lwc';
 import getProductsByCategory from '@salesforce/apex/ProductPickerService.getProductsByCategory';
 
 export default class JourneyApprovalCard extends LightningElement {
-    @api approval;
+    _approval;
     @api journeySteps = []; // All steps in this journey (passed from parent)
 
-    @track editedSubject;
-    @track editedBody;
-    @track editedSmsBody;
+    // Use a setter to detect when approval changes and refresh local state
+    @api
+    get approval() {
+        return this._approval;
+    }
+    set approval(value) {
+        const prevId = this._approval?.Id;
+        this._approval = value;
+
+        // Refresh local state when approval data changes (e.g., after refreshApex)
+        if (value) {
+            // Only update if the approval Id is the same (data refresh) or first load
+            if (!prevId || prevId === value.Id) {
+                this.editedSubject = value.Suggested_Subject__c || '';
+                this.editedBody = value.Suggested_Body__c || '';
+                this.editedSmsBody = value.SMS_Body__c || '';
+                this.newPrompt = value.Firefly_Prompt__c || '';
+                // After server refresh, sync local products with server state
+                this.localProducts = this.parseProducts(value.Recommended_Products__c);
+                this.productsModified = false; // Reset flag - server now has latest
+            }
+        }
+    }
+
+    @track editedSubject = '';
+    @track editedBody = '';
+    @track editedSmsBody = '';
     @track showDeclineModal = false;
     @track showRegenerateModal = false;
     @track showProductPicker = false;
@@ -27,15 +51,19 @@ export default class JourneyApprovalCard extends LightningElement {
     @track pickerSelectedProducts = [];
     @track pickerLoading = true;
 
+    // Helper to parse products JSON
+    parseProducts(productsJson) {
+        if (!productsJson) return [];
+        try {
+            return JSON.parse(productsJson);
+        } catch (e) {
+            console.error('Failed to parse products:', e);
+            return [];
+        }
+    }
+
     connectedCallback() {
-        // Initialize editable fields with suggested content
-        this.editedSubject = this.approval?.Suggested_Subject__c || '';
-        this.editedBody = this.approval?.Suggested_Body__c || '';
-        this.editedSmsBody = this.approval?.SMS_Body__c || '';
-        this.newPrompt = this.approval?.Firefly_Prompt__c || '';
-        // Initialize local products from approval
-        this.localProducts = this.recommendedProducts;
-        // Set initial step index based on step number
+        // Initial setup - approval setter will handle state initialization
         if (this.approval?.Step_Number__c) {
             this.currentStepIndex = this.approval.Step_Number__c - 1;
         }
@@ -270,7 +298,7 @@ export default class JourneyApprovalCard extends LightningElement {
     }
 
     get addProductsLabel() {
-        return this.hasRecommendedProducts ? '+ Add/Edit' : '+ Add Products';
+        return this.hasRecommendedProducts ? 'Add/Edit' : '+ Add Products';
     }
 
     // ─── Step Navigation ───────────────────────────────────────────────

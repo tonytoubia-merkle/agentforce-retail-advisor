@@ -212,7 +212,7 @@ public with sharing class JourneyApprovalService {
     }
 
     /**
-     * Update products and regenerate the Firefly prompt.
+     * Update products and regenerate the Firefly prompt AND email body.
      * Called when marketer changes product selection.
      */
     private static ApprovalActionResult updateProducts(Journey_Approval__c approval, ApprovalActionRequest req) {
@@ -231,6 +231,14 @@ public with sharing class JourneyApprovalService {
 
             approval.Firefly_Prompt__c = promptResult.prompt;
 
+            // Also rebuild the email body with new product names
+            String newBody = rebuildEmailBodyWithProducts(
+                approval.Suggested_Body__c,
+                req.productsJson,
+                approval.Event_Type__c
+            );
+            approval.Suggested_Body__c = newBody;
+
             // Clear existing generated image since products changed
             approval.Generated_Image_URL__c = null;
             approval.Image_Content_Version_Id__c = null;
@@ -238,7 +246,7 @@ public with sharing class JourneyApprovalService {
             update approval;
 
             result.success = true;
-            result.message = 'Products updated and prompt regenerated';
+            result.message = 'Products updated - prompt and email body regenerated';
 
         } catch (Exception e) {
             result.success = false;
@@ -246,6 +254,65 @@ public with sharing class JourneyApprovalService {
         }
 
         return result;
+    }
+
+    /**
+     * Rebuild email body HTML with updated product recommendations.
+     * Replaces the product section in the email with the new products.
+     */
+    private static String rebuildEmailBodyWithProducts(String currentBody, String productsJson, String eventType) {
+        if (String.isBlank(productsJson)) {
+            return currentBody;
+        }
+
+        // Parse products
+        List<String> productNames = new List<String>();
+        try {
+            List<Object> parsed = (List<Object>) JSON.deserializeUntyped(productsJson);
+            for (Object obj : parsed) {
+                Map<String, Object> prodMap = (Map<String, Object>) obj;
+                String name = (String) prodMap.get('name');
+                if (String.isNotBlank(name)) {
+                    productNames.add(name);
+                }
+            }
+        } catch (Exception e) {
+            System.debug(LoggingLevel.WARN, 'Failed to parse products: ' + e.getMessage());
+            return currentBody;
+        }
+
+        if (productNames.isEmpty()) {
+            return currentBody;
+        }
+
+        // Build product list HTML
+        String productListHtml = '<ul style="margin: 16px 0; padding-left: 24px;">\n';
+        for (String name : productNames) {
+            productListHtml += '<li style="margin-bottom: 8px;"><strong>' + name + '</strong></li>\n';
+        }
+        productListHtml += '</ul>';
+
+        // Try to replace existing product list in the body
+        // Look for common patterns: <ul>...</ul> that contains product names
+        String updatedBody = currentBody;
+
+        // Pattern 1: Replace existing <ul>...</ul> section (simple approach)
+        Pattern ulPattern = Pattern.compile('(?i)<ul[^>]*>.*?</ul>');
+        Matcher ulMatcher = ulPattern.matcher(currentBody);
+        if (ulMatcher.find()) {
+            updatedBody = ulMatcher.replaceFirst(productListHtml);
+        } else {
+            // No existing list - append products before closing paragraph
+            // Insert product section before "</p>" if the body has content
+            if (updatedBody.contains('</p>')) {
+                Integer lastPIndex = updatedBody.lastIndexOf('</p>');
+                String beforeLast = updatedBody.substring(0, lastPIndex + 4);
+                String afterLast = updatedBody.substring(lastPIndex + 4);
+                updatedBody = beforeLast + '\n<p>Here are some products we think you\'ll love:</p>\n' + productListHtml + afterLast;
+            }
+        }
+
+        return updatedBody;
     }
 
     /**
@@ -370,12 +437,81 @@ public with sharing class JourneyApprovalService {
                    Generated_Image_URL__c, Firefly_Prompt__c,
                    Recommended_Products__c,
                    Contact__c, Contact__r.Name, Contact__r.Email,
-                   Meaningful_Event__c, CreatedDate
+                   Meaningful_Event__c, CreatedDate,
+                   // Multi-step journey fields
+                   Journey_Id__c, Step_Number__c, Total_Steps__c,
+                   Channel__c, Send_Delay_Days__c, Scheduled_Send_Date__c,
+                   SMS_Body__c, Journey_Guardrails__c
             FROM Journey_Approval__c
             WHERE Status__c = 'Pending'
-            ORDER BY Days_Until_Event__c ASC NULLS LAST, CreatedDate DESC
-            LIMIT 50
+            ORDER BY Journey_Id__c NULLS LAST, Step_Number__c ASC, Days_Until_Event__c ASC NULLS LAST, CreatedDate DESC
+            LIMIT 100
         ];
+    }
+
+    /**
+     * Approve all steps in a journey at once.
+     * Returns the result of the operation.
+     */
+    @AuraEnabled
+    public static ApprovalActionResult approveAllJourneySteps(String journeyId) {
+        ApprovalActionResult result = new ApprovalActionResult();
+
+        if (String.isBlank(journeyId)) {
+            result.success = false;
+            result.errorMessage = 'Journey ID is required';
+            return result;
+        }
+
+        try {
+            // Get all pending steps for this journey
+            List<Journey_Approval__c> steps = [
+                SELECT Id, Status__c, Step_Number__c, Send_Delay_Days__c,
+                       Suggested_Subject__c, Suggested_Body__c
+                FROM Journey_Approval__c
+                WHERE Journey_Id__c = :journeyId
+                AND Status__c = 'Pending'
+            ];
+
+            if (steps.isEmpty()) {
+                result.success = false;
+                result.errorMessage = 'No pending steps found for this journey';
+                return result;
+            }
+
+            // Calculate scheduled send dates and approve all steps
+            DateTime baseTime = DateTime.now();
+            for (Journey_Approval__c step : steps) {
+                step.Status__c = 'Approved';
+                step.Reviewed_By__c = UserInfo.getUserId();
+                step.Reviewed_At__c = DateTime.now();
+
+                // Copy suggested to approved if not already set
+                if (String.isBlank(step.Approved_Subject__c)) {
+                    step.Approved_Subject__c = step.Suggested_Subject__c;
+                }
+                if (String.isBlank(step.Approved_Body__c)) {
+                    step.Approved_Body__c = step.Suggested_Body__c;
+                }
+
+                // Calculate scheduled send date
+                Integer delayDays = step.Send_Delay_Days__c != null ?
+                    (Integer)step.Send_Delay_Days__c : 0;
+                step.Scheduled_Send_Date__c = baseTime.addDays(delayDays);
+            }
+
+            update steps;
+
+            result.success = true;
+            result.message = 'Approved ' + steps.size() + ' journey steps';
+            result.newStatus = 'Approved';
+
+        } catch (Exception e) {
+            result.success = false;
+            result.errorMessage = 'Failed to approve journey: ' + e.getMessage();
+        }
+
+        return result;
     }
 
     @AuraEnabled

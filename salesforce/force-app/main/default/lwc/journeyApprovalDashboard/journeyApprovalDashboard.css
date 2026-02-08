@@ -4,3 +4,157 @@
     right: 1rem;
     z-index: 9999;
 }
+
+/* Journey Group Styles */
+.journey-group {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.journey-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.journey-icon {
+    flex-shrink: 0;
+}
+
+/* Linear Step List (Accordion) */
+.step-list {
+    border-top: 1px solid #e5e5e5;
+}
+
+.step-row {
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.step-row:last-child {
+    border-bottom: none;
+}
+
+.step-row-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.step-row-header:hover {
+    background: #f8f9fa;
+}
+
+.step-row-left {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+}
+
+.step-number-badge {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 13px;
+    color: white;
+    flex-shrink: 0;
+}
+
+.step-number-badge[data-channel="Email"] {
+    background: linear-gradient(135deg, #1589ee 0%, #0070d2 100%);
+}
+
+.step-number-badge[data-channel="SMS"] {
+    background: linear-gradient(135deg, #04844b 0%, #027e46 100%);
+}
+
+.step-number-badge[data-channel="Push"] {
+    background: linear-gradient(135deg, #9050e9 0%, #7526c2 100%);
+}
+
+.step-channel-icon {
+    margin-left: 10px;
+    color: #706e6b;
+    flex-shrink: 0;
+}
+
+.step-row-info {
+    margin-left: 12px;
+    min-width: 0;
+    flex: 1;
+}
+
+.step-row-subject {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #181818;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.step-row-meta {
+    display: block;
+    font-size: 12px;
+    color: #706e6b;
+    margin-top: 2px;
+}
+
+.step-row-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.step-status-badge {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+}
+
+.step-status-badge[data-status="Pending"] {
+    background: #fef3cd;
+    color: #856404;
+}
+
+.step-status-badge[data-status="Approved"] {
+    background: #d4edda;
+    color: #155724;
+}
+
+.step-status-badge[data-status="Declined"] {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.step-expand-icon {
+    color: #b0adab;
+    transition: transform 0.2s ease;
+}
+
+.step-row.is-expanded .step-expand-icon {
+    transform: rotate(180deg);
+}
+
+.step-row-content {
+    display: none;
+    padding: 0 16px 16px 16px;
+    background: #fafafa;
+    border-top: 1px solid #e5e5e5;
+}
+
+.step-row.is-expanded .step-row-content {
+    display: block;
+}

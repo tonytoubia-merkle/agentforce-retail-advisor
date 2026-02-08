@@ -16,9 +16,8 @@
 import https from 'node:https';
 import sharp from 'sharp';
 
-// Canvas dimensions
-const COMPOSITE_WIDTH = 600;   // Width of the product composite canvas
-const COMPOSITE_HEIGHT = 400;  // Height of the product composite canvas (shorter to leave room for text)
+// Canvas dimensions (matching original working version)
+const COMPOSITE_SIZE = 400;    // Square product composite canvas (original was 400x400)
 const OUTPUT_WIDTH = 1792;     // Final expanded image width (email banner ratio)
 const OUTPUT_HEIGHT = 1024;    // Final expanded image height
 
@@ -92,8 +91,8 @@ async function compositeProducts(products) {
   // Create transparent canvas (wider than tall to position products in lower center)
   const canvas = sharp({
     create: {
-      width: COMPOSITE_WIDTH,
-      height: COMPOSITE_HEIGHT,
+      width: COMPOSITE_SIZE,
+      height: COMPOSITE_SIZE,
       channels: 4,
       background: { r: 0, g: 0, b: 0, alpha: 0 }
     }
@@ -223,8 +222,8 @@ async function softProductEdges(imageBuffer, _size) {
  */
 function getProductPositions(count) {
   const positions = [];
-  const cw = COMPOSITE_WIDTH;
-  const ch = COMPOSITE_HEIGHT;
+  const cw = COMPOSITE_SIZE;
+  const ch = COMPOSITE_SIZE;
 
   // Products are sized relative to the smaller dimension
   const baseSize = Math.min(cw, ch);
@@ -337,11 +336,19 @@ async function uploadToFirefly(imageBuffer, token, clientId) {
 }
 
 /**
- * Call Firefly Expand Image API.
+ * Sleep helper for retry delays.
+ */
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Call Firefly Expand Image API with retry logic.
  * Expands the composite image with AI-generated scene content.
  * Products are placed in the lower center to leave the top clear for text overlay.
  */
 async function expandImage(uploadId, prompt, token, clientId) {
+  // Use simple placement format that was working before
   const requestBody = JSON.stringify({
     numVariations: 1,
     size: {
@@ -355,22 +362,93 @@ async function expandImage(uploadId, prompt, token, clientId) {
     },
     prompt: prompt,
     placement: {
-      // Position products in lower-center area, leaving top for text overlay
-      alignment: {
-        horizontal: 'center',
-        vertical: 'bottom',
-      },
-      // Inset from bottom edge to avoid products being cut off
-      inset: {
-        bottom: 80,
-      },
+      alignment: 'center',
     },
+  });
+
+  const maxRetries = 3;
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`[generate-journey-image] Firefly expand attempt ${attempt}/${maxRetries}`);
+
+      const result = await httpsRequest({
+        hostname: 'firefly-api.adobe.io',
+        port: 443,
+        path: '/v3/images/expand',
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'x-api-key': clientId,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Content-Length': Buffer.byteLength(requestBody),
+        },
+      }, requestBody);
+
+      if (result.statusCode === 200) {
+        const data = JSON.parse(result.body.toString());
+
+        // Extract image URL from response
+        const imageUrl = data.outputs?.[0]?.image?.url ||
+                         data.outputs?.[0]?.image?.presignedUrl ||
+                         data.images?.[0]?.url;
+
+        if (!imageUrl) {
+          throw new Error('Firefly returned no image URL');
+        }
+
+        return imageUrl;
+      }
+
+      // Check if error is retryable (5xx errors)
+      const bodyStr = result.body.toString();
+      if (result.statusCode >= 500 && attempt < maxRetries) {
+        console.log(`[generate-journey-image] Firefly returned ${result.statusCode}, retrying in ${attempt * 2}s...`);
+        lastError = new Error(`Firefly expand failed: ${result.statusCode} - ${bodyStr}`);
+        await sleep(attempt * 2000); // Exponential backoff: 2s, 4s, 6s
+        continue;
+      }
+
+      // Non-retryable error or final attempt
+      throw new Error(`Firefly expand failed: ${result.statusCode} - ${bodyStr}`);
+
+    } catch (err) {
+      lastError = err;
+      if (attempt < maxRetries && err.message.includes('500')) {
+        console.log(`[generate-journey-image] Error on attempt ${attempt}, retrying...`);
+        await sleep(attempt * 2000);
+        continue;
+      }
+      throw err;
+    }
+  }
+
+  throw lastError || new Error('Firefly expand failed after all retries');
+}
+
+/**
+ * Fallback: Call Firefly Generate API (text-to-image) without product compositing.
+ * Used when Expand API fails consistently.
+ */
+async function generateImageFallback(prompt, token, clientId) {
+  console.log('[generate-journey-image] Using Generate API fallback...');
+
+  const requestBody = JSON.stringify({
+    prompt: prompt,
+    contentClass: 'photo',
+    size: {
+      width: 1024,
+      height: 1024
+    },
+    numVariations: 1
   });
 
   const result = await httpsRequest({
     hostname: 'firefly-api.adobe.io',
     port: 443,
-    path: '/v3/images/expand',
+    path: '/v3/images/generate',
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -382,18 +460,16 @@ async function expandImage(uploadId, prompt, token, clientId) {
   }, requestBody);
 
   if (result.statusCode !== 200) {
-    throw new Error(`Firefly expand failed: ${result.statusCode} - ${result.body.toString()}`);
+    throw new Error(`Firefly generate failed: ${result.statusCode} - ${result.body.toString()}`);
   }
 
   const data = JSON.parse(result.body.toString());
-
-  // Extract image URL from response
   const imageUrl = data.outputs?.[0]?.image?.url ||
                    data.outputs?.[0]?.image?.presignedUrl ||
                    data.images?.[0]?.url;
 
   if (!imageUrl) {
-    throw new Error('Firefly returned no image URL');
+    throw new Error('Firefly generate returned no image URL');
   }
 
   return imageUrl;
@@ -401,33 +477,34 @@ async function expandImage(uploadId, prompt, token, clientId) {
 
 /**
  * Build an enhanced prompt with brand guidelines.
- * Includes composition guidance for text overlay area in the top portion.
+ * IMPORTANT: Firefly has a 1024 character limit, so keep this concise!
  */
 function buildEnhancedPrompt(basePrompt, eventType) {
-  const brandContext = 'Luxury beauty brand aesthetic. Soft, elegant, aspirational mood. ' +
-    'Color palette: muted pastels, warm neutrals, soft rose gold accents. ' +
-    'Lighting: soft diffused natural light, gentle highlights, no harsh shadows. ' +
-    'Style: high-end editorial photography, magazine-quality, sophisticated.';
+  // Truncate base prompt if too long (leave room for style additions)
+  const maxBaseLength = 600;
+  const truncatedBase = basePrompt.length > maxBaseLength
+    ? basePrompt.substring(0, maxBaseLength)
+    : basePrompt;
 
-  // Composition guidance that ensures clear space for text overlay
-  const compositionGuidance = 'Professional product photography, photorealistic, ' +
-    'elegant lifestyle scene surrounding the beauty products. ' +
-    'IMPORTANT COMPOSITION: The upper third of the image should have a soft, ' +
-    'clean, uncluttered background with gentle gradients or subtle bokeh - ' +
-    'suitable for white or dark text overlay. Avoid busy patterns, sharp details, ' +
-    'or high-contrast elements in the top portion. Products and detailed scene ' +
-    'elements should be concentrated in the lower two-thirds of the image.';
+  // Concise brand/style context (~200 chars)
+  const style = 'Luxury beauty aesthetic, soft natural light, muted pastels, rose gold accents, editorial photography, clean upper area for text overlay';
 
-  let eventContext = '';
+  // Event-specific context (~50-80 chars)
+  let eventHint = '';
   if (eventType === 'travel') {
-    eventContext = 'Travel-inspired scene with luggage, maps, or destination elements in the lower area. Soft sky or blurred background in upper portion. ';
+    eventHint = 'travel lifestyle scene, soft blurred background';
   } else if (eventType === 'birthday') {
-    eventContext = 'Celebratory atmosphere with subtle gift elements, flowers, or festive touches. Soft gradient or bokeh in upper area for text. ';
+    eventHint = 'celebratory atmosphere, bokeh lights';
   } else if (eventType === 'wedding') {
-    eventContext = 'Romantic bridal atmosphere with white florals, soft fabrics, champagne tones. Dreamy soft-focus upper area ideal for elegant text. ';
+    eventHint = 'romantic bridal scene, white florals';
   }
 
-  return `${basePrompt}. ${eventContext}${brandContext} ${compositionGuidance}`;
+  const fullPrompt = eventHint
+    ? `${truncatedBase}. ${eventHint}, ${style}`
+    : `${truncatedBase}. ${style}`;
+
+  // Final safety check - Firefly limit is 1024
+  return fullPrompt.length > 1000 ? fullPrompt.substring(0, 1000) : fullPrompt;
 }
 
 /**
@@ -479,32 +556,42 @@ export default async function handler(req, res) {
 
     console.log(`[generate-journey-image] Starting with ${products.length} products`);
 
-    // Step 1: Composite product images
-    console.log('[generate-journey-image] Compositing products...');
-    const compositeBuffer = await compositeProducts(products);
-    console.log(`[generate-journey-image] Composite created: ${compositeBuffer.length} bytes`);
-
-    // Step 2: Get Firefly token
+    // Get Firefly token first
     console.log('[generate-journey-image] Getting Firefly token...');
     const token = await getFireflyToken(clientId, clientSecret);
 
-    // Step 3: Upload composite to Firefly
-    console.log('[generate-journey-image] Uploading to Firefly...');
-    const uploadId = await uploadToFirefly(compositeBuffer, token, clientId);
-    console.log(`[generate-journey-image] Upload ID: ${uploadId}`);
-
-    // Step 4: Call Firefly Expand
     const enhancedPrompt = buildEnhancedPrompt(prompt, eventType);
-    console.log('[generate-journey-image] Calling Firefly Expand...');
-    const imageUrl = await expandImage(uploadId, enhancedPrompt, token, clientId);
+    let imageUrl;
+    let usedFallback = false;
+
+    try {
+      // Try Expand API with product compositing
+      console.log('[generate-journey-image] Compositing products...');
+      const compositeBuffer = await compositeProducts(products);
+      console.log(`[generate-journey-image] Composite created: ${compositeBuffer.length} bytes`);
+
+      console.log('[generate-journey-image] Uploading to Firefly...');
+      const uploadId = await uploadToFirefly(compositeBuffer, token, clientId);
+      console.log(`[generate-journey-image] Upload ID: ${uploadId}`);
+
+      console.log('[generate-journey-image] Calling Firefly Expand...');
+      imageUrl = await expandImage(uploadId, enhancedPrompt, token, clientId);
+    } catch (expandErr) {
+      // Fallback to Generate API if Expand fails
+      console.log(`[generate-journey-image] Expand failed: ${expandErr.message}`);
+      console.log('[generate-journey-image] Falling back to Generate API...');
+      imageUrl = await generateImageFallback(enhancedPrompt, token, clientId);
+      usedFallback = true;
+    }
+
     console.log(`[generate-journey-image] Generated image URL: ${imageUrl.substring(0, 100)}...`);
 
     // Return success
     const result = JSON.stringify({
       success: true,
       imageUrl: imageUrl,
-      compositeSize: compositeBuffer.length,
       productCount: products.length,
+      usedFallback: usedFallback,
     });
 
     res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
