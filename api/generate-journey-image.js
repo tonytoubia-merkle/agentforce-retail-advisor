@@ -16,8 +16,9 @@
 import https from 'node:https';
 import sharp from 'sharp';
 
-// Canvas dimensions (matching original working version)
-const COMPOSITE_SIZE = 400;    // Square product composite canvas (original was 400x400)
+// Canvas dimensions
+// Composite is larger to fill more of the output and reduce Firefly generation area
+const COMPOSITE_SIZE = 600;    // Square product composite canvas
 const OUTPUT_WIDTH = 1792;     // Final expanded image width (email banner ratio)
 const OUTPUT_HEIGHT = 1024;    // Final expanded image height
 
@@ -87,18 +88,23 @@ async function downloadImage(url) {
 }
 
 /**
- * Composite multiple product images onto a transparent canvas.
- * Products are arranged in the lower portion to leave space for text overlay.
- * Edges are softened for better blending with generated backgrounds.
+ * Composite multiple product images onto a canvas.
+ * Products are arranged in the center for optimal Firefly expansion.
+ *
+ * IMPORTANT: We use a solid background (not transparent) because Firefly Expand
+ * treats transparent areas as "areas to fill" which can result in generated
+ * products overlapping or replacing our actual product images.
  */
 async function compositeProducts(products) {
-  // Create transparent canvas (wider than tall to position products in lower center)
+  // Create canvas with a soft neutral background
+  // This background color will be expanded/blended by Firefly
   const canvas = sharp({
     create: {
       width: COMPOSITE_SIZE,
       height: COMPOSITE_SIZE,
       channels: 4,
-      background: { r: 0, g: 0, b: 0, alpha: 0 }
+      // Soft cream/beige - will blend well with luxury beauty aesthetic
+      background: { r: 250, g: 245, b: 240, alpha: 255 }
     }
   });
 
@@ -144,6 +150,11 @@ async function compositeProducts(products) {
     .composite(composites)
     .png()
     .toBuffer();
+
+  console.log(`[generate-journey-image] Composite: ${COMPOSITE_SIZE}x${COMPOSITE_SIZE}, ${composites.length} products placed`);
+  composites.forEach((c, i) => {
+    console.log(`  Product ${i}: position (${c.left}, ${c.top})`);
+  });
 
   return compositeBuffer;
 }
@@ -536,7 +547,7 @@ export default async function handler(req, res) {
 
   try {
     const body = await readBody(req);
-    const { products, prompt, eventType } = JSON.parse(body.toString());
+    const { products, prompt, eventType, debugComposite } = JSON.parse(body.toString());
 
     // Validate input
     if (!products || !Array.isArray(products) || products.length === 0) {
@@ -559,6 +570,10 @@ export default async function handler(req, res) {
     }
 
     console.log(`[generate-journey-image] Starting with ${products.length} products`);
+    console.log('[generate-journey-image] Products:');
+    products.forEach((p, i) => {
+      console.log(`  [${i}] ${p.name}: ${p.imageUrl}`);
+    });
 
     // Get Firefly token first
     console.log('[generate-journey-image] Getting Firefly token...');
@@ -568,22 +583,39 @@ export default async function handler(req, res) {
     let imageUrl;
     let usedFallback = false;
 
+    // Create the product composite
+    console.log('[generate-journey-image] Compositing products...');
+    const compositeBuffer = await compositeProducts(products);
+    console.log(`[generate-journey-image] Composite created: ${compositeBuffer.length} bytes`);
+
+    // Debug mode: return the composite as base64 without calling Firefly
+    if (debugComposite) {
+      console.log('[generate-journey-image] DEBUG MODE: Returning composite image only');
+      const compositeBase64 = compositeBuffer.toString('base64');
+      const result = JSON.stringify({
+        success: true,
+        debug: true,
+        compositeDataUrl: `data:image/png;base64,${compositeBase64}`,
+        productCount: products.length,
+      });
+      res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+      return res.end(result);
+    }
+
     try {
       // Try Expand API with product compositing
-      console.log('[generate-journey-image] Compositing products...');
-      const compositeBuffer = await compositeProducts(products);
-      console.log(`[generate-journey-image] Composite created: ${compositeBuffer.length} bytes`);
-
       console.log('[generate-journey-image] Uploading to Firefly...');
       const uploadId = await uploadToFirefly(compositeBuffer, token, clientId);
       console.log(`[generate-journey-image] Upload ID: ${uploadId}`);
 
       console.log('[generate-journey-image] Calling Firefly Expand...');
+      console.log('[generate-journey-image] Enhanced prompt:', enhancedPrompt);
       imageUrl = await expandImage(uploadId, enhancedPrompt, token, clientId);
+      console.log('[generate-journey-image] Expand API SUCCEEDED - products should be in the output');
     } catch (expandErr) {
       // Fallback to Generate API if Expand fails
-      console.log(`[generate-journey-image] Expand failed: ${expandErr.message}`);
-      console.log('[generate-journey-image] Falling back to Generate API...');
+      console.log(`[generate-journey-image] ⚠️ EXPAND FAILED: ${expandErr.message}`);
+      console.log('[generate-journey-image] ⚠️ Falling back to Generate API - PRODUCTS WILL NOT BE IN OUTPUT');
       imageUrl = await generateImageFallback(enhancedPrompt, token, clientId);
       usedFallback = true;
     }
