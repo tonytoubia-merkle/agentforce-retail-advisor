@@ -362,10 +362,9 @@ export class DataCloudCustomerService {
 
   async getCustomerLoyalty(customerId: string): Promise<LoyaltyData | null> {
     // Query standard Salesforce Loyalty Management object
-    // Using only confirmed fields: Id, MembershipNumber
-    // Note: TotalPointsAccrued/Redeemed don't exist in this org's schema
+    // Note: Points fields (TotalPointsAccrued, etc.) not available in this org
     const data = await this.fetchJson(
-      `/services/data/v60.0/query/?q=SELECT+Id,MembershipNumber+FROM+LoyaltyProgramMember+WHERE+Contact.Id='${customerId}'+LIMIT+1`
+      `/services/data/v60.0/query/?q=SELECT+Id,MembershipNumber,EnrollmentDate,MemberStatus+FROM+LoyaltyProgramMember+WHERE+ContactId='${customerId}'+LIMIT+1`
     );
 
     const records = data.records || [];
@@ -374,10 +373,10 @@ export class DataCloudCustomerService {
     const member = records[0];
 
     return {
-      tier: 'bronze' as LoyaltyData['tier'],
-      pointsBalance: 0, // Points fields not available in this org
+      tier: 'bronze' as LoyaltyData['tier'], // Tier stored in separate LoyaltyMemberTier object
+      pointsBalance: 0, // Points tracked in LoyaltyMemberCurrency object
       lifetimePoints: 0,
-      memberSince: undefined,
+      memberSince: member.EnrollmentDate,
       tierExpiryDate: undefined,
       rewardsAvailable: [],
     };
