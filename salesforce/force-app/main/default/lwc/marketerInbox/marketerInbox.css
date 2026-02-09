@@ -292,6 +292,24 @@
     max-width: 900px;
 }
 
+/* Modal Close Button - Fix background square issue */
+.slds-modal__close {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.slds-modal__close:hover,
+.slds-modal__close:focus {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-radius: 4px;
+}
+
+.slds-modal__close lightning-icon,
+.slds-modal__close svg {
+    fill: white;
+}
+
 /* Journey Group Styles */
 .journey-group {
     border-radius: 8px;
