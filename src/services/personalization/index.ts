@@ -87,6 +87,7 @@ function getSdk(): any {
   // Check for different SDK global names (varies by SDK version/configuration):
   // - SalesforceDataCloud / c360a: Data Cloud Web SDK (c360a.min.js beacon)
   // - SalesforceInteractions / Evergage: Interaction Studio / MC Personalization SDK (web-sdk.min.js)
+  // - getSalesforceInteractions: Factory function pattern used by newer SDK versions
   if (w.SalesforceDataCloud) {
     sdkType = 'c360a';
     return w.SalesforceDataCloud;
@@ -98,6 +99,13 @@ function getSdk(): any {
   if (w.SalesforceInteractions) {
     sdkType = 'interactions';
     return w.SalesforceInteractions;
+  }
+  // Factory function pattern: getSalesforceInteractions() returns the SDK instance
+  if (typeof w.getSalesforceInteractions === 'function') {
+    sdkType = 'interactions';
+    const sdk = w.getSalesforceInteractions();
+    console.log('[sfp] SDK obtained via getSalesforceInteractions():', sdk);
+    return sdk;
   }
   if (w.Evergage) {
     sdkType = 'interactions';
