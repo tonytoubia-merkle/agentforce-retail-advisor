@@ -5,9 +5,11 @@ import { ConversationProvider } from '@/contexts/ConversationContext';
 import { CustomerProvider } from '@/contexts/CustomerContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { StoreProvider } from '@/contexts/StoreContext';
+import { PortfolioProvider } from '@/contexts/PortfolioContext';
 import { ActivityToastProvider } from '@/components/ActivityToast';
 import { AdvisorPage } from '@/components/AdvisorPage';
 import { StorefrontPage } from '@/components/Storefront';
+import { PortfolioDashboard } from '@/components/Portfolio';
 import type { Product } from '@/types/product';
 import { MOCK_PRODUCTS } from '@/mocks/products';
 
@@ -18,7 +20,7 @@ import { MOCK_PRODUCTS } from '@/mocks/products';
  * - Profile dropdown with persona selector for demos
  */
 function App() {
-  const [mode, setMode] = useState<'storefront' | 'advisor'>('storefront');
+  const [mode, setMode] = useState<'storefront' | 'advisor' | 'portfolio'>('storefront');
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -35,6 +37,14 @@ function App() {
   }, []);
 
   const handleCloseAdvisor = useCallback(() => {
+    setMode('storefront');
+  }, []);
+
+  const handleOpenPortfolio = useCallback(() => {
+    setMode('portfolio');
+  }, []);
+
+  const handleClosePortfolio = useCallback(() => {
     setMode('storefront');
   }, []);
 
@@ -61,7 +71,7 @@ function App() {
           <SceneProvider>
             <ActivityToastProvider>
               <AnimatePresence mode="wait">
-                {mode === 'storefront' ? (
+                {mode === 'storefront' && (
                   <motion.div
                     key="storefront"
                     initial={{ opacity: 0 }}
@@ -72,9 +82,11 @@ function App() {
                     <StorefrontPage
                       products={products}
                       onBeautyAdvisorClick={handleOpenAdvisor}
+                      onPortfolioClick={handleOpenPortfolio}
                     />
                   </motion.div>
-                ) : (
+                )}
+                {mode === 'advisor' && (
                   <motion.div
                     key="advisor"
                     initial={{ opacity: 0 }}
@@ -93,6 +105,34 @@ function App() {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.3 }}
                       onClick={handleCloseAdvisor}
+                      className="fixed top-4 left-4 z-50 flex items-center gap-2 px-4 py-2 bg-white/90 backdrop-blur-sm text-stone-700 text-sm font-medium rounded-full shadow-lg border border-stone-200 hover:bg-white hover:shadow-xl transition-all"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                      Back to Store
+                    </motion.button>
+                  </motion.div>
+                )}
+                {mode === 'portfolio' && (
+                  <motion.div
+                    key="portfolio"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="relative"
+                  >
+                    <PortfolioProvider>
+                      <PortfolioDashboard />
+                    </PortfolioProvider>
+
+                    {/* Back to Store button */}
+                    <motion.button
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.3 }}
+                      onClick={handleClosePortfolio}
                       className="fixed top-4 left-4 z-50 flex items-center gap-2 px-4 py-2 bg-white/90 backdrop-blur-sm text-stone-700 text-sm font-medium rounded-full shadow-lg border border-stone-200 hover:bg-white hover:shadow-xl transition-all"
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
