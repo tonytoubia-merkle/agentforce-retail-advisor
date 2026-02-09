@@ -16,13 +16,11 @@ import type { Product, ProductCategory } from '@/types/product';
 interface StorefrontPageProps {
   products: Product[];
   onBeautyAdvisorClick: () => void;
-  onPortfolioClick?: () => void;
 }
 
 export const StorefrontPage: React.FC<StorefrontPageProps> = ({
   products,
   onBeautyAdvisorClick,
-  onPortfolioClick,
 }) => {
   const { view, selectedCategory, selectedProduct, navigateHome, navigateToCategory } = useStore();
   const { customer, isAuthenticated } = useCustomer();
@@ -355,7 +353,7 @@ export const StorefrontPage: React.FC<StorefrontPageProps> = ({
 
   return (
     <div className="min-h-screen bg-white">
-      <StoreHeader onBeautyAdvisorClick={onBeautyAdvisorClick} onPortfolioClick={onPortfolioClick} />
+      <StoreHeader onBeautyAdvisorClick={onBeautyAdvisorClick} />
       {renderContent()}
     </div>
   );

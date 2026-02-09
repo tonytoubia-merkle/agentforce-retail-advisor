@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Portfolio_Owner__c</fullName>
+    <label>Portfolio Owner</label>
+    <description>The primary marketing user responsible for this portfolio. Different from Campaign Owner - this is the hands-on portfolio manager.</description>
+    <type>Lookup</type>
+    <referenceTo>User</referenceTo>
+    <relationshipLabel>Owned Portfolios</relationshipLabel>
+    <relationshipName>Owned_Portfolios</relationshipName>
+    <required>false</required>
+    <deleteConstraint>SetNull</deleteConstraint>
+</CustomField>

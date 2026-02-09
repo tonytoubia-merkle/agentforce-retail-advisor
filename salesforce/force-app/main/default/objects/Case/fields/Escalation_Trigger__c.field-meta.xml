@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Escalation_Trigger__c</fullName>
+    <label>Escalation Trigger</label>
+    <description>What triggered this escalation from the AI agent.</description>
+    <type>Picklist</type>
+    <required>false</required>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>High Value Customer</fullName>
+                <default>false</default>
+                <label>High Value Customer</label>
+            </value>
+            <value>
+                <fullName>Negative Sentiment</fullName>
+                <default>false</default>
+                <label>Negative Sentiment</label>
+            </value>
+            <value>
+                <fullName>Complaint Detected</fullName>
+                <default>false</default>
+                <label>Complaint Detected</label>
+            </value>
+            <value>
+                <fullName>Complex Request</fullName>
+                <default>false</default>
+                <label>Complex Request</label>
+            </value>
+            <value>
+                <fullName>Churn Risk</fullName>
+                <default>false</default>
+                <label>Churn Risk</label>
+            </value>
+            <value>
+                <fullName>Meaningful Event</fullName>
+                <default>false</default>
+                <label>Meaningful Event</label>
+            </value>
+            <value>
+                <fullName>Multiple Interactions</fullName>
+                <default>false</default>
+                <label>Multiple Interactions</label>
+            </value>
+            <value>
+                <fullName>Policy Override Needed</fullName>
+                <default>false</default>
+                <label>Policy Override Needed</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

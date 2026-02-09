@@ -20,10 +20,9 @@ const CATEGORIES: { label: string; value: ProductCategory }[] = [
 
 interface StoreHeaderProps {
   onBeautyAdvisorClick: () => void;
-  onPortfolioClick?: () => void;
 }
 
-export const StoreHeader: React.FC<StoreHeaderProps> = ({ onBeautyAdvisorClick, onPortfolioClick }) => {
+export const StoreHeader: React.FC<StoreHeaderProps> = ({ onBeautyAdvisorClick }) => {
   const { navigateHome, navigateToCategory, navigateToCart, navigateToAccount, searchQuery, setSearchQuery } = useStore();
   const { itemCount } = useCart();
   const { isAuthenticated, customer, signIn } = useCustomer();
@@ -50,17 +49,6 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ onBeautyAdvisorClick, 
         >
           Try our AI Beauty Advisor
         </button>
-        {onPortfolioClick && (
-          <>
-            <span className="mx-2 hidden sm:inline">|</span>
-            <button
-              onClick={onPortfolioClick}
-              className="underline hover:text-purple-300 transition-colors font-medium hidden sm:inline"
-            >
-              Portfolio Management
-            </button>
-          </>
-        )}
       </div>
 
       {/* Main header */}

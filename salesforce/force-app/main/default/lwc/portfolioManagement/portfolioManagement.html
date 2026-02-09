@@ -1,0 +1,173 @@
+<template>
+    <div class="slds-page-header slds-page-header_joined">
+        <div class="slds-page-header__row">
+            <div class="slds-page-header__col-title">
+                <div class="slds-media">
+                    <div class="slds-media__figure">
+                        <lightning-icon icon-name="standard:campaign" size="large"></lightning-icon>
+                    </div>
+                    <div class="slds-media__body">
+                        <div class="slds-page-header__name">
+                            <div class="slds-page-header__name-title">
+                                <h1>
+                                    <span class="slds-page-header__title slds-truncate">Portfolio Management</span>
+                                </h1>
+                            </div>
+                        </div>
+                        <p class="slds-page-header__name-meta">
+                            Agent-Assisted Marketing Portfolios
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="slds-page-header__col-actions">
+                <lightning-button-group>
+                    <lightning-button
+                        label="Refresh"
+                        icon-name="utility:refresh"
+                        onclick={handleRefresh}>
+                    </lightning-button>
+                </lightning-button-group>
+            </div>
+        </div>
+    </div>
+
+    <div class="slds-grid slds-wrap slds-gutters slds-p-around_medium">
+        <!-- Portfolio Selector -->
+        <div class="slds-col slds-size_1-of-1 slds-large-size_3-of-12 slds-p-bottom_medium">
+            <lightning-card title="My Portfolios" icon-name="standard:campaign">
+                <div class="slds-p-horizontal_small">
+                    <template if:true={isLoading}>
+                        <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+                    </template>
+
+                    <template if:false={isLoading}>
+                        <template if:true={portfolios.length}>
+                            <ul class="slds-has-dividers_bottom-space">
+                                <template for:each={portfolios} for:item="portfolio">
+                                    <li key={portfolio.id}
+                                        class={portfolio.itemClass}
+                                        onclick={handlePortfolioSelect}
+                                        data-id={portfolio.id}>
+                                        <div class="slds-grid slds-grid_vertical-align-center">
+                                            <div class="slds-col slds-grow">
+                                                <p class="slds-text-body_regular slds-truncate">{portfolio.name}</p>
+                                                <p class="slds-text-body_small slds-text-color_weak">{portfolio.portfolioType}</p>
+                                            </div>
+                                            <div class="slds-col slds-shrink">
+                                                <template if:true={portfolio.pendingCount}>
+                                                    <lightning-badge label={portfolio.pendingCount} class="slds-theme_error"></lightning-badge>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </li>
+                                </template>
+                            </ul>
+                        </template>
+
+                        <template if:false={portfolios.length}>
+                            <div class="slds-illustration slds-illustration_small slds-p-vertical_medium">
+                                <p class="slds-text-body_regular slds-text-color_weak slds-text-align_center">
+                                    No portfolios assigned to you.
+                                </p>
+                            </div>
+                        </template>
+                    </template>
+                </div>
+            </lightning-card>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="slds-col slds-size_1-of-1 slds-large-size_9-of-12">
+            <template if:true={selectedPortfolio}>
+                <!-- Portfolio Header -->
+                <lightning-card class="slds-m-bottom_medium">
+                    <h2 slot="title">
+                        <lightning-icon icon-name="standard:campaign" size="small" class="slds-m-right_x-small"></lightning-icon>
+                        {selectedPortfolio.name}
+                    </h2>
+                    <div slot="actions">
+                        <lightning-combobox
+                            label="Autonomy Level"
+                            value={selectedPortfolio.autonomyLevel}
+                            options={autonomyOptions}
+                            onchange={handleAutonomyChange}
+                            variant="label-hidden"
+                            class="slds-size_x-small">
+                        </lightning-combobox>
+                    </div>
+                    <div class="slds-p-horizontal_medium slds-p-bottom_medium">
+                        <c-portfolio-card
+                            portfolio={selectedPortfolio}
+                            metrics={portfolioMetrics}>
+                        </c-portfolio-card>
+                    </div>
+                </lightning-card>
+
+                <!-- Two Column Layout -->
+                <div class="slds-grid slds-wrap slds-gutters">
+                    <!-- Pending Actions -->
+                    <div class="slds-col slds-size_1-of-1 slds-large-size_7-of-12 slds-p-bottom_medium">
+                        <c-pending-escalations
+                            portfolio-id={selectedPortfolio.id}
+                            onactioncomplete={handleActionComplete}>
+                        </c-pending-escalations>
+                    </div>
+
+                    <!-- Activity Feed & Engagement -->
+                    <div class="slds-col slds-size_1-of-1 slds-large-size_5-of-12 slds-p-bottom_medium">
+                        <lightning-card title="Recent Agent Activity" icon-name="standard:bot">
+                            <div class="slds-p-horizontal_small" style="max-height: 400px; overflow-y: auto;">
+                                <template if:true={recentActivity.length}>
+                                    <ul class="slds-timeline">
+                                        <template for:each={recentActivity} for:item="activity">
+                                            <li key={activity.Id}>
+                                                <div class="slds-timeline__item_expandable">
+                                                    <span class="slds-assistive-text">Activity</span>
+                                                    <div class="slds-media">
+                                                        <div class="slds-media__figure">
+                                                            <lightning-icon
+                                                                icon-name={activity.iconName}
+                                                                size="small"
+                                                                variant={activity.iconVariant}>
+                                                            </lightning-icon>
+                                                        </div>
+                                                        <div class="slds-media__body">
+                                                            <p class="slds-truncate">
+                                                                <strong>{activity.Contact__r.Name}</strong>
+                                                            </p>
+                                                            <p class="slds-text-body_small">{activity.Action__c}</p>
+                                                            <p class="slds-text-body_small slds-text-color_weak">
+                                                                {activity.formattedDate} via {activity.Channel__c}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </li>
+                                        </template>
+                                    </ul>
+                                </template>
+
+                                <template if:false={recentActivity.length}>
+                                    <p class="slds-text-body_regular slds-text-color_weak slds-text-align_center slds-p-vertical_medium">
+                                        No recent activity
+                                    </p>
+                                </template>
+                            </div>
+                        </lightning-card>
+                    </div>
+                </div>
+            </template>
+
+            <template if:false={selectedPortfolio}>
+                <div class="slds-illustration slds-illustration_large slds-p-vertical_x-large slds-text-align_center">
+                    <lightning-icon icon-name="utility:touch_action" size="large" class="slds-m-bottom_medium"></lightning-icon>
+                    <h3 class="slds-text-heading_medium">Select a Portfolio</h3>
+                    <p class="slds-text-body_regular slds-text-color_weak">
+                        Choose a portfolio from the list to view details and pending actions.
+                    </p>
+                </div>
+            </template>
+        </div>
+    </div>
+</template>
