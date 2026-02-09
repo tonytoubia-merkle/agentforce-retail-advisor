@@ -10,7 +10,26 @@ interface HeroBannerProps {
   isAuthenticated?: boolean;
 }
 
-function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boolean) {
+// Hero image mapping for personalization scenarios
+const HERO_IMAGES = {
+  authenticated: '/assets/hero/hero-glowing-skin.png',      // Known + signed in → radiant glow
+  pseudonymous: '/assets/hero/hero-face-wash.png',          // Known + not signed in → fresh start
+  cleanBeauty: '/assets/hero/hero-clean-botanicals.png',    // 3P clean/natural interests
+  luxury: '/assets/hero/hero-luxury-textures.png',          // 3P luxury/premium interests
+  wellness: '/assets/hero/hero-wellness-lifestyle.png',     // 3P wellness/fitness interests
+  default: '/assets/hero/hero-spa-mask.png',                // Anonymous → aspirational spa
+};
+
+interface HeroVariant {
+  badge: string;
+  headlineTop: string;
+  headlineBottom: string;
+  subtitle: string;
+  heroImage: string;
+  imageAlt: string;
+}
+
+function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boolean): HeroVariant {
   const tier = customer?.merkuryIdentity?.identityTier;
   const firstName = customer?.name?.split(' ')[0];
 
@@ -26,6 +45,8 @@ function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boo
       subtitle: loyaltyLine
         ? `Curated picks for you. ${loyaltyLine}.`
         : 'Curated skincare and beauty essentials, just for you.',
+      heroImage: HERO_IMAGES.authenticated,
+      imageAlt: 'Radiant glowing skin',
     };
   }
 
@@ -42,6 +63,8 @@ function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boo
       headlineTop: `Welcome back,`,
       headlineBottom: firstName,
       subtitle: subtitleParts.join(' '),
+      heroImage: HERO_IMAGES.pseudonymous,
+      imageAlt: 'Fresh morning skincare routine',
     };
   }
 
@@ -54,6 +77,8 @@ function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boo
         headlineTop: 'Clean Beauty,',
         headlineBottom: 'Naturally You',
         subtitle: 'Curated clean and natural beauty essentials for a conscious routine.',
+        heroImage: HERO_IMAGES.cleanBeauty,
+        imageAlt: 'Natural botanical ingredients',
       };
     }
     if (interests.some((i) => i.includes('luxury') || i.includes('premium'))) {
@@ -62,6 +87,8 @@ function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boo
         headlineTop: 'Luxury Essentials,',
         headlineBottom: 'Curated for You',
         subtitle: 'Premium skincare and beauty from the brands you love.',
+        heroImage: HERO_IMAGES.luxury,
+        imageAlt: 'Luxurious beauty textures',
       };
     }
     if (interests.some((i) => i.includes('wellness') || i.includes('yoga') || i.includes('fitness'))) {
@@ -70,6 +97,8 @@ function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boo
         headlineTop: 'Beauty Meets',
         headlineBottom: 'Wellness',
         subtitle: 'Skincare and beauty that complements your active lifestyle.',
+        heroImage: HERO_IMAGES.wellness,
+        imageAlt: 'Wellness and self-care lifestyle',
       };
     }
   }
@@ -80,6 +109,8 @@ function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boo
     headlineTop: 'Discover Your',
     headlineBottom: 'Perfect Glow',
     subtitle: 'Curated skincare and beauty essentials, personalized to your unique needs. Experience the future of beauty with our AI-powered recommendations.',
+    heroImage: HERO_IMAGES.default,
+    imageAlt: 'Luxurious spa treatment',
   };
 }
 
@@ -93,10 +124,20 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onShopNow, onBeautyAdvis
   }, [customer]);
 
   // SF Personalization decision takes priority, fallback to local logic
-  const variant = useMemo(
-    () => sfpDecision || getHeroVariant(customer, isAuthenticated),
-    [sfpDecision, customer, isAuthenticated]
-  );
+  // Merge SFP decision with local variant to ensure heroImage/imageAlt are always present
+  const variant = useMemo(() => {
+    const localVariant = getHeroVariant(customer, isAuthenticated);
+    if (sfpDecision) {
+      return {
+        ...localVariant,
+        ...sfpDecision,
+        // Use SFP heroImage if provided, otherwise keep local logic's choice
+        heroImage: sfpDecision.heroImage || localVariant.heroImage,
+        imageAlt: sfpDecision.imageAlt || localVariant.imageAlt,
+      };
+    }
+    return localVariant;
+  }, [sfpDecision, customer, isAuthenticated]);
 
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-stone-100 via-rose-50 to-purple-50">

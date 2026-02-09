@@ -38,6 +38,8 @@ export interface PersonalizationDecision {
   headlineTop: string;
   headlineBottom: string;
   subtitle: string;
+  heroImage?: string;   // Optional hero image path from campaign
+  imageAlt?: string;    // Optional alt text for hero image
   campaignId?: string;
   experienceId?: string;
 }
