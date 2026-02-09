@@ -65,6 +65,18 @@ export const StorefrontPage: React.FC<StorefrontPageProps> = ({
       .slice(0, 4);
   }, [products]);
 
+  // Haircare products
+  const haircareProducts = useMemo(() => {
+    return products
+      .filter((p) => ['shampoo', 'conditioner', 'hair-treatment'].includes(p.category))
+      .slice(0, 4);
+  }, [products]);
+
+  // Fragrance products
+  const fragranceProducts = useMemo(() => {
+    return products.filter((p) => p.category === 'fragrance').slice(0, 4);
+  }, [products]);
+
   const renderContent = () => {
     switch (view) {
       case 'category':
@@ -136,12 +148,51 @@ export const StorefrontPage: React.FC<StorefrontPageProps> = ({
                 <h2 className="text-2xl sm:text-3xl font-medium text-stone-900 mb-8 text-center">
                   Shop by Category
                 </h2>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {/* Skincare row */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
                   {[
-                    { label: 'Skincare', category: 'moisturizer' as ProductCategory, color: 'from-rose-100 to-pink-100' },
+                    { label: 'Moisturizers', category: 'moisturizer' as ProductCategory, color: 'from-rose-100 to-pink-100' },
                     { label: 'Cleansers', category: 'cleanser' as ProductCategory, color: 'from-sky-100 to-blue-100' },
                     { label: 'Serums', category: 'serum' as ProductCategory, color: 'from-purple-100 to-violet-100' },
                     { label: 'Sun Care', category: 'sunscreen' as ProductCategory, color: 'from-amber-100 to-yellow-100' },
+                  ].map((cat) => (
+                    <button
+                      key={cat.category}
+                      onClick={() => navigateToCategory(cat.category)}
+                      className={`bg-gradient-to-br ${cat.color} rounded-2xl p-6 sm:p-8 text-center hover:shadow-lg transition-shadow group`}
+                    >
+                      <span className="text-lg font-medium text-stone-900 group-hover:text-rose-600 transition-colors">
+                        {cat.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                {/* Makeup row */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+                  {[
+                    { label: 'Foundation', category: 'foundation' as ProductCategory, color: 'from-orange-100 to-amber-100' },
+                    { label: 'Lipstick', category: 'lipstick' as ProductCategory, color: 'from-red-100 to-rose-100' },
+                    { label: 'Mascara', category: 'mascara' as ProductCategory, color: 'from-stone-200 to-stone-100' },
+                    { label: 'Blush', category: 'blush' as ProductCategory, color: 'from-pink-100 to-rose-100' },
+                  ].map((cat) => (
+                    <button
+                      key={cat.category}
+                      onClick={() => navigateToCategory(cat.category)}
+                      className={`bg-gradient-to-br ${cat.color} rounded-2xl p-6 sm:p-8 text-center hover:shadow-lg transition-shadow group`}
+                    >
+                      <span className="text-lg font-medium text-stone-900 group-hover:text-rose-600 transition-colors">
+                        {cat.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                {/* Hair & Fragrance row */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {[
+                    { label: 'Shampoo', category: 'shampoo' as ProductCategory, color: 'from-teal-100 to-cyan-100' },
+                    { label: 'Conditioner', category: 'conditioner' as ProductCategory, color: 'from-emerald-100 to-green-100' },
+                    { label: 'Hair Care', category: 'hair-treatment' as ProductCategory, color: 'from-lime-100 to-green-100' },
+                    { label: 'Fragrance', category: 'fragrance' as ProductCategory, color: 'from-violet-100 to-purple-100' },
                   ].map((cat) => (
                     <button
                       key={cat.category}
@@ -200,6 +251,30 @@ export const StorefrontPage: React.FC<StorefrontPageProps> = ({
                 products={makeupProducts}
                 showViewAll
                 onViewAll={() => navigateToCategory('foundation' as ProductCategory)}
+              />
+            )}
+
+            {/* Haircare Section */}
+            {haircareProducts.length > 0 && (
+              <div className="bg-stone-50">
+                <ProductSection
+                  title="Hair Care"
+                  subtitle="Healthy hair, beautiful you"
+                  products={haircareProducts}
+                  showViewAll
+                  onViewAll={() => navigateToCategory('shampoo' as ProductCategory)}
+                />
+              </div>
+            )}
+
+            {/* Fragrance Section */}
+            {fragranceProducts.length > 0 && (
+              <ProductSection
+                title="Signature Scents"
+                subtitle="Find your perfect fragrance"
+                products={fragranceProducts}
+                showViewAll
+                onViewAll={() => navigateToCategory('fragrance' as ProductCategory)}
               />
             )}
 

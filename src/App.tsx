@@ -28,7 +28,7 @@ function App() {
     async function loadProducts() {
       setLoading(true);
       try {
-        const res = await fetch('/api/products?limit=100', {
+        const res = await fetch('/api/products?limit=200', {
           headers: { accept: 'application/json' },
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);

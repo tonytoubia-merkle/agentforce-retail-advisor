@@ -223,7 +223,7 @@ const server = http.createServer((req, res) => {
     // Parse query params
     const urlObj = new URL(req.url, 'http://localhost');
     const q = urlObj.searchParams.get('q') || '';
-    const limit = Math.min(parseInt(urlObj.searchParams.get('limit') || '24', 10), 50);
+    const limit = Math.min(parseInt(urlObj.searchParams.get('limit') || '24', 10), 200);
     const offset = Math.max(parseInt(urlObj.searchParams.get('offset') || '0', 10), 0);
     const pricebookName = urlObj.searchParams.get('pricebook') || 'Standard Price Book';
 
