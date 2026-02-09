@@ -182,35 +182,35 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onShopNow, onBeautyAdvis
               <motion.img
                 src="/assets/products/ff-moisturizer-daily.png"
                 alt="Featured moisturizer"
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 object-contain drop-shadow-2xl"
+                className="absolute inset-0 m-auto w-80 h-80 object-contain drop-shadow-2xl"
                 animate={{ y: [0, -8, 0] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               />
               <motion.img
                 src="/assets/products/serum-brightening.png"
                 alt="Featured serum"
-                className="absolute top-0 right-0 w-24 h-24 object-contain drop-shadow-xl"
+                className="absolute top-0 right-0 w-48 h-48 object-contain drop-shadow-xl"
                 animate={{ y: [0, 8, 0] }}
                 transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
               />
               <motion.img
                 src="/assets/products/sunscreen-tinted.png"
                 alt="Featured sunscreen"
-                className="absolute bottom-0 left-0 w-28 h-28 object-contain drop-shadow-xl"
+                className="absolute bottom-0 left-0 w-56 h-56 object-contain drop-shadow-xl"
                 animate={{ y: [0, -6, 0] }}
                 transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
               />
               <motion.img
                 src="/assets/products/lipstick-satin.png"
                 alt="Featured lipstick"
-                className="absolute top-0 left-0 w-20 h-20 object-contain drop-shadow-xl"
+                className="absolute top-0 left-0 w-40 h-40 object-contain drop-shadow-xl"
                 animate={{ y: [0, 6, 0] }}
                 transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
               />
               <motion.img
                 src="/assets/products/eye-cream-brightening.png"
                 alt="Featured eye cream"
-                className="absolute bottom-0 right-0 w-24 h-24 object-contain drop-shadow-xl"
+                className="absolute bottom-0 right-0 w-48 h-48 object-contain drop-shadow-xl"
                 animate={{ y: [0, -5, 0] }}
                 transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
               />
