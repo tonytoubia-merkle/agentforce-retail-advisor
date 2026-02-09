@@ -4,6 +4,8 @@
 import https from 'node:https';
 
 const SF_INSTANCE = process.env.VITE_AGENTFORCE_INSTANCE_URL || 'https://me1769724439764.my.salesforce.com';
+const CLIENT_ID = process.env.VITE_AGENTFORCE_CLIENT_ID;
+const CLIENT_SECRET = process.env.VITE_AGENTFORCE_CLIENT_SECRET;
 
 const routes = [
   { prefix: '/api/oauth/token',            target: SF_INSTANCE,                                 rewrite: '/services/oauth2/token' },
@@ -62,6 +64,60 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-goog-api-key, x-api-key',
 };
+
+/** Get a server-side OAuth token using Client Credentials flow */
+async function getServerToken() {
+  if (!CLIENT_ID || !CLIENT_SECRET) return null;
+  const sfUrl = new URL(SF_INSTANCE);
+  const body = 'grant_type=client_credentials';
+  const result = await httpsRequest({
+    hostname: sfUrl.hostname,
+    port: 443,
+    path: '/services/oauth2/token',
+    method: 'POST',
+    headers: {
+      host: sfUrl.hostname,
+      'content-type': 'application/x-www-form-urlencoded',
+      'content-length': Buffer.byteLength(body),
+      authorization: 'Basic ' + Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64'),
+      accept: 'application/json',
+    },
+  }, body);
+  try {
+    const json = JSON.parse(result.body.toString());
+    return json.access_token || null;
+  } catch {
+    return null;
+  }
+}
+
+/** Helper to run Salesforce REST API calls */
+async function sfFetch(token, method, sfPath, body) {
+  const sfUrl = new URL(SF_INSTANCE);
+  const bodyStr = body ? JSON.stringify(body) : null;
+  const headers = {
+    host: sfUrl.hostname,
+    authorization: `Bearer ${token}`,
+    accept: 'application/json',
+  };
+  if (bodyStr) {
+    headers['content-type'] = 'application/json';
+    headers['content-length'] = Buffer.byteLength(bodyStr);
+  }
+  const result = await httpsRequest({
+    hostname: sfUrl.hostname,
+    port: 443,
+    path: sfPath,
+    method,
+    headers,
+  }, bodyStr);
+  if (result.statusCode === 204) return { statusCode: 204 };
+  try {
+    return { statusCode: result.statusCode, data: JSON.parse(result.body.toString()) };
+  } catch {
+    return { statusCode: result.statusCode, raw: result.body.toString() };
+  }
+}
 
 // Static product catalog for WPM (Web Personalization Manager) catalog browser
 // These IDs match the Salesforce Product2 records created for Data Cloud integration
@@ -286,6 +342,84 @@ export default async function handler(req, res) {
       return res.end(result.body);
     }
 
+    // --- GET /api/demo/contacts — List demo contacts from CRM ---
+    if (url.startsWith('/api/demo/contacts') && req.method === 'GET') {
+      const authHeader = req.headers.authorization;
+      const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '') : await getServerToken();
+      if (!token) {
+        res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ contacts: [] }));
+      }
+      const soql = "SELECT Id, FirstName, LastName, Email, Demo_Profile__c, Merkury_Id__c FROM Contact WHERE Demo_Profile__c != null ORDER BY Demo_Profile__c, LastName";
+      const result = await sfFetch(token, 'GET', `/services/data/v60.0/query?q=${encodeURIComponent(soql)}`);
+      const contacts = (result.data?.records || []).map(r => ({
+        id: r.Id,
+        firstName: r.FirstName,
+        lastName: r.LastName,
+        email: r.Email,
+        demoProfile: r.Demo_Profile__c,
+        merkuryId: r.Merkury_Id__c || null,
+      }));
+      const json = JSON.stringify({ contacts });
+      res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+      return res.end(json);
+    }
+
+    // --- POST /api/contacts — Create Account + Contact in CRM ---
+    if (url === '/api/contacts' && req.method === 'POST') {
+      const body = await readBody(req);
+      const { firstName, lastName, email, merkuryId, demoProfile, leadSource, beautyFields } = JSON.parse(body.toString());
+      if (!email) {
+        res.writeHead(400, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'Missing email' }));
+      }
+      const authHeader = req.headers.authorization;
+      const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '') : await getServerToken();
+      if (!token) {
+        res.writeHead(401, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'Unauthorized' }));
+      }
+      // Check if contact already exists
+      const existingQ = await sfFetch(token, 'GET',
+        `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT Id, AccountId FROM Contact WHERE Email = '${email.replace(/'/g, "\\'")}' LIMIT 1`)}`);
+      const existing = existingQ.data?.records?.[0];
+      if (existing) {
+        const json = JSON.stringify({ success: true, contactId: existing.Id, accountId: existing.AccountId, existing: true });
+        res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(json);
+      }
+      // Create Account
+      const fName = firstName || email.split('@')[0];
+      const lName = lastName || 'Customer';
+      const accountRes = await sfFetch(token, 'POST', '/services/data/v60.0/sobjects/Account', { Name: `${fName} ${lName} Household` });
+      const accountId = accountRes.data?.id;
+      if (!accountId) {
+        res.writeHead(500, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'Failed to create Account', details: accountRes.data }));
+      }
+      // Create Contact
+      const contactFields = {
+        FirstName: fName,
+        LastName: lName,
+        Email: email,
+        AccountId: accountId,
+        Demo_Profile__c: demoProfile || 'Created',
+        LeadSource: leadSource || 'Web',
+        ...(merkuryId && { Merkury_Id__c: merkuryId }),
+        ...(beautyFields || {}),
+      };
+      const contactRes = await sfFetch(token, 'POST', '/services/data/v60.0/sobjects/Contact', contactFields);
+      const contactId = contactRes.data?.id;
+      if (!contactId) {
+        res.writeHead(500, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'Failed to create Contact', details: contactRes.data }));
+      }
+      console.log(`[contacts] Created Account ${accountId} + Contact ${contactId} for ${email}`);
+      const json = JSON.stringify({ success: true, contactId, accountId });
+      res.writeHead(201, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+      return res.end(json);
+    }
+
     // --- Generic route-based proxy ---
     const route = findRoute(url);
     if (!route) {
@@ -303,6 +437,11 @@ export default async function handler(req, res) {
     }
     if (!headers.accept || headers.accept.includes('text/html')) {
       headers.accept = 'application/json';
+    }
+    // For Salesforce routes, auto-fetch a server-side token if none provided
+    if (!headers.authorization && route.target === SF_INSTANCE) {
+      const token = await getServerToken();
+      if (token) headers.authorization = `Bearer ${token}`;
     }
 
     const body = ['POST', 'PUT', 'PATCH'].includes(req.method) ? await readBody(req) : null;
