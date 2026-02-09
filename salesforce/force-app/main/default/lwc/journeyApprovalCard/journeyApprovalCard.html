@@ -146,42 +146,56 @@
                         </template>
                     </div>
 
-                    <!-- Generated Image Display (Thumbnail with click to expand) -->
-                    <template if:true={hasGeneratedImage}>
+                    <!-- Image Generation Loading State -->
+                    <template if:true={isGeneratingImage}>
                         <div class="slds-m-bottom_small">
                             <p class="slds-text-title_caps slds-m-bottom_xx-small">Generated Image</p>
-                            <div class="image-thumbnail-container" onclick={handleImageClick} title="Click to preview full size">
-                                <img src={approval.Generated_Image_URL__c} alt="Generated journey image" class="image-thumbnail" onerror={handleImageError}/>
-                                <div class="image-expand-overlay">
-                                    <lightning-icon icon-name="utility:zoomin" size="small" variant="inverse"></lightning-icon>
-                                </div>
-                            </div>
-                            <div class="slds-m-top_xx-small">
-                                <lightning-button
-                                    variant="base"
-                                    label="Regenerate"
-                                    icon-name="utility:refresh"
-                                    onclick={handleRegenerateClick}
-                                    size="small">
-                                </lightning-button>
+                            <div class="slds-box slds-theme_default slds-text-align_center" style="border: 2px dashed #d8dde6; padding: 2rem; min-height: 150px;">
+                                <lightning-spinner alternative-text="Generating image..." size="medium"></lightning-spinner>
+                                <p class="slds-text-body_regular slds-m-top_medium slds-text-color_weak">Generating personalized image with Adobe Firefly...</p>
+                                <p class="slds-text-body_small slds-text-color_weak slds-m-top_x-small">This may take 15-30 seconds</p>
                             </div>
                         </div>
                     </template>
 
-                    <!-- Generate Image Placeholder (when no image yet or load failed) -->
-                    <template if:false={hasGeneratedImage}>
-                        <div class="slds-m-bottom_small">
-                            <div class="slds-box slds-theme_default slds-text-align_center" style="border: 2px dashed #d8dde6; padding: 1.5rem;">
-                                <lightning-icon icon-name="utility:image" size="medium" class="slds-m-bottom_small"></lightning-icon>
-                                <p class="slds-text-body_regular slds-m-bottom_small">Ready to generate personalized image</p>
-                                <lightning-button
-                                    variant="brand"
-                                    label="Generate Image"
-                                    icon-name="utility:sparkles"
-                                    onclick={handleRegenerateClick}>
-                                </lightning-button>
+                    <!-- Generated Image Display (Thumbnail with click to expand) -->
+                    <template if:false={isGeneratingImage}>
+                        <template if:true={hasGeneratedImage}>
+                            <div class="slds-m-bottom_small">
+                                <p class="slds-text-title_caps slds-m-bottom_xx-small">Generated Image</p>
+                                <div class="image-thumbnail-container" onclick={handleImageClick} title="Click to preview full size">
+                                    <img src={approval.Generated_Image_URL__c} alt="Generated journey image" class="image-thumbnail" onerror={handleImageError}/>
+                                    <div class="image-expand-overlay">
+                                        <lightning-icon icon-name="utility:zoomin" size="small" variant="inverse"></lightning-icon>
+                                    </div>
+                                </div>
+                                <div class="slds-m-top_xx-small">
+                                    <lightning-button
+                                        variant="base"
+                                        label="Regenerate"
+                                        icon-name="utility:refresh"
+                                        onclick={handleRegenerateClick}
+                                        size="small">
+                                    </lightning-button>
+                                </div>
                             </div>
-                        </div>
+                        </template>
+
+                        <!-- Generate Image Placeholder (when no image yet or load failed) -->
+                        <template if:false={hasGeneratedImage}>
+                            <div class="slds-m-bottom_small">
+                                <div class="slds-box slds-theme_default slds-text-align_center" style="border: 2px dashed #d8dde6; padding: 1.5rem;">
+                                    <lightning-icon icon-name="utility:image" size="medium" class="slds-m-bottom_small"></lightning-icon>
+                                    <p class="slds-text-body_regular slds-m-bottom_small">Ready to generate personalized image</p>
+                                    <lightning-button
+                                        variant="brand"
+                                        label="Generate Image"
+                                        icon-name="utility:sparkles"
+                                        onclick={handleRegenerateClick}>
+                                    </lightning-button>
+                                </div>
+                            </div>
+                        </template>
                     </template>
                 </template>
 

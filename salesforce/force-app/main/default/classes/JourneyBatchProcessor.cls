@@ -92,7 +92,17 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
 
         // Link to source records
         approval.Meaningful_Event__c = event.Id;
-        approval.Contact__c = event.Contact__c;
+
+        // Use Contact__c lookup if set, otherwise try Customer_Id__c (text field)
+        if (event.Contact__c != null) {
+            approval.Contact__c = event.Contact__c;
+        } else if (String.isNotBlank(event.Customer_Id__c)) {
+            try {
+                approval.Contact__c = Id.valueOf(event.Customer_Id__c);
+            } catch (Exception e) {
+                System.debug(LoggingLevel.WARN, 'Could not parse Customer_Id__c as Contact Id: ' + event.Customer_Id__c);
+            }
+        }
 
         // Copy event details
         approval.Event_Type__c = event.Event_Type__c;

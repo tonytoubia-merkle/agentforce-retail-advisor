@@ -78,10 +78,16 @@ export default class MarketerInbox extends LightningElement {
     // Get approvals filtered by selected portfolio
     @wire(getApprovalsByPortfolio, { portfolioId: '$selectedPortfolio' })
     wiredApprovals(result) {
+        console.log('[MarketerInbox] wiredApprovals callback triggered');
         this.wiredApprovalsResult = result;
         this.isLoading = false;
 
         if (result.data) {
+            console.log('[MarketerInbox] Received', result.data.length, 'approvals from wire');
+            // Log first approval's image URL for debugging
+            if (result.data.length > 0) {
+                console.log('[MarketerInbox] First approval image URL:', result.data[0].Generated_Image_URL__c);
+            }
             this.approvals = result.data.map(approval => this.enrichApproval(approval));
         } else if (result.error) {
             this.showToastMessage('Error loading inbox: ' + result.error.body?.message, 'error');
@@ -110,6 +116,8 @@ export default class MarketerInbox extends LightningElement {
     enrichApproval(approval) {
         return {
             ...approval,
+            // Add timestamp to force LWC to detect changes after refresh
+            _refreshTimestamp: Date.now(),
             contactName: approval.Contact__r?.Name || 'Unknown',
             contactEmail: approval.Contact__r?.Email || '',
             eventType: approval.Meaningful_Event__r?.Event_Type__c || 'General',
@@ -626,7 +634,20 @@ export default class MarketerInbox extends LightningElement {
             console.log('[MarketerInbox] Action result:', result);
             if (result.success) {
                 this.showToastMessage(result.message || 'Action completed', 'success');
+                console.log('[MarketerInbox] Refreshing approvals data...');
                 await refreshApex(this.wiredApprovalsResult);
+                console.log('[MarketerInbox] Refresh complete. Approvals count:', this.approvals?.length);
+
+                // CRITICAL: Update selectedApproval with refreshed data so the card sees changes
+                if (this.selectedApproval && this.approvals?.length > 0) {
+                    const refreshedApproval = this.approvals.find(a => a.Id === approvalId);
+                    if (refreshedApproval) {
+                        console.log('[MarketerInbox] Updating selectedApproval with refreshed data');
+                        console.log('[MarketerInbox] New image URL:', refreshedApproval.Generated_Image_URL__c);
+                        console.log('[MarketerInbox] New body preview:', refreshedApproval.Suggested_Body__c?.substring(0, 100));
+                        this.selectedApproval = refreshedApproval;
+                    }
+                }
                 await refreshApex(this.wiredStatsResult);
             } else {
                 this.showToastMessage(result.errorMessage || 'Action failed', 'error');
@@ -635,6 +656,15 @@ export default class MarketerInbox extends LightningElement {
         } catch (error) {
             console.error('[MarketerInbox] Action error:', error);
             this.showToastMessage('Error: ' + (error.body?.message || error.message), 'error');
+            // Refresh data on error to reset card states (like isGeneratingImage)
+            await refreshApex(this.wiredApprovalsResult);
+            // Also update selectedApproval on error to reset card state
+            if (this.selectedApproval && this.approvals?.length > 0) {
+                const refreshedApproval = this.approvals.find(a => a.Id === this.selectedApproval.Id);
+                if (refreshedApproval) {
+                    this.selectedApproval = refreshedApproval;
+                }
+            }
         } finally {
             this.isLoading = false;
         }

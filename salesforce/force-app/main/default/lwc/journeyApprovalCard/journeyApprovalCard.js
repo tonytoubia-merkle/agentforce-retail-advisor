@@ -17,6 +17,7 @@ export default class JourneyApprovalCard extends LightningElement {
         // This ensures server-regenerated content (body, prompt, products) is displayed immediately
         if (value) {
             console.log('[JourneyApprovalCard] Setter called, syncing local state from server');
+            console.log('[JourneyApprovalCard] Image URL:', value.Generated_Image_URL__c);
             this.editedSubject = value.Suggested_Subject__c || '';
             this.editedBody = value.Suggested_Body__c || '';
             this.editedSmsBody = value.SMS_Body__c || '';
@@ -26,6 +27,8 @@ export default class JourneyApprovalCard extends LightningElement {
             this.productsModified = false; // Reset flag - server now has latest
             // Reset image error state when approval changes
             this.imageLoadError = false;
+            // Reset generating state - data has been refreshed
+            this.isGeneratingImage = false;
         }
     }
 
@@ -53,6 +56,7 @@ export default class JourneyApprovalCard extends LightningElement {
     @track pickerSelectedProducts = [];
     @track pickerLoading = true;
     @track imageLoadError = false; // Track if generated image failed to load
+    @track isGeneratingImage = false; // Track if image generation is in progress
 
     // Helper to parse products JSON
     parseProducts(productsJson) {
@@ -632,6 +636,10 @@ export default class JourneyApprovalCard extends LightningElement {
     }
 
     confirmRegenerate() {
+        // Set loading state before dispatching action
+        this.isGeneratingImage = true;
+        this.imageLoadError = false; // Reset error state
+
         this.dispatchEvent(new CustomEvent('action', {
             detail: {
                 action: 'regenerate',

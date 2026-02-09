@@ -173,6 +173,12 @@ public with sharing class FireflyApexService {
      * Call the Vercel API to composite products and generate expanded image.
      */
     private static String callVercelImageApi(List<Map<String, Object>> products, String prompt, String eventType) {
+        System.debug(LoggingLevel.INFO, '[callVercelImageApi] Starting with ' + products.size() + ' products');
+        for (Integer i = 0; i < products.size(); i++) {
+            Map<String, Object> p = products[i];
+            System.debug(LoggingLevel.INFO, '[callVercelImageApi] Product ' + i + ': ' + p.get('name') + ' -> ' + p.get('imageUrl'));
+        }
+
         HttpRequest req = new HttpRequest();
         req.setEndpoint(VERCEL_APP_URL + '/api/generate-journey-image');
         req.setMethod('POST');
@@ -201,11 +207,23 @@ public with sharing class FireflyApexService {
         }
 
         Map<String, Object> responseData = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+        System.debug(LoggingLevel.INFO, '[callVercelImageApi] Full response: ' + res.getBody());
 
         Boolean success = (Boolean) responseData.get('success');
         if (success != true) {
             String errorMsg = (String) responseData.get('error');
             throw new FireflyException('Image generation failed: ' + errorMsg);
+        }
+
+        // Check if Expand API failed and fell back to text-only generation
+        Boolean usedFallback = responseData.containsKey('usedFallback') && (Boolean) responseData.get('usedFallback');
+        Integer productCount = responseData.containsKey('productCount') ? (Integer) responseData.get('productCount') : 0;
+
+        System.debug(LoggingLevel.INFO, '[callVercelImageApi] productCount: ' + productCount);
+        System.debug(LoggingLevel.INFO, '[callVercelImageApi] usedFallback: ' + usedFallback);
+
+        if (usedFallback) {
+            System.debug(LoggingLevel.WARN, '[callVercelImageApi] WARNING: Firefly Expand failed - used text-only generation (no product images in output)');
         }
 
         String imageUrl = (String) responseData.get('imageUrl');
@@ -395,15 +413,21 @@ public with sharing class FireflyApexService {
     /**
      * Create a public URL for a ContentVersion by creating a ContentDistribution.
      * This allows the image to be displayed without authentication.
+     *
+     * Uses DistributionPublicUrl which is truly public (no auth required),
+     * unlike ContentDownloadUrl which requires Salesforce authentication.
      */
     public static String createPublicUrl(Id contentVersionId) {
+        System.debug(LoggingLevel.INFO, '[createPublicUrl] Creating public URL for ContentVersionId: ' + contentVersionId);
+
         // Get the ContentDocumentId
         ContentVersion cv = [
-            SELECT Id, ContentDocumentId
+            SELECT Id, ContentDocumentId, Title
             FROM ContentVersion
             WHERE Id = :contentVersionId
             LIMIT 1
         ];
+        System.debug(LoggingLevel.INFO, '[createPublicUrl] ContentVersion found: ' + cv.Title + ', ContentDocumentId: ' + cv.ContentDocumentId);
 
         // Check if a ContentDistribution already exists
         List<ContentDistribution> existingDist = [
@@ -414,8 +438,14 @@ public with sharing class FireflyApexService {
         ];
 
         if (!existingDist.isEmpty()) {
-            return existingDist[0].ContentDownloadUrl;
+            System.debug(LoggingLevel.INFO, '[createPublicUrl] Existing ContentDistribution found');
+            System.debug(LoggingLevel.INFO, '[createPublicUrl] DistributionPublicUrl: ' + existingDist[0].DistributionPublicUrl);
+            System.debug(LoggingLevel.INFO, '[createPublicUrl] ContentDownloadUrl: ' + existingDist[0].ContentDownloadUrl);
+            // Use DistributionPublicUrl for unauthenticated access
+            return existingDist[0].DistributionPublicUrl;
         }
+
+        System.debug(LoggingLevel.INFO, '[createPublicUrl] No existing distribution, creating new one...');
 
         // Create a new ContentDistribution for public access
         ContentDistribution cd = new ContentDistribution();
@@ -427,6 +457,7 @@ public with sharing class FireflyApexService {
         cd.PreferencesPasswordRequired = false;
         cd.PreferencesAllowOriginalDownload = true;
         insert cd;
+        System.debug(LoggingLevel.INFO, '[createPublicUrl] ContentDistribution created with Id: ' + cd.Id);
 
         // Re-query to get the generated URL
         cd = [
@@ -436,7 +467,20 @@ public with sharing class FireflyApexService {
             LIMIT 1
         ];
 
-        return cd.ContentDownloadUrl;
+        System.debug(LoggingLevel.INFO, '[createPublicUrl] After insert - DistributionPublicUrl: ' + cd.DistributionPublicUrl);
+        System.debug(LoggingLevel.INFO, '[createPublicUrl] After insert - ContentDownloadUrl: ' + cd.ContentDownloadUrl);
+
+        // Use DistributionPublicUrl for unauthenticated access
+        // Fall back to ContentDownloadUrl if DistributionPublicUrl is null
+        if (String.isNotBlank(cd.DistributionPublicUrl)) {
+            return cd.DistributionPublicUrl;
+        } else if (String.isNotBlank(cd.ContentDownloadUrl)) {
+            System.debug(LoggingLevel.WARN, '[createPublicUrl] DistributionPublicUrl is null, using ContentDownloadUrl');
+            return cd.ContentDownloadUrl;
+        } else {
+            System.debug(LoggingLevel.ERROR, '[createPublicUrl] Both URLs are null!');
+            throw new FireflyException('ContentDistribution URLs are not available');
+        }
     }
 
     // ─── Prompt Building ──────────────────────────────────────────────

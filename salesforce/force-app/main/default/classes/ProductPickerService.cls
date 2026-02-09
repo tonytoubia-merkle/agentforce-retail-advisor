@@ -157,23 +157,23 @@ public with sharing class ProductPickerService {
 
         // LUMIÈRE (Premium Anti-Aging)
         products.add(createProduct('serum-vitamin-c', 'Radiance Renewal Serum', 'LUMIÈRE', 'Serum', 89.00, '20% Vitamin C brightening serum', new List<String>{'brightening', 'anti-aging', 'luxury'}, false));
-        products.add(createProduct('serum-peptide', 'Peptide Lift Pro Serum', 'LUMIÈRE', 'Serum', 125.00, 'Advanced peptide anti-aging complex', new List<String>{'anti-aging', 'luxury'}, false));
+        products.add(createProduct('serum-anti-aging', 'Peptide Lift Pro Serum', 'LUMIÈRE', 'Serum', 125.00, 'Advanced peptide anti-aging complex', new List<String>{'anti-aging', 'luxury'}, false));
         products.add(createProduct('eye-cream', 'Eye Revival Cream', 'LUMIÈRE', 'Eye Care', 68.00, 'Depuffing and dark circle treatment', new List<String>{'anti-aging', 'hydrating'}, false));
-        products.add(createProduct('retinol-night', 'Retinol Night Repair', 'LUMIÈRE', 'Treatment', 95.00, 'Overnight retinol renewal treatment', new List<String>{'anti-aging', 'luxury'}, false));
-        products.add(createProduct('collagen-cream', 'Collagen Boost Cream', 'LUMIÈRE', 'Moisturizer', 110.00, 'Firming collagen-infused moisturizer', new List<String>{'anti-aging', 'luxury', 'hydrating'}, false));
+        products.add(createProduct('serum-retinol', 'Retinol Night Repair', 'LUMIÈRE', 'Treatment', 95.00, 'Overnight retinol renewal treatment', new List<String>{'anti-aging', 'luxury'}, false));
+        products.add(createProduct('moisturizer-night', 'Collagen Boost Cream', 'LUMIÈRE', 'Moisturizer', 110.00, 'Firming collagen-infused moisturizer', new List<String>{'anti-aging', 'luxury', 'hydrating'}, false));
 
         // AURA (Color Cosmetics)
         products.add(createProduct('lipstick-velvet', 'Velvet Matte Lipstick', 'AURA', 'Lipstick', 32.00, 'Long-wearing matte lipstick', new List<String>{'luxury'}, false));
         products.add(createProduct('lip-gloss', 'Crystal Shine Lip Gloss', 'AURA', 'Lipstick', 24.00, 'High-shine hydrating gloss', new List<String>{'hydrating'}, false));
         products.add(createProduct('foundation-dewy', 'Skin Glow Foundation', 'AURA', 'Foundation', 48.00, 'Dewy finish buildable coverage', new List<String>{'hydrating'}, false));
-        products.add(createProduct('concealer', 'Brightening Concealer', 'AURA', 'Concealer', 28.00, 'Full coverage brightening concealer', new List<String>{'brightening'}, false));
-        products.add(createProduct('blush-cream', 'Cream Blush Duo', 'AURA', 'Blush', 34.00, 'Natural flush cream blush', new List<String>{}, false));
+        products.add(createProduct('concealer-brightening', 'Brightening Concealer', 'AURA', 'Concealer', 28.00, 'Full coverage brightening concealer', new List<String>{'brightening'}, false));
+        products.add(createProduct('blush-silk', 'Cream Blush Duo', 'AURA', 'Blush', 34.00, 'Natural flush cream blush', new List<String>{}, false));
         products.add(createProduct('mascara-volume', 'Volume Boost Mascara', 'AURA', 'Mascara', 26.00, 'Volumizing lengthening mascara', new List<String>{}, false));
 
         // PURE (Clean Beauty)
-        products.add(createProduct('oil-face', 'Botanical Face Oil', 'PURE', 'Treatment', 52.00, 'Nourishing organic face oil', new List<String>{'hydrating', 'sensitive'}, false));
-        products.add(createProduct('balm-lip', 'Honey Lip Balm', 'PURE', 'Lip Care', 16.00, 'Organic honey lip treatment', new List<String>{'hydrating', 'travel'}, true));
-        products.add(createProduct('body-lotion', 'Shea Body Lotion', 'PURE', 'Body', 38.00, 'Rich shea butter body cream', new List<String>{'hydrating'}, false));
+        products.add(createProduct('serum-hyaluronic', 'Botanical Face Oil', 'PURE', 'Treatment', 52.00, 'Nourishing organic face oil', new List<String>{'hydrating', 'sensitive'}, false));
+        products.add(createProduct('lip-balm-spf', 'Honey Lip Balm', 'PURE', 'Lip Care', 16.00, 'Organic honey lip treatment', new List<String>{'hydrating', 'travel'}, true));
+        products.add(createProduct('moisturizer-rich', 'Shea Body Lotion', 'PURE', 'Body', 38.00, 'Rich shea butter body cream', new List<String>{'hydrating'}, false));
 
         return products;
     }

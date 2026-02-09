@@ -197,26 +197,28 @@ public with sharing class JourneyApprovalService {
         }
 
         if (fireflyResult != null && fireflyResult.success) {
-            // Use permanent public URL from ContentVersion instead of temporary Firefly URL
-            String publicUrl = fireflyResult.imageUrl;
+            System.debug(LoggingLevel.INFO, '[regenerateImage] Firefly returned success');
+            System.debug(LoggingLevel.INFO, '[regenerateImage] Original imageUrl: ' + fireflyResult.imageUrl);
+            System.debug(LoggingLevel.INFO, '[regenerateImage] ContentVersionId: ' + fireflyResult.contentVersionId);
+
+            // Build Salesforce internal file URL (works for authenticated users in LWC)
+            // Format: /sfc/servlet.shepherd/version/download/{ContentVersionId}
+            String imageUrl = fireflyResult.imageUrl; // Fallback to Firefly URL
             if (String.isNotBlank(fireflyResult.contentVersionId)) {
-                try {
-                    publicUrl = FireflyApexService.createPublicUrl(fireflyResult.contentVersionId);
-                } catch (Exception e) {
-                    // Fall back to original URL if public URL creation fails
-                    System.debug(LoggingLevel.WARN, 'Could not create public URL: ' + e.getMessage());
-                }
+                imageUrl = '/sfc/servlet.shepherd/version/download/' + fireflyResult.contentVersionId;
+                System.debug(LoggingLevel.INFO, '[regenerateImage] Using Salesforce file URL: ' + imageUrl);
             }
 
-            approval.Generated_Image_URL__c = publicUrl;
+            approval.Generated_Image_URL__c = imageUrl;
             approval.Image_Content_Version_Id__c = fireflyResult.contentVersionId;
             approval.Firefly_Prompt__c = prompt;
 
             update approval;
+            System.debug(LoggingLevel.INFO, '[regenerateImage] Approval updated with image URL');
 
             result.success = true;
             result.message = 'Image regenerated successfully';
-            result.newImageUrl = publicUrl;
+            result.newImageUrl = imageUrl;
         } else {
             result.success = false;
             result.errorMessage = fireflyResult == null ? 'No result' : fireflyResult.errorMessage;
@@ -310,12 +312,15 @@ public with sharing class JourneyApprovalService {
         // Look for common patterns: <ul>...</ul> that contains product names
         String updatedBody = currentBody;
 
-        // Pattern 1: Replace existing <ul>...</ul> section (simple approach)
-        Pattern ulPattern = Pattern.compile('(?i)<ul[^>]*>.*?</ul>');
+        // Pattern 1: Replace existing <ul>...</ul> section
+        // Use (?s) flag to make . match newlines (DOTALL mode in Apex)
+        Pattern ulPattern = Pattern.compile('(?is)<ul[^>]*>.*?</ul>');
         Matcher ulMatcher = ulPattern.matcher(currentBody);
         if (ulMatcher.find()) {
+            System.debug(LoggingLevel.INFO, '[rebuildEmailBody] Found existing <ul> to replace');
             updatedBody = ulMatcher.replaceFirst(productListHtml);
         } else {
+            System.debug(LoggingLevel.INFO, '[rebuildEmailBody] No existing <ul> found, will append');
             // No existing list - append products before closing paragraph
             // Insert product section before "</p>" if the body has content
             if (updatedBody.contains('</p>')) {

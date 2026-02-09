@@ -134,11 +134,11 @@ public with sharing class CampaignAgentService {
     private static String getCampaignAgentId() {
         try {
             // Query for the agent by name
-            // Note: The actual object/field names may vary based on your org's setup
+            // BotDefinition uses Status field, not IsActive
             List<SObject> agents = Database.query(
                 'SELECT Id, DeveloperName FROM BotDefinition ' +
                 'WHERE DeveloperName LIKE \'%Campaign%\' ' +
-                'AND IsActive = true LIMIT 1'
+                'LIMIT 1'
             );
 
             if (!agents.isEmpty()) {
