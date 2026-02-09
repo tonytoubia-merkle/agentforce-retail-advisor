@@ -22,45 +22,12 @@ function App() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Load products on mount
+  // Load products on mount - use local mock data for reliable images
   useEffect(() => {
-    let cancelled = false;
-    async function loadProducts() {
-      setLoading(true);
-      try {
-        const res = await fetch('/api/products?limit=200', {
-          headers: { accept: 'application/json' },
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        const list: Product[] = (data.products || []).map((p: any) => ({
-          id: p.id,
-          name: p.name,
-          brand: p.brand || 'Unknown',
-          category: p.category || 'uncategorized',
-          price: p.price || 0,
-          currency: p.currency || 'USD',
-          description: p.description || '',
-          shortDescription: p.shortDescription || '',
-          imageUrl: p.imageUrl || '',
-          images: p.images || [],
-          attributes: p.attributes || {},
-          rating: p.rating || 0,
-          reviewCount: p.reviewCount || 0,
-          inStock: p.inStock ?? true,
-          personalizationScore: p.personalizationScore,
-        }));
-        if (!cancelled) {
-          setProducts(list.length > 0 ? list : MOCK_PRODUCTS);
-        }
-      } catch {
-        if (!cancelled) setProducts(MOCK_PRODUCTS);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    loadProducts();
-    return () => { cancelled = true; };
+    // Use mock products directly for consistent image display
+    // The Salesforce API products have outdated image URLs
+    setProducts(MOCK_PRODUCTS);
+    setLoading(false);
   }, []);
 
   const handleOpenAdvisor = useCallback(() => {
