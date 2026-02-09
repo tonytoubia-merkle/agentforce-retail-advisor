@@ -1,7 +1,7 @@
 import type { SceneSetting } from '@/types/scene';
 
 /**
- * Brand standards for LUMIÈRE beauty brand.
+ * Brand standards for BEAUTÉ beauty brand.
  * Applied to all generated backgrounds for visual consistency.
  */
 export const BRAND_CONTEXT = `

@@ -114,6 +114,7 @@ export default class MarketerInbox extends LightningElement {
      * Enrich approval with computed display properties.
      */
     enrichApproval(approval) {
+        const isPastDue = this.checkIsPastDue(approval.Auto_Send_Deadline__c);
         return {
             ...approval,
             // Add timestamp to force LWC to detect changes after refresh
@@ -123,26 +124,41 @@ export default class MarketerInbox extends LightningElement {
             eventType: approval.Meaningful_Event__r?.Event_Type__c || 'General',
             eventDate: approval.Meaningful_Event__r?.Event_Date__c,
             portfolioName: approval.Assigned_Portfolio__r?.Name || 'Unassigned',
-            tierClass: this.getTierClass(approval.Approval_Tier__c),
-            tierIcon: this.getTierIcon(approval.Approval_Tier__c),
+            itemClass: isPastDue ? 'inbox-item slds-box past-due-item' : 'inbox-item slds-box',
+            tierClass: isPastDue ? 'tier-past-due' : this.getTierClass(approval.Approval_Tier__c),
+            tierIcon: isPastDue ? 'utility:ban' : this.getTierIcon(approval.Approval_Tier__c),
             urgencyClass: this.getUrgencyClass(approval.Urgency__c),
             channelIcon: this.getChannelIcon(approval.Channel__c),
             confidenceClass: this.getConfidenceClass(approval.Confidence_Score__c),
             deadlineDisplay: this.getDeadlineDisplay(approval.Auto_Send_Deadline__c),
             isApproachingDeadline: this.isApproachingDeadline(approval.Auto_Send_Deadline__c),
+            isPastDue: isPastDue,
             priorityDisplay: this.getPriorityDisplay(approval.Priority_Score__c),
             isMultiStep: approval.Total_Steps__c > 1,
             stepDisplay: approval.Total_Steps__c > 1 ?
-                `Step ${approval.Step_Number__c} of ${approval.Total_Steps__c}` : null
+                `Step ${approval.Step_Number__c} of ${approval.Total_Steps__c}` : null,
+            // Marketing Flow link (if exists)
+            hasMarketingFlow: !!approval.Marketing_Flow__c,
+            marketingFlowName: approval.Marketing_Flow__r?.Name,
+            marketingFlowUrl: approval.Marketing_Flow__r?.Flow_URL__c
         };
     }
 
     // Filter getters
     get filteredApprovals() {
-        if (this.activeFilter === 'all') {
-            return this.approvals;
+        // Past due filter shows only past due items
+        if (this.activeFilter === 'past-due') {
+            return this.approvals.filter(a => a.isPastDue);
         }
-        return this.approvals.filter(a => {
+
+        // All other filters exclude past due items by default
+        let filtered = this.approvals.filter(a => !a.isPastDue);
+
+        if (this.activeFilter === 'all') {
+            return filtered;
+        }
+
+        return filtered.filter(a => {
             switch (this.activeFilter) {
                 case 'immediate':
                     return a.Urgency__c === 'Immediate';
@@ -191,6 +207,9 @@ export default class MarketerInbox extends LightningElement {
                     // Deadline (earliest in group)
                     earliestDeadline: null,
                     isApproachingDeadline: false,
+                    // Past due tracking
+                    isPastDue: false,
+                    hasAnyPastDue: false,
                     // Expansion state
                     isExpanded: this.expandedJourneys.has(journeyId),
                     expandIcon: this.expandedJourneys.has(journeyId) ? 'utility:chevrondown' : 'utility:chevronright'
@@ -228,6 +247,16 @@ export default class MarketerInbox extends LightningElement {
                     group.isApproachingDeadline = approval.isApproachingDeadline;
                 }
             }
+
+            // Track past due status
+            if (approval.isPastDue) {
+                group.hasAnyPastDue = true;
+            }
+        }
+
+        // Determine if entire group is past due (all steps are past due)
+        for (const group of groups.values()) {
+            group.isPastDue = group.steps.length > 0 && group.steps.every(s => s.isPastDue);
         }
 
         // Sort steps within each group by step number
@@ -261,13 +290,21 @@ export default class MarketerInbox extends LightningElement {
     }
 
     get filterOptions() {
-        return [
-            { label: `All (${this.stats.totalPending || 0})`, value: 'all' },
+        const activePending = (this.stats.totalPending || 0) - (this.stats.pastDueCount || 0);
+        const options = [
+            { label: `All (${activePending})`, value: 'all' },
             { label: `Immediate (${this.stats.immediateCount || 0})`, value: 'immediate' },
             { label: `Soft Review (${this.stats.softReviewCount || 0})`, value: 'soft-review' },
             { label: `Review Required (${this.stats.reviewRequiredCount || 0})`, value: 'review-required' },
             { label: `Escalate (${this.stats.escalateCount || 0})`, value: 'escalate' }
         ];
+
+        // Add Past Due option if there are any
+        if (this.stats.pastDueCount > 0) {
+            options.push({ label: `Past Due (${this.stats.pastDueCount})`, value: 'past-due' });
+        }
+
+        return options;
     }
 
     // Dynamic title based on selected portfolio
@@ -290,6 +327,18 @@ export default class MarketerInbox extends LightningElement {
 
     get hasDeadlineWarning() {
         return this.stats.approachingDeadlineCount > 0;
+    }
+
+    get hasPastDue() {
+        return this.stats.pastDueCount > 0;
+    }
+
+    get activePendingCount() {
+        return (this.stats.totalPending || 0) - (this.stats.pastDueCount || 0);
+    }
+
+    get isPastDueFilter() {
+        return this.activeFilter === 'past-due';
     }
 
     // Tier styling
@@ -346,7 +395,7 @@ export default class MarketerInbox extends LightningElement {
         const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
         const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
 
-        if (diffMs <= 0) return 'Sending now...';
+        if (diffMs <= 0) return 'Past Due';
         if (diffHours < 1) return `${diffMins}m until auto-send`;
         return `${diffHours}h ${diffMins}m until auto-send`;
     }
@@ -359,6 +408,13 @@ export default class MarketerInbox extends LightningElement {
         return diffMs > 0 && diffMs < (60 * 60 * 1000); // Less than 1 hour
     }
 
+    checkIsPastDue(deadline) {
+        if (!deadline) return false;
+        const deadlineDate = new Date(deadline);
+        const now = new Date();
+        return deadlineDate < now;
+    }
+
     getPriorityDisplay(score) {
         if (score >= 70) return 'High Priority';
         if (score >= 40) return 'Medium Priority';
@@ -368,6 +424,13 @@ export default class MarketerInbox extends LightningElement {
     // Event handlers
     handleFilterChange(event) {
         this.activeFilter = event.detail.value;
+    }
+
+    handleStatClick(event) {
+        const filter = event.currentTarget.dataset.filter;
+        if (filter) {
+            this.activeFilter = filter;
+        }
     }
 
     handleRefresh() {

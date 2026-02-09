@@ -559,6 +559,7 @@ public with sharing class PortfolioAssignmentService {
         @AuraEnabled public Integer thisWeekCount = 0;
         @AuraEnabled public Integer thisMonthCount = 0;
         @AuraEnabled public Integer approachingDeadlineCount = 0;
+        @AuraEnabled public Integer pastDueCount = 0;
         @AuraEnabled public Integer portfolioCount = 0;
     }
 
@@ -822,6 +823,17 @@ public with sharing class PortfolioAssignmentService {
             AND Status__c = 'Pending'
             AND Approval_Tier__c = 'Soft Review'
             AND Auto_Send_Deadline__c <= :DateTime.now().addHours(1)
+            AND Auto_Send_Deadline__c > :DateTime.now()
+        ];
+
+        // Count past due (deadline has passed)
+        stats.pastDueCount = [
+            SELECT COUNT()
+            FROM Journey_Approval__c
+            WHERE Assigned_Portfolio__c IN :portfolioIds
+            AND Status__c = 'Pending'
+            AND Auto_Send_Deadline__c != null
+            AND Auto_Send_Deadline__c < :DateTime.now()
         ];
 
         stats.portfolioCount = portfolioIds.size();

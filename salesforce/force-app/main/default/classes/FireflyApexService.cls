@@ -487,7 +487,7 @@ public with sharing class FireflyApexService {
     // ─── Prompt Building ──────────────────────────────────────────────
 
     /**
-     * Build a branded prompt with LUMIÈRE beauty brand guidelines.
+     * Build a branded prompt with BEAUTÉ beauty brand guidelines.
      */
     public static String buildBrandedPrompt(String basePrompt, String eventType) {
         String brandContext = 'Luxury beauty brand aesthetic. Soft, elegant, aspirational mood. '

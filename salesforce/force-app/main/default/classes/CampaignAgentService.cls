@@ -263,7 +263,7 @@ public with sharing class CampaignAgentService {
         prompt += '2. An email subject line (under 60 characters)\n';
         prompt += '3. Email body content (personalized, warm, celebratory tone)\n';
         prompt += '4. A suggested image prompt for generating a hero banner\n';
-        prompt += '\nBRAND: LUMIÈRE Beauty (luxury skincare, soft rose gold aesthetic)\n';
+        prompt += '\nBRAND: BEAUTÉ Beauty (luxury skincare, soft rose gold aesthetic)\n';
         prompt += 'TONE: Personal, celebratory, helpful, elegant\n';
 
         return prompt;
@@ -382,7 +382,7 @@ public with sharing class CampaignAgentService {
         content.put('body', '<p>We noticed something exciting coming up for you!</p>' +
             '<p>' + eventDescription + '</p>' +
             '<p>We\'d love to help you prepare with our curated selection of products.</p>' +
-            '<p>Warm regards,<br/>The LUMIÈRE Team</p>');
+            '<p>Warm regards,<br/>The BEAUTÉ Team</p>');
         content.put('imagePrompt', 'Elegant ' + eventType + ' celebration, luxury beauty products, ' +
             'soft rose gold accents, warm natural lighting, sophisticated editorial style');
 

@@ -460,7 +460,7 @@ public with sharing class MultiStepJourneyBuilder {
         }
 
         html += '<p style="margin-top: 20px;"><a href="#" style="color: #B76E79; font-weight: bold;">Shop Now</a></p>';
-        html += '<p style="margin-top: 30px;">Warm regards,<br/>The LUMIÈRE Team</p>';
+        html += '<p style="margin-top: 30px;">Warm regards,<br/>The BEAUTÉ Team</p>';
         html += '</div>';
 
         return html;

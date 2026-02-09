@@ -43,34 +43,40 @@
             <!-- Stats Summary -->
             <template if:true={hasStats}>
                 <div class="stats-bar slds-grid slds-gutters slds-m-bottom_medium">
-                    <div class="slds-col slds-size_1-of-5">
-                        <div class="stat-card">
-                            <div class="stat-value">{stats.totalPending}</div>
-                            <div class="stat-label">Pending</div>
+                    <div class="slds-col slds-size_1-of-6">
+                        <div class="stat-card stat-clickable" data-filter="all" onclick={handleStatClick}>
+                            <div class="stat-value">{activePendingCount}</div>
+                            <div class="stat-label">Active</div>
                         </div>
                     </div>
-                    <div class="slds-col slds-size_1-of-5">
-                        <div class="stat-card stat-immediate">
+                    <div class="slds-col slds-size_1-of-6">
+                        <div class="stat-card stat-immediate stat-clickable" data-filter="immediate" onclick={handleStatClick}>
                             <div class="stat-value">{stats.immediateCount}</div>
                             <div class="stat-label">Immediate</div>
                         </div>
                     </div>
-                    <div class="slds-col slds-size_1-of-5">
-                        <div class="stat-card stat-soft-review">
+                    <div class="slds-col slds-size_1-of-6">
+                        <div class="stat-card stat-soft-review stat-clickable" data-filter="soft-review" onclick={handleStatClick}>
                             <div class="stat-value">{stats.softReviewCount}</div>
                             <div class="stat-label">Soft Review</div>
                         </div>
                     </div>
-                    <div class="slds-col slds-size_1-of-5">
-                        <div class="stat-card stat-review-required">
+                    <div class="slds-col slds-size_1-of-6">
+                        <div class="stat-card stat-review-required stat-clickable" data-filter="review-required" onclick={handleStatClick}>
                             <div class="stat-value">{stats.reviewRequiredCount}</div>
                             <div class="stat-label">Review Required</div>
                         </div>
                     </div>
-                    <div class="slds-col slds-size_1-of-5">
-                        <div class="stat-card stat-escalate">
+                    <div class="slds-col slds-size_1-of-6">
+                        <div class="stat-card stat-escalate stat-clickable" data-filter="escalate" onclick={handleStatClick}>
                             <div class="stat-value">{stats.escalateCount}</div>
                             <div class="stat-label">Escalate</div>
+                        </div>
+                    </div>
+                    <div class="slds-col slds-size_1-of-6">
+                        <div class="stat-card stat-past-due stat-clickable" data-filter="past-due" onclick={handleStatClick}>
+                            <div class="stat-value">{stats.pastDueCount}</div>
+                            <div class="stat-label">Past Due</div>
                         </div>
                     </div>
                 </div>
@@ -155,21 +161,26 @@
 
                                         <!-- Bulk Actions -->
                                         <div class="slds-col slds-size_4-of-12 slds-text-align_right">
-                                            <lightning-button
-                                                label="Approve All"
-                                                variant="brand"
-                                                icon-name="utility:check"
-                                                data-journey-id={group.journeyId}
-                                                onclick={handleApproveAllSteps}
-                                                class="slds-m-right_x-small">
-                                            </lightning-button>
-                                            <lightning-button
-                                                label="Send Flow"
-                                                variant="success"
-                                                icon-name="utility:send"
-                                                data-journey-id={group.journeyId}
-                                                onclick={handleSendFlow}>
-                                            </lightning-button>
+                                            <template if:true={group.isPastDue}>
+                                                <span class="past-due-badge">Past Due</span>
+                                            </template>
+                                            <template if:false={group.isPastDue}>
+                                                <lightning-button
+                                                    label="Approve All"
+                                                    variant="brand"
+                                                    icon-name="utility:check"
+                                                    data-journey-id={group.journeyId}
+                                                    onclick={handleApproveAllSteps}
+                                                    class="slds-m-right_x-small">
+                                                </lightning-button>
+                                                <lightning-button
+                                                    label="Send Flow"
+                                                    variant="success"
+                                                    icon-name="utility:send"
+                                                    data-journey-id={group.journeyId}
+                                                    onclick={handleSendFlow}>
+                                                </lightning-button>
+                                            </template>
                                         </div>
                                     </div>
                                 </div>
@@ -206,11 +217,16 @@
 
                                                     <!-- Step Actions -->
                                                     <div class="slds-col slds-size_1-of-4 slds-text-align_right action-buttons">
-                                                        <lightning-button-group>
-                                                            <lightning-button-icon icon-name="utility:check" title="Approve" variant="brand" data-id={step.Id} onclick={handleQuickApprove}></lightning-button-icon>
-                                                            <lightning-button-icon icon-name="utility:email" title="Send" variant="success" data-id={step.Id} onclick={handleQuickSend}></lightning-button-icon>
-                                                            <lightning-button-icon icon-name="utility:close" title="Decline" variant="destructive" data-id={step.Id} onclick={handleQuickDecline}></lightning-button-icon>
-                                                        </lightning-button-group>
+                                                        <template if:true={step.isPastDue}>
+                                                            <span class="past-due-badge">Past Due</span>
+                                                        </template>
+                                                        <template if:false={step.isPastDue}>
+                                                            <lightning-button-group>
+                                                                <lightning-button-icon icon-name="utility:check" title="Approve" variant="brand" data-id={step.Id} onclick={handleQuickApprove}></lightning-button-icon>
+                                                                <lightning-button-icon icon-name="utility:email" title="Send" variant="success" data-id={step.Id} onclick={handleQuickSend}></lightning-button-icon>
+                                                                <lightning-button-icon icon-name="utility:close" title="Decline" variant="destructive" data-id={step.Id} onclick={handleQuickDecline}></lightning-button-icon>
+                                                            </lightning-button-group>
+                                                        </template>
                                                     </div>
                                                 </div>
                                             </div>
@@ -223,7 +239,7 @@
                             <template if:false={group.isMultiStep}>
                                 <template for:each={group.steps} for:item="approval">
                                     <div key={approval.Id}
-                                         class="inbox-item slds-box"
+                                         class={approval.itemClass}
                                          data-id={approval.Id}
                                          onclick={handleViewDetails}>
 
@@ -270,11 +286,16 @@
 
                                             <!-- Right: Actions -->
                                             <div class="slds-col slds-size_1-of-6 slds-text-align_right action-buttons">
-                                                <lightning-button-group>
-                                                    <lightning-button-icon icon-name="utility:check" title="Approve" variant="brand" data-id={approval.Id} onclick={handleQuickApprove}></lightning-button-icon>
-                                                    <lightning-button-icon icon-name="utility:email" title="Send" variant="success" data-id={approval.Id} onclick={handleQuickSend}></lightning-button-icon>
-                                                    <lightning-button-icon icon-name="utility:close" title="Decline" variant="destructive" data-id={approval.Id} onclick={handleQuickDecline}></lightning-button-icon>
-                                                </lightning-button-group>
+                                                <template if:true={approval.isPastDue}>
+                                                    <span class="past-due-badge">Past Due</span>
+                                                </template>
+                                                <template if:false={approval.isPastDue}>
+                                                    <lightning-button-group>
+                                                        <lightning-button-icon icon-name="utility:check" title="Approve" variant="brand" data-id={approval.Id} onclick={handleQuickApprove}></lightning-button-icon>
+                                                        <lightning-button-icon icon-name="utility:email" title="Send" variant="success" data-id={approval.Id} onclick={handleQuickSend}></lightning-button-icon>
+                                                        <lightning-button-icon icon-name="utility:close" title="Decline" variant="destructive" data-id={approval.Id} onclick={handleQuickDecline}></lightning-button-icon>
+                                                    </lightning-button-group>
+                                                </template>
                                             </div>
                                         </div>
 

@@ -61,6 +61,29 @@
     color: #a86403;
 }
 
+/* ─── Marketing Flow Link ─────────────────────────────────────────────── */
+
+.marketing-flow-link {
+    background: linear-gradient(135deg, #1b96ff 0%, #0176d3 100%);
+    color: white;
+}
+
+.marketing-flow-link .slds-text-link {
+    color: white;
+    font-weight: 600;
+    text-decoration: underline;
+    display: inline-flex;
+    align-items: center;
+}
+
+.marketing-flow-link .slds-text-link:hover {
+    color: #f0f0f0;
+}
+
+.marketing-flow-link lightning-icon {
+    --slds-c-icon-color-foreground-default: white;
+}
+
 /* ─── Guardrails Section ──────────────────────────────────────────────── */
 
 .guardrails-list {

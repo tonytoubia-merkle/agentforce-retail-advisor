@@ -43,6 +43,46 @@
     color: #ba0517;
 }
 
+.stat-past-due .stat-value {
+    color: #706e6b;
+}
+
+/* Clickable stat cards */
+.stat-clickable {
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.stat-clickable:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.stat-clickable:active {
+    transform: translateY(0);
+}
+
+/* Past due item styling */
+.inbox-item.past-due-item {
+    opacity: 0.7;
+    background: #f8f8f8;
+}
+
+.inbox-item.past-due-item:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: #d8dde6;
+}
+
+.past-due-badge {
+    font-size: 11px;
+    background: #706e6b;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
 /* Inbox Items */
 .inbox-list {
     max-height: 600px;
@@ -96,6 +136,10 @@
 
 .tier-escalate {
     background: linear-gradient(180deg, #fe5c4c 0%, #c23934 100%);
+}
+
+.tier-past-due {
+    background: linear-gradient(180deg, #706e6b 0%, #514f4d 100%);
 }
 
 .tier-default {

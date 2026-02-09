@@ -39,7 +39,7 @@ steps.add(new Journey_Approval__c(
     Journey_Id__c=jid, Step_Number__c=1, Total_Steps__c=3, Channel__c='Email', Send_Delay_Days__c=0,
     Journey_Guardrails__c=guard, Firefly_Prompt__c=p1, Recommended_Products__c=prods,
     Suggested_Subject__c='Sarah, Paris is calling! Your travel essentials await',
-    Suggested_Body__c='<p>Dear Sarah,</p><p>Paris awaits! We curated travel essentials for you:</p><ul><li><strong>Invisible Shield SPF 50</strong></li><li><strong>Cooling Facial Mist</strong></li><li><strong>Hydra-Calm Moisturizer</strong></li></ul><p>With love,<br/>LUMIÈRE</p>'
+    Suggested_Body__c='<p>Dear Sarah,</p><p>Paris awaits! We curated travel essentials for you:</p><ul><li><strong>Invisible Shield SPF 50</strong></li><li><strong>Cooling Facial Mist</strong></li><li><strong>Hydra-Calm Moisturizer</strong></li></ul><p>With love,<br/>BEAUTÉ</p>'
 ));
 
 // Step 2: SMS
@@ -62,7 +62,7 @@ steps.add(new Journey_Approval__c(
     Journey_Id__c=jid, Step_Number__c=3, Total_Steps__c=3, Channel__c='Email', Send_Delay_Days__c=5,
     Journey_Guardrails__c=guard, Firefly_Prompt__c=p2, Recommended_Products__c=prods,
     Suggested_Subject__c='Sarah, last chance before Paris! Free shipping ends tonight',
-    Suggested_Body__c='<p>Dear Sarah,</p><p>2 days until Paris! Last chance for free shipping:</p><ul><li><strong>Invisible Shield SPF 50</strong></li><li><strong>Cooling Facial Mist</strong></li><li><strong>Hydra-Calm Moisturizer</strong></li></ul><p>Bon voyage!<br/>LUMIÈRE</p>'
+    Suggested_Body__c='<p>Dear Sarah,</p><p>2 days until Paris! Last chance for free shipping:</p><ul><li><strong>Invisible Shield SPF 50</strong></li><li><strong>Cooling Facial Mist</strong></li><li><strong>Hydra-Calm Moisturizer</strong></li></ul><p>Bon voyage!<br/>BEAUTÉ</p>'
 ));
 
 insert steps;

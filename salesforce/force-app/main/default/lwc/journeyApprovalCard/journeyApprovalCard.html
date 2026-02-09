@@ -69,6 +69,22 @@
                 </template>
             </div>
 
+            <!-- Marketing Flow Link (if exists) -->
+            <template if:true={hasMarketingFlow}>
+                <div class="slds-box slds-theme_alt-inverse slds-m-bottom_small marketing-flow-link">
+                    <div class="slds-grid slds-grid_vertical-align-center">
+                        <lightning-icon icon-name="utility:flow" size="small" class="slds-m-right_small"></lightning-icon>
+                        <div>
+                            <p class="slds-text-title_caps slds-m-bottom_xx-small" style="color: inherit;">Marketing Flow</p>
+                            <a href={marketingFlowRecordUrl} class="slds-text-link" target="_blank">
+                                {marketingFlowName}
+                                <lightning-icon icon-name="utility:new_window" size="xx-small" class="slds-m-left_xx-small"></lightning-icon>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
             <!-- Journey Guardrails (if present) -->
             <template if:true={hasGuardrails}>
                 <div class="guardrails-section slds-m-bottom_small">

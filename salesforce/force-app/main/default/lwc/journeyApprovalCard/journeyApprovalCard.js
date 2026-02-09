@@ -94,6 +94,24 @@ export default class JourneyApprovalCard extends LightningElement {
         }
     }
 
+    // ─── Marketing Flow Getters ───────────────────────────────────────
+
+    get hasMarketingFlow() {
+        return !!this.approval?.Marketing_Flow__c || !!this.approval?.hasMarketingFlow;
+    }
+
+    get marketingFlowName() {
+        return this.approval?.Marketing_Flow__r?.Name || this.approval?.marketingFlowName || 'Marketing Flow';
+    }
+
+    get marketingFlowRecordUrl() {
+        // Navigate to the Marketing Flow record in Salesforce
+        if (this.approval?.Marketing_Flow__c) {
+            return `/${this.approval.Marketing_Flow__c}`;
+        }
+        return null;
+    }
+
     // ─── Multi-Step Journey Getters ────────────────────────────────────
 
     get isMultiStepJourney() {
@@ -342,7 +360,7 @@ export default class JourneyApprovalCard extends LightningElement {
     }
 
     get addProductsLabel() {
-        return this.hasRecommendedProducts ? 'Add/Edit' : '+ Add Products';
+        return this.hasRecommendedProducts ? 'Add/Edit' : 'Add Products';
     }
 
     // ─── Step Navigation ───────────────────────────────────────────────

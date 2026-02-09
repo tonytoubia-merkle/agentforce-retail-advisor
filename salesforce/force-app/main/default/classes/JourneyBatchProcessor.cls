@@ -52,14 +52,16 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
 
         for (Meaningful_Event__c event : events) {
             try {
-                // Create the journey approval record
-                Journey_Approval__c approval = processEvent(event);
+                // Create multi-step journey approval records
+                List<Journey_Approval__c> journeySteps = processEventMultiStep(event);
 
-                if (approval != null) {
-                    // Assign to a portfolio so it appears in marketer inbox
-                    approval.Assigned_Portfolio__c = assignedPortfolioId;
+                if (!journeySteps.isEmpty()) {
+                    // Assign all steps to the same portfolio
+                    for (Journey_Approval__c step : journeySteps) {
+                        step.Assigned_Portfolio__c = assignedPortfolioId;
+                    }
 
-                    approvalsToInsert.add(approval);
+                    approvalsToInsert.addAll(journeySteps);
 
                     // Mark the event as processed
                     event.Approval_Status__c = 'Approval Created';
@@ -81,7 +83,7 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
             update eventsToUpdate;
         }
 
-        System.debug('JourneyBatchProcessor: Created ' + approvalsToInsert.size() + ' approvals');
+        System.debug('JourneyBatchProcessor: Created ' + approvalsToInsert.size() + ' journey steps from ' + eventsToUpdate.size() + ' events');
     }
 
     global void finish(Database.BatchableContext bc) {
@@ -92,35 +94,65 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
     // ─── Event Processing ─────────────────────────────────────────────
 
     /**
-     * Process a single meaningful event and create a Journey Approval record.
+     * Process a meaningful event and create multi-step Journey Approval records.
+     * Uses MultiStepJourneyBuilder to determine the optimal journey pattern
+     * based on days until event and contact channel preferences.
+     *
+     * @param event The meaningful event to process
+     * @return List of Journey_Approval__c records (one per journey step)
      */
-    private Journey_Approval__c processEvent(Meaningful_Event__c event) {
-        Journey_Approval__c approval = new Journey_Approval__c();
+    private List<Journey_Approval__c> processEventMultiStep(Meaningful_Event__c event) {
+        List<Journey_Approval__c> approvals = new List<Journey_Approval__c>();
 
-        // Link to source records
-        approval.Meaningful_Event__c = event.Id;
-
-        // Use Contact__c lookup if set, otherwise try Customer_Id__c (text field)
-        if (event.Contact__c != null) {
-            approval.Contact__c = event.Contact__c;
-        } else if (String.isNotBlank(event.Customer_Id__c)) {
+        // Resolve contact ID
+        Id contactId = event.Contact__c;
+        if (contactId == null && String.isNotBlank(event.Customer_Id__c)) {
             try {
-                approval.Contact__c = Id.valueOf(event.Customer_Id__c);
+                contactId = Id.valueOf(event.Customer_Id__c);
             } catch (Exception e) {
                 System.debug(LoggingLevel.WARN, 'Could not parse Customer_Id__c as Contact Id: ' + event.Customer_Id__c);
             }
         }
 
-        // Copy event details
-        approval.Event_Type__c = event.Event_Type__c;
-        approval.Event_Date__c = event.Event_Date__c;
-        approval.Urgency__c = event.Urgency__c;
-        approval.Status__c = 'Pending';
+        // Get contact name for personalization
+        String contactName = null;
+        if (contactId != null) {
+            try {
+                Contact c = [SELECT FirstName, LastName FROM Contact WHERE Id = :contactId LIMIT 1];
+                contactName = c.FirstName;
+            } catch (Exception e) {
+                // Continue without name
+            }
+        }
 
-        // Build event summary (sanitized for marketer view)
-        approval.Event_Summary__c = buildEventSummary(event);
+        // Build journey configuration
+        MultiStepJourneyBuilder.JourneyConfig config = new MultiStepJourneyBuilder.JourneyConfig();
+        config.contactId = contactId;
+        config.meaningfulEventId = event.Id;
+        config.eventType = event.Event_Type__c;
+        config.eventDescription = event.Description__c;
+        config.eventDate = event.Event_Date__c;
+        config.urgency = event.Urgency__c;
+        config.suggestedProducts = event.Suggested_Products__c;
+        config.agentNote = event.Agent_Note__c;
+        config.contactName = contactName;
 
-        // Generate content using Campaign Creation Agent
+        // Build the multi-step journey
+        MultiStepJourneyBuilder.JourneyResult journeyResult = MultiStepJourneyBuilder.buildJourney(config);
+
+        if (!journeyResult.success || journeyResult.steps.isEmpty()) {
+            System.debug(LoggingLevel.WARN, 'Journey builder failed: ' + journeyResult.error + '. Falling back to single step.');
+            // Fallback to single-step journey
+            Journey_Approval__c fallback = createFallbackApproval(event, contactId, contactName);
+            approvals.add(fallback);
+            return approvals;
+        }
+
+        // Build common event summary
+        String eventSummary = buildEventSummary(event);
+
+        // Get AI-generated content for the first email step (primary touchpoint)
+        CampaignAgentService.BriefGenerationResult agentResult = null;
         try {
             CampaignAgentService.BriefGenerationRequest agentReq = new CampaignAgentService.BriefGenerationRequest();
             agentReq.eventType = event.Event_Type__c;
@@ -128,44 +160,99 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
             agentReq.eventDate = event.Event_Date__c;
             agentReq.suggestedProducts = event.Suggested_Products__c;
             agentReq.additionalContext = event.Agent_Note__c;
-
-            // Get contact name if available
-            if (event.Contact__c != null) {
-                try {
-                    Contact c = [SELECT FirstName, LastName FROM Contact WHERE Id = :event.Contact__c LIMIT 1];
-                    agentReq.contactName = c.FirstName;
-                } catch (Exception e) {
-                    // Contact query failed, continue without name
-                }
-            }
+            agentReq.contactName = contactName;
 
             List<CampaignAgentService.BriefGenerationResult> agentResults =
                 CampaignAgentService.generateBriefs(new List<CampaignAgentService.BriefGenerationRequest>{agentReq});
 
             if (!agentResults.isEmpty() && agentResults[0].success) {
-                CampaignAgentService.BriefGenerationResult agentResult = agentResults[0];
+                agentResult = agentResults[0];
+            }
+        } catch (Exception e) {
+            System.debug(LoggingLevel.WARN, 'Campaign Agent failed: ' + e.getMessage());
+        }
+
+        // Create Journey_Approval__c records for each step
+        for (MultiStepJourneyBuilder.JourneyStep step : journeyResult.steps) {
+            Journey_Approval__c approval = new Journey_Approval__c();
+
+            // Link to source records
+            approval.Meaningful_Event__c = event.Id;
+            approval.Contact__c = contactId;
+
+            // Copy event details
+            approval.Event_Type__c = event.Event_Type__c;
+            approval.Event_Date__c = event.Event_Date__c;
+            approval.Urgency__c = event.Urgency__c;
+            approval.Status__c = 'Pending';
+            approval.Event_Summary__c = eventSummary;
+
+            // Multi-step journey fields
+            approval.Journey_Id__c = journeyResult.journeyId;
+            approval.Step_Number__c = step.stepNumber;
+            approval.Total_Steps__c = step.totalSteps;
+            approval.Channel__c = step.channel;
+            approval.Send_Delay_Days__c = step.sendDelayDays;
+            approval.Journey_Guardrails__c = step.guardrailsJson;
+
+            // Content: Use AI-generated for first email step, builder templates for others
+            if (step.stepNumber == 1 && step.channel == 'Email' && agentResult != null) {
+                // First email uses AI-generated content
                 approval.Suggested_Subject__c = agentResult.suggestedSubject;
                 approval.Suggested_Body__c = agentResult.suggestedBody;
 
-                // Store the Firefly prompt suggestion (marketer will click button to generate image)
                 if (String.isNotBlank(agentResult.fireflyPromptSuggestion)) {
                     approval.Firefly_Prompt__c = agentResult.fireflyPromptSuggestion;
                 } else if (String.isNotBlank(event.Suggested_Firefly_Prompt__c)) {
                     approval.Firefly_Prompt__c = event.Suggested_Firefly_Prompt__c;
                 } else {
-                    approval.Firefly_Prompt__c = buildDefaultFireflyPrompt(event);
+                    approval.Firefly_Prompt__c = step.fireflyPrompt;
                 }
+            } else {
+                // Subsequent steps use builder-generated templates
+                approval.Suggested_Subject__c = step.subject;
+                approval.Suggested_Body__c = step.body;
+                approval.SMS_Body__c = step.smsBody;
+                approval.Firefly_Prompt__c = step.fireflyPrompt;
             }
-        } catch (Exception e) {
-            System.debug(LoggingLevel.WARN, 'Campaign Agent failed, using fallback: ' + e.getMessage());
-            // Use fallback content generation
-            approval.Suggested_Subject__c = buildFallbackSubject(event);
-            approval.Suggested_Body__c = buildFallbackBody(event);
-            approval.Firefly_Prompt__c = buildDefaultFireflyPrompt(event);
+
+            // Products JSON (if available)
+            if (String.isNotBlank(step.productsJson)) {
+                approval.Recommended_Products__c = step.productsJson;
+            }
+
+            approvals.add(approval);
         }
 
-        // NOTE: Image generation is NOT automatic - marketer clicks "Generate Image" button
-        // The Firefly_Prompt__c is pre-populated so they can review/edit before generating
+        System.debug('Created ' + approvals.size() + '-step journey for event: ' + event.Description__c);
+        return approvals;
+    }
+
+    /**
+     * Create a fallback single-step approval when journey builder fails.
+     */
+    private Journey_Approval__c createFallbackApproval(Meaningful_Event__c event, Id contactId, String contactName) {
+        Journey_Approval__c approval = new Journey_Approval__c();
+
+        approval.Meaningful_Event__c = event.Id;
+        approval.Contact__c = contactId;
+        approval.Event_Type__c = event.Event_Type__c;
+        approval.Event_Date__c = event.Event_Date__c;
+        approval.Urgency__c = event.Urgency__c;
+        approval.Status__c = 'Pending';
+        approval.Event_Summary__c = buildEventSummary(event);
+
+        // Single step fields
+        approval.Journey_Id__c = JourneyStepService.generateJourneyId(contactId, event.Event_Type__c);
+        approval.Step_Number__c = 1;
+        approval.Total_Steps__c = 1;
+        approval.Channel__c = 'Email';
+        approval.Send_Delay_Days__c = 0;
+
+        // Use fallback content
+        approval.Suggested_Subject__c = buildFallbackSubject(event);
+        approval.Suggested_Body__c = buildFallbackBody(event);
+        approval.Firefly_Prompt__c = buildDefaultFireflyPrompt(event);
 
         return approval;
     }
@@ -334,7 +421,7 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
         html += '<p>' + event.Description__c + '</p>';
         html += '<p>We\'d love to help you prepare with our curated selection of products perfect for this special occasion.</p>';
         html += '<p><a href="#" style="color: #B76E79;">Shop the Collection</a></p>';
-        html += '<p style="margin-top: 30px;">Warm regards,<br/>The LUMIÈRE Team</p>';
+        html += '<p style="margin-top: 30px;">Warm regards,<br/>The BEAUTÉ Team</p>';
         html += '</div>';
         return html;
     }

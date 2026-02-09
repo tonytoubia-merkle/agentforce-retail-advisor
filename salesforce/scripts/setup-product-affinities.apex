@@ -173,7 +173,7 @@ Journey_Approval__c approval = new Journey_Approval__c(
         '<li><strong>Cooling Facial Mist</strong> – Refresh between museum visits</li>' +
         '</ul>' +
         '<p>Bon voyage!</p>' +
-        '<p>With love,<br/>The LUMIÈRE Team</p>',
+        '<p>With love,<br/>The BEAUTÉ Team</p>',
     Firefly_Prompt__c = result.prompt,
     Recommended_Products__c = result.recommendedProductsJson
 );
