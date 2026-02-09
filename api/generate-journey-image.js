@@ -363,7 +363,7 @@ function sleep(ms) {
  * Products are placed in the lower center to leave the top clear for text overlay.
  */
 async function expandImage(uploadId, prompt, token, clientId) {
-  // Use simple placement format that was working before
+  // Firefly Expand API requires alignment to be an object with horizontal/vertical
   const requestBody = JSON.stringify({
     numVariations: 1,
     size: {
@@ -377,7 +377,10 @@ async function expandImage(uploadId, prompt, token, clientId) {
     },
     prompt: prompt,
     placement: {
-      alignment: 'center',
+      alignment: {
+        horizontal: 'center',
+        vertical: 'center',
+      },
     },
   });
 
