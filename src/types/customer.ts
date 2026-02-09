@@ -98,12 +98,18 @@ export interface ChatSummary {
 }
 
 // ─── Meaningful Events (Agent-captured) ─────────────────────────
+export type EventUrgency = 'Immediate' | 'This Week' | 'This Month' | 'Future' | 'No Date';
+
 export interface MeaningfulEvent {
   eventType: 'preference' | 'milestone' | 'life-event' | 'concern' | 'intent';
   description: string;
   capturedAt: string;
   agentNote?: string;
   metadata?: Record<string, string>;
+  // Temporal fields for journey orchestration
+  relativeTimeText?: string;  // Original phrase: "in two weeks", "next month"
+  eventDate?: string;         // ISO date calculated from relative time
+  urgency?: EventUrgency;     // Calculated urgency bucket
 }
 
 // ─── Browse Data ────────────────────────────────────────────────

@@ -445,25 +445,114 @@ public with sharing class MultiStepJourneyBuilder {
 
     private static String buildEmailBody(JourneyConfig config, Integer stepNum, Integer totalSteps) {
         String name = String.isNotBlank(config.contactName) ? config.contactName : 'there';
-        String html = '<div style="font-family: Georgia, serif; color: #333;">';
+        String eventDesc = config.eventDescription != null ? config.eventDescription.toLowerCase() : 'special occasion';
+        String html = '<div style="font-family: Georgia, serif; color: #333; max-width: 600px; margin: 0 auto;">';
+
+        // Event-type specific opening and content
+        String eventType = getEventCategory(eventDesc);
+        String greeting = '<p style="font-size: 18px; margin-bottom: 20px;">Dear ' + name + ',</p>';
 
         if (stepNum == 1) {
-            html += '<p>Hi ' + name + ',</p>';
-            html += '<p>We heard you have something exciting coming up: <strong>' + config.eventDescription + '</strong>.</p>';
-            html += '<p>We\'ve curated some products we think you\'ll love for this special occasion.</p>';
+            html += greeting;
+            html += buildFirstEmailContent(eventType, eventDesc, name);
         } else if (stepNum == totalSteps) {
-            html += '<p>Hi ' + name + ',</p>';
-            html += '<p>Your special day is almost here! Don\'t forget to pack these essentials.</p>';
+            html += greeting;
+            html += buildFinalEmailContent(eventType, eventDesc);
         } else {
-            html += '<p>Hi ' + name + ',</p>';
-            html += '<p>Just checking in with some tips and product recommendations for your upcoming ' + config.eventDescription + '.</p>';
+            html += greeting;
+            html += buildMiddleEmailContent(eventType, eventDesc, stepNum, totalSteps);
         }
 
-        html += '<p style="margin-top: 20px;"><a href="#" style="color: #B76E79; font-weight: bold;">Shop Now</a></p>';
-        html += '<p style="margin-top: 30px;">Warm regards,<br/>The BEAUTÉ Team</p>';
+        // Elegant CTA button
+        html += '<p style="margin: 30px 0; text-align: center;">';
+        html += '<a href="#" style="display: inline-block; background: linear-gradient(135deg, #B76E79, #D4A574); color: white; text-decoration: none; padding: 14px 32px; border-radius: 25px; font-weight: 500; font-size: 14px; letter-spacing: 0.5px;">Discover Your Selection</a>';
+        html += '</p>';
+
+        // Warm sign-off
+        html += '<p style="margin-top: 40px; color: #666; font-style: italic;">With love,</p>';
+        html += '<p style="color: #B76E79; font-weight: 600; font-size: 16px;">The BEAUTÉ Team</p>';
         html += '</div>';
 
         return html;
+    }
+
+    private static String getEventCategory(String eventDesc) {
+        if (eventDesc.contains('wedding')) return 'wedding';
+        if (eventDesc.contains('anniversary')) return 'anniversary';
+        if (eventDesc.contains('birthday')) return 'birthday';
+        if (eventDesc.contains('travel') || eventDesc.contains('trip') || eventDesc.contains('vacation')) return 'travel';
+        if (eventDesc.contains('baby') || eventDesc.contains('pregnant')) return 'baby';
+        if (eventDesc.contains('graduation')) return 'graduation';
+        return 'celebration';
+    }
+
+    private static String buildFirstEmailContent(String eventType, String eventDesc, String name) {
+        String content = '';
+
+        if (eventType == 'wedding') {
+            content += '<p style="font-size: 16px; line-height: 1.7; color: #444;">Every love story deserves its own glow. We hear there\'s a beautiful celebration on the horizon, and we couldn\'t be more delighted for you.</p>';
+            content += '<p style="font-size: 16px; line-height: 1.7; color: #444;">Whether you\'re walking down the aisle or celebrating someone you love, we\'ve thoughtfully selected pieces designed to make you radiant — from the rehearsal dinner to the last dance.</p>';
+            content += '<p style="font-size: 16px; line-height: 1.7; color: #444;"><em>Your skin tells your story. Let it glow.</em></p>';
+        } else if (eventType == 'anniversary') {
+            content += '<p style="font-size: 16px; line-height: 1.7; color: #444;">Another year of beautiful moments deserves to be celebrated. We\'ve curated something special for this milestone.</p>';
+            content += '<p style="font-size: 16px; line-height: 1.7; color: #444;">From luxurious fragrances to skin that tells a story of happiness — here\'s to looking and feeling your most radiant.</p>';
+        } else if (eventType == 'travel') {
+            content += '<p style="font-size: 16px; line-height: 1.7; color: #444;">Adventure awaits! Before you embark on your journey, we\'ve assembled the perfect travel companions for your beauty ritual.</p>';
+            content += '<p style="font-size: 16px; line-height: 1.7; color: #444;">From protective SPF to hydrating essentials that survive any climate — arrive at every destination looking refreshed and radiant.</p>';
+            content += '<p style="font-size: 16px; line-height: 1.7; color: #444;"><em>Because the best souvenirs are the memories in your glow.</em></p>';
+        } else if (eventType == 'birthday') {
+            content += '<p style="font-size: 16px; line-height: 1.7; color: #444;">A birthday means celebrating the most important person — you. This year, why not gift yourself the glow you deserve?</p>';
+            content += '<p style="font-size: 16px; line-height: 1.7; color: #444;">We\'ve selected pieces that will make you feel as radiant as the day itself. Because every year more beautiful deserves to be seen.</p>';
+        } else if (eventType == 'baby') {
+            content += '<p style="font-size: 16px; line-height: 1.7; color: #444;">What an incredible journey you\'re on! Your body is doing something miraculous, and you deserve to feel nurtured every step of the way.</p>';
+            content += '<p style="font-size: 16px; line-height: 1.7; color: #444;">We\'ve carefully selected gentle, pregnancy-safe formulas to keep you glowing through this beautiful chapter.</p>';
+        } else {
+            content += '<p style="font-size: 16px; line-height: 1.7; color: #444;">Something wonderful is on the horizon, and we wanted to help you prepare in the most beautiful way possible.</p>';
+            content += '<p style="font-size: 16px; line-height: 1.7; color: #444;">We\'ve selected a collection designed to make you feel confident, radiant, and ready for your special moment.</p>';
+        }
+
+        return content;
+    }
+
+    private static String buildMiddleEmailContent(String eventType, String eventDesc, Integer stepNum, Integer totalSteps) {
+        String content = '';
+        Integer daysContext = stepNum == 2 ? 7 : 3; // Approximate days before event
+
+        if (eventType == 'wedding') {
+            content += '<p style="font-size: 16px; line-height: 1.7; color: #444;">The countdown continues! With the big day approaching, now is the perfect time to finalize your beauty essentials.</p>';
+            content += '<p style="font-size: 16px; line-height: 1.7; color: #444;">Pro tip: Start your skin prep regimen now — hydrated, glowing skin photographs beautifully and holds makeup flawlessly.</p>';
+        } else if (eventType == 'travel') {
+            content += '<p style="font-size: 16px; line-height: 1.7; color: #444;">Getting excited? Us too! Here\'s a friendly reminder to stock up on travel-sized essentials.</p>';
+            content += '<p style="font-size: 16px; line-height: 1.7; color: #444;">Don\'t forget: in-flight hydration is key. Your skin will thank you upon landing!</p>';
+        } else {
+            content += '<p style="font-size: 16px; line-height: 1.7; color: #444;">Your moment is getting closer! We wanted to check in and make sure you have everything you need.</p>';
+            content += '<p style="font-size: 16px; line-height: 1.7; color: #444;">There\'s still time to add those finishing touches to your beauty collection.</p>';
+        }
+
+        return content;
+    }
+
+    private static String buildFinalEmailContent(String eventType, String eventDesc) {
+        String content = '';
+
+        if (eventType == 'wedding') {
+            content += '<p style="font-size: 16px; line-height: 1.7; color: #444;">The moment is almost here! 💕</p>';
+            content += '<p style="font-size: 16px; line-height: 1.7; color: #444;">One last thing: don\'t forget to do a final mask treatment tonight, and keep a blotting paper and lipstick in your clutch for touch-ups.</p>';
+            content += '<p style="font-size: 16px; line-height: 1.7; color: #444;">Wishing you a day as beautiful as your love story. Go shine!</p>';
+        } else if (eventType == 'travel') {
+            content += '<p style="font-size: 16px; line-height: 1.7; color: #444;">Safe travels! 🌟</p>';
+            content += '<p style="font-size: 16px; line-height: 1.7; color: #444;">Last-minute checklist: SPF, lip balm, travel cleanser, and your favorite serum. Trust us — your future self will be grateful.</p>';
+            content += '<p style="font-size: 16px; line-height: 1.7; color: #444;">Have the most amazing trip. We\'ll be here when you return!</p>';
+        } else if (eventType == 'birthday') {
+            content += '<p style="font-size: 16px; line-height: 1.7; color: #444;">Happy almost-birthday! 🎂</p>';
+            content += '<p style="font-size: 16px; line-height: 1.7; color: #444;">Tomorrow is all about you. Prep your skin tonight with a luxurious mask, and wake up ready to glow.</p>';
+            content += '<p style="font-size: 16px; line-height: 1.7; color: #444;">Here\'s to another year of beautiful you!</p>';
+        } else {
+            content += '<p style="font-size: 16px; line-height: 1.7; color: #444;">The big day is here! ✨</p>';
+            content += '<p style="font-size: 16px; line-height: 1.7; color: #444;">You\'ve prepared beautifully. Now go out there and shine — you\'ve got this!</p>';
+        }
+
+        return content;
     }
 
     private static String buildSmsBody(JourneyConfig config, Integer stepNum, Integer totalSteps) {

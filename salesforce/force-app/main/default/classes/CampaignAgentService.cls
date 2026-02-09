@@ -376,13 +376,51 @@ public with sharing class CampaignAgentService {
             }
         }
 
-        // Generate basic content
+        // Generate event-specific content
+        String eventLower = eventDescription.toLowerCase();
+        String subject = 'Something special just for you';
+        String body = '';
+
+        if (eventLower.contains('wedding')) {
+            subject = 'Your wedding glow awaits ✨';
+            body = '<div style="font-family: Georgia, serif; color: #333; max-width: 600px;">' +
+                '<p style="font-size: 18px; line-height: 1.7;">Every love story deserves its own glow.</p>' +
+                '<p style="font-size: 16px; line-height: 1.7; color: #444;">We heard there\'s a beautiful celebration on the horizon! Whether you\'re walking down the aisle or celebrating someone you love, we\'ve thoughtfully selected pieces designed to make you radiant — from the rehearsal dinner to the last dance.</p>' +
+                '<p style="margin: 25px 0;"><a href="#" style="display: inline-block; background: linear-gradient(135deg, #B76E79, #D4A574); color: white; text-decoration: none; padding: 14px 32px; border-radius: 25px; font-weight: 500;">Discover Your Selection</a></p>' +
+                '<p style="color: #666; font-style: italic;">With love,</p><p style="color: #B76E79; font-weight: 600;">The BEAUTÉ Team</p></div>';
+        } else if (eventLower.contains('travel') || eventLower.contains('trip') || eventLower.contains('vacation')) {
+            subject = 'Travel beauty essentials for your adventure';
+            body = '<div style="font-family: Georgia, serif; color: #333; max-width: 600px;">' +
+                '<p style="font-size: 18px; line-height: 1.7;">Adventure awaits! 🌟</p>' +
+                '<p style="font-size: 16px; line-height: 1.7; color: #444;">Before you embark on your journey, we\'ve assembled the perfect travel companions for your beauty ritual. From protective SPF to hydrating essentials that survive any climate — arrive at every destination looking refreshed and radiant.</p>' +
+                '<p style="margin: 25px 0;"><a href="#" style="display: inline-block; background: linear-gradient(135deg, #B76E79, #D4A574); color: white; text-decoration: none; padding: 14px 32px; border-radius: 25px; font-weight: 500;">Shop Travel Essentials</a></p>' +
+                '<p style="color: #666; font-style: italic;">With love,</p><p style="color: #B76E79; font-weight: 600;">The BEAUTÉ Team</p></div>';
+        } else if (eventLower.contains('birthday')) {
+            subject = 'Birthday glow time! 🎂';
+            body = '<div style="font-family: Georgia, serif; color: #333; max-width: 600px;">' +
+                '<p style="font-size: 18px; line-height: 1.7;">A birthday means celebrating the most important person — you!</p>' +
+                '<p style="font-size: 16px; line-height: 1.7; color: #444;">This year, gift yourself the glow you deserve. We\'ve selected pieces that will make you feel as radiant as the day itself. Because every year more beautiful deserves to be seen.</p>' +
+                '<p style="margin: 25px 0;"><a href="#" style="display: inline-block; background: linear-gradient(135deg, #B76E79, #D4A574); color: white; text-decoration: none; padding: 14px 32px; border-radius: 25px; font-weight: 500;">Celebrate You</a></p>' +
+                '<p style="color: #666; font-style: italic;">With love,</p><p style="color: #B76E79; font-weight: 600;">The BEAUTÉ Team</p></div>';
+        } else if (eventLower.contains('anniversary')) {
+            subject = 'Celebrating your beautiful milestone 💕';
+            body = '<div style="font-family: Georgia, serif; color: #333; max-width: 600px;">' +
+                '<p style="font-size: 18px; line-height: 1.7;">Another year of beautiful moments deserves to be celebrated.</p>' +
+                '<p style="font-size: 16px; line-height: 1.7; color: #444;">We\'ve curated something special for this milestone. From luxurious fragrances to skin that tells a story of happiness — here\'s to looking and feeling your most radiant.</p>' +
+                '<p style="margin: 25px 0;"><a href="#" style="display: inline-block; background: linear-gradient(135deg, #B76E79, #D4A574); color: white; text-decoration: none; padding: 14px 32px; border-radius: 25px; font-weight: 500;">Discover Your Selection</a></p>' +
+                '<p style="color: #666; font-style: italic;">With love,</p><p style="color: #B76E79; font-weight: 600;">The BEAUTÉ Team</p></div>';
+        } else {
+            subject = 'Something special for your upcoming moment ✨';
+            body = '<div style="font-family: Georgia, serif; color: #333; max-width: 600px;">' +
+                '<p style="font-size: 18px; line-height: 1.7;">Something wonderful is on the horizon!</p>' +
+                '<p style="font-size: 16px; line-height: 1.7; color: #444;">We noticed ' + eventDescription + ' — and we couldn\'t help but want to help you prepare in the most beautiful way possible. We\'ve selected a collection designed to make you feel confident, radiant, and ready for your special moment.</p>' +
+                '<p style="margin: 25px 0;"><a href="#" style="display: inline-block; background: linear-gradient(135deg, #B76E79, #D4A574); color: white; text-decoration: none; padding: 14px 32px; border-radius: 25px; font-weight: 500;">Discover Your Selection</a></p>' +
+                '<p style="color: #666; font-style: italic;">With love,</p><p style="color: #B76E79; font-weight: 600;">The BEAUTÉ Team</p></div>';
+        }
+
         content.put('briefContent', 'Personalized journey for ' + eventType + ': ' + eventDescription);
-        content.put('subject', 'Something special just for you');
-        content.put('body', '<p>We noticed something exciting coming up for you!</p>' +
-            '<p>' + eventDescription + '</p>' +
-            '<p>We\'d love to help you prepare with our curated selection of products.</p>' +
-            '<p>Warm regards,<br/>The BEAUTÉ Team</p>');
+        content.put('subject', subject);
+        content.put('body', body);
         content.put('imagePrompt', 'Elegant ' + eventType + ' celebration, luxury beauty products, ' +
             'soft rose gold accents, warm natural lighting, sophisticated editorial style');
 

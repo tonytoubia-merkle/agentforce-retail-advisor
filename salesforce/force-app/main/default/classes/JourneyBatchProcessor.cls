@@ -498,14 +498,38 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
 
     /**
      * Build fallback email body if Campaign Agent is unavailable.
+     * Event-type specific content for a more engaging, personalized experience.
      */
     private String buildFallbackBody(Meaningful_Event__c event) {
-        String html = '<div style="font-family: Georgia, serif; color: #333;">';
-        html += '<p>We couldn\'t help but notice you have something exciting coming up.</p>';
-        html += '<p>' + event.Description__c + '</p>';
-        html += '<p>We\'d love to help you prepare with our curated selection of products perfect for this special occasion.</p>';
-        html += '<p><a href="#" style="color: #B76E79;">Shop the Collection</a></p>';
-        html += '<p style="margin-top: 30px;">Warm regards,<br/>The BEAUTÉ Team</p>';
+        String eventDesc = event.Description__c != null ? event.Description__c.toLowerCase() : 'special occasion';
+        String html = '<div style="font-family: Georgia, serif; color: #333; max-width: 600px; margin: 0 auto;">';
+
+        // Event-specific opening
+        if (eventDesc.contains('wedding')) {
+            html += '<p style="font-size: 18px; line-height: 1.7; color: #444;">Every love story deserves its own glow. ✨</p>';
+            html += '<p style="font-size: 16px; line-height: 1.7; color: #444;">We heard there\'s a beautiful celebration on the horizon — how exciting! Whether you\'re walking down the aisle or celebrating someone you love, we\'ve thoughtfully selected pieces designed to make you radiant from the rehearsal dinner to the last dance.</p>';
+        } else if (eventDesc.contains('travel') || eventDesc.contains('trip') || eventDesc.contains('vacation')) {
+            html += '<p style="font-size: 18px; line-height: 1.7; color: #444;">Adventure awaits! 🌟</p>';
+            html += '<p style="font-size: 16px; line-height: 1.7; color: #444;">Before you embark on your journey, we\'ve assembled the perfect travel companions for your beauty ritual. From protective SPF to hydrating essentials that survive any climate — arrive at every destination looking refreshed and radiant.</p>';
+        } else if (eventDesc.contains('birthday')) {
+            html += '<p style="font-size: 18px; line-height: 1.7; color: #444;">A birthday means celebrating the most important person — you! 🎂</p>';
+            html += '<p style="font-size: 16px; line-height: 1.7; color: #444;">This year, gift yourself the glow you deserve. We\'ve selected pieces that will make you feel as radiant as the day itself. Because every year more beautiful deserves to be seen.</p>';
+        } else if (eventDesc.contains('anniversary')) {
+            html += '<p style="font-size: 18px; line-height: 1.7; color: #444;">Another year of beautiful moments deserves to be celebrated. 💕</p>';
+            html += '<p style="font-size: 16px; line-height: 1.7; color: #444;">We\'ve curated something special for this milestone. From luxurious fragrances to skin that tells a story of happiness — here\'s to looking and feeling your most radiant.</p>';
+        } else {
+            html += '<p style="font-size: 18px; line-height: 1.7; color: #444;">Something wonderful is on the horizon! ✨</p>';
+            html += '<p style="font-size: 16px; line-height: 1.7; color: #444;">We noticed ' + event.Description__c + ' — and we couldn\'t help but want to help you prepare in the most beautiful way possible. We\'ve selected a collection designed to make you feel confident, radiant, and ready for your special moment.</p>';
+        }
+
+        // Elegant CTA
+        html += '<p style="margin: 30px 0; text-align: center;">';
+        html += '<a href="#" style="display: inline-block; background: linear-gradient(135deg, #B76E79, #D4A574); color: white; text-decoration: none; padding: 14px 32px; border-radius: 25px; font-weight: 500; font-size: 14px; letter-spacing: 0.5px;">Discover Your Selection</a>';
+        html += '</p>';
+
+        // Warm sign-off
+        html += '<p style="margin-top: 40px; color: #666; font-style: italic;">With love,</p>';
+        html += '<p style="color: #B76E79; font-weight: 600; font-size: 16px;">The BEAUTÉ Team</p>';
         html += '</div>';
         return html;
     }

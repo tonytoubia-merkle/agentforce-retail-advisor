@@ -93,11 +93,12 @@ export class DataCloudWriteService {
     event: MeaningfulEvent,
   ): Promise<void> {
     if (useMockData) {
-      console.log('[mock] Would write meaningful event:', event.description);
+      console.log('[mock] Would write meaningful event:', event.description, event.eventDate ? `(${event.eventDate})` : '');
       return;
     }
 
-    await this.postJson('/services/data/v60.0/sobjects/Meaningful_Event__c', {
+    // Build the record with optional temporal fields
+    const record: Record<string, unknown> = {
       Customer_Id__c: customerId,
       Session_Id__c: sessionId,
       Event_Type__c: event.eventType,
@@ -105,7 +106,20 @@ export class DataCloudWriteService {
       Captured_At__c: event.capturedAt,
       Agent_Note__c: event.agentNote || '',
       Metadata_JSON__c: event.metadata ? JSON.stringify(event.metadata) : null,
-    });
+    };
+
+    // Add temporal fields for journey orchestration
+    if (event.relativeTimeText) {
+      record.Relative_Time_Text__c = event.relativeTimeText;
+    }
+    if (event.eventDate) {
+      record.Event_Date__c = event.eventDate;
+    }
+    if (event.urgency) {
+      record.Urgency__c = event.urgency;
+    }
+
+    await this.postJson('/services/data/v60.0/sobjects/Meaningful_Event__c', record);
   }
 
   async writeCapturedProfileField(
