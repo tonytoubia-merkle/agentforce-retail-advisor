@@ -5,6 +5,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useCustomer } from '@/contexts/CustomerContext';
 import { ProductImage } from './ProductImage';
 import { MerkuryProfilePicker } from './MerkuryProfilePicker';
+import { trackPurchase } from '@/services/personalization';
 
 const API_BASE = '';
 
@@ -62,6 +63,12 @@ export const CheckoutPage: React.FC = () => {
       if (useMock) {
         setTimeout(() => {
           const orderId = `ORD-${Date.now().toString(36).toUpperCase()}`;
+          trackPurchase(orderId, total, items.map((item) => ({
+            product2Id: item.product.id,
+            productName: item.product.name,
+            quantity: item.quantity,
+            unitPrice: item.product.price,
+          })));
           clearCart();
           navigateToOrderConfirmation(orderId);
         }, 2000);
@@ -99,6 +106,16 @@ export const CheckoutPage: React.FC = () => {
         .then((res) => res.json())
         .then((result) => {
           if (result.success) {
+            trackPurchase(
+              result.orderNumber || result.orderId,
+              total,
+              items.map((item) => ({
+                product2Id: item.product.id,
+                productName: item.product.name,
+                quantity: item.quantity,
+                unitPrice: item.product.price,
+              })),
+            );
             clearCart();
             navigateToOrderConfirmation(result.orderNumber || result.orderId, result);
           } else {

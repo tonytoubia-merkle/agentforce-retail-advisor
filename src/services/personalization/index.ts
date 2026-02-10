@@ -598,6 +598,44 @@ export function trackAddToCart(productId: string, productName: string, price: nu
   }
 }
 
+/**
+ * Track a purchase/order event.
+ * Sends an explicit sendEvent with order details and line items so
+ * Data Cloud can build engagement signals for recommenders.
+ */
+export function trackPurchase(
+  orderId: string,
+  orderTotal: number,
+  lineItems: Array<{ product2Id: string; productName: string; quantity: number; unitPrice: number }>,
+  currency = 'USD',
+): void {
+  if (!isPersonalizationConfigured() || !initialized) return;
+
+  const sfp = getSdk();
+  if (!sfp) return;
+
+  try {
+    sendSdkEvent(sfp, {
+      interaction: {
+        name: 'Purchase',
+        order: {
+          id: orderId,
+          totalValue: orderTotal,
+          currency,
+          lineItems: lineItems.map((item) => ({
+            catalogObjectType: 'Product',
+            catalogObjectId: item.product2Id,
+            quantity: item.quantity,
+            price: item.unitPrice,
+          })),
+        },
+      },
+    });
+  } catch (err) {
+    console.error('[sfp] Purchase tracking error:', err);
+  }
+}
+
 // ── Campaign decisions ───────────────────────────────────────────────────────
 
 /**
