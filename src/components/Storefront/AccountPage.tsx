@@ -1,8 +1,9 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useCustomer } from '@/contexts/CustomerContext';
 import { useStore } from '@/contexts/StoreContext';
-import type { OrderRecord, AgentCapturedProfile, CapturedProfileField } from '@/types/customer';
+import { getDataCloudWriteService, type BeautyPreferencesUpdate, type CommunicationPreferencesUpdate } from '@/services/datacloud/writeProfile';
+import type { OrderRecord, AgentCapturedProfile, CapturedProfileField, ProfilePreferences } from '@/types/customer';
 
 const TIER_THRESHOLDS: Record<string, { next: string; points: number }> = {
   bronze: { next: 'Silver', points: 1000 },
@@ -17,11 +18,61 @@ const STATUS_COLORS: Record<string, string> = {
   returned: 'bg-amber-100 text-amber-700',
 };
 
+// ─── Constants for preference options ────────────────────────────
+const SKIN_TYPES: ProfilePreferences['skinType'][] = ['normal', 'dry', 'oily', 'combination', 'sensitive'];
+const COMMON_CONCERNS = [
+  'acne', 'aging', 'dark spots', 'dryness', 'dullness', 'fine lines',
+  'hyperpigmentation', 'large pores', 'oiliness', 'redness', 'sensitivity',
+  'texture', 'uneven tone', 'wrinkles',
+];
+const COMMON_ALLERGIES = [
+  'fragrance', 'parabens', 'sulfates', 'alcohol', 'retinol', 'vitamin C',
+  'essential oils', 'lanolin', 'formaldehyde', 'silicones', 'nuts', 'soy',
+];
+
 export const AccountPage: React.FC = () => {
-  const { customer, isAuthenticated } = useCustomer();
+  const { customer, isAuthenticated, refreshProfile } = useCustomer();
   const { goBack, navigateHome } = useStore();
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [showDataSources, setShowDataSources] = useState(false);
+
+  // ─── Preference editing state ───────────────────────────────────
+  const [isEditingPrefs, setIsEditingPrefs] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Editable form state
+  const [editSkinType, setEditSkinType] = useState<ProfilePreferences['skinType']>('normal');
+  const [editConcerns, setEditConcerns] = useState<string[]>([]);
+  const [editAllergies, setEditAllergies] = useState<string[]>([]);
+  const [newAllergyInput, setNewAllergyInput] = useState('');
+
+  // Communication preferences
+  const [emailOptIn, setEmailOptIn] = useState(true);
+  const [smsOptIn, setSmsOptIn] = useState(false);
+  const [pushOptIn, setPushOptIn] = useState(false);
+
+  // Initialize form state from customer profile
+  useEffect(() => {
+    if (customer?.beautyProfile) {
+      const bp = customer.beautyProfile;
+      setEditSkinType(bp.skinType || 'normal');
+      setEditConcerns(bp.concerns || []);
+      setEditAllergies(bp.allergies || []);
+      setEmailOptIn(bp.communicationPrefs?.email ?? true);
+      setSmsOptIn(bp.communicationPrefs?.sms ?? false);
+      setPushOptIn(bp.communicationPrefs?.push ?? false);
+    }
+  }, [customer]);
+
+  // Reset success message after delay
+  useEffect(() => {
+    if (saveSuccess) {
+      const timer = setTimeout(() => setSaveSuccess(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [saveSuccess]);
 
   if (!customer) {
     return (
@@ -43,6 +94,90 @@ export const AccountPage: React.FC = () => {
   const tierProgress = loyalty && tierInfo
     ? Math.min(100, (loyalty.lifetimePoints / tierInfo.points) * 100)
     : 0;
+
+  // Check if this is a Salesforce Contact (ID starts with 003)
+  const isSalesforceContact = customer.id?.startsWith('003');
+
+  // ─── Save preferences handler ────────────────────────────────────
+  const handleSavePreferences = async () => {
+    if (!isSalesforceContact) {
+      setSaveError('Profile updates require a linked Salesforce account.');
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveError(null);
+
+    try {
+      const writeService = getDataCloudWriteService();
+
+      // Update beauty preferences
+      const beautyUpdate: BeautyPreferencesUpdate = {
+        skinType: editSkinType,
+        concerns: editConcerns,
+        allergies: editAllergies,
+      };
+      await writeService.updateBeautyPreferences(customer.id, beautyUpdate);
+
+      // Update communication preferences
+      const commUpdate: CommunicationPreferencesUpdate = {
+        emailOptIn,
+        smsOptIn,
+        pushOptIn,
+      };
+      await writeService.updateCommunicationPreferences(customer.id, commUpdate);
+
+      // Refresh profile to get updated data
+      await refreshProfile();
+
+      setIsEditingPrefs(false);
+      setSaveSuccess(true);
+    } catch (err) {
+      console.error('Failed to save preferences:', err);
+      setSaveError(err instanceof Error ? err.message : 'Failed to save preferences');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    // Reset to original values
+    if (customer?.beautyProfile) {
+      const bp = customer.beautyProfile;
+      setEditSkinType(bp.skinType || 'normal');
+      setEditConcerns(bp.concerns || []);
+      setEditAllergies(bp.allergies || []);
+      setEmailOptIn(bp.communicationPrefs?.email ?? true);
+      setSmsOptIn(bp.communicationPrefs?.sms ?? false);
+      setPushOptIn(bp.communicationPrefs?.push ?? false);
+    }
+    setIsEditingPrefs(false);
+    setSaveError(null);
+  };
+
+  const toggleConcern = (concern: string) => {
+    setEditConcerns(prev =>
+      prev.includes(concern)
+        ? prev.filter(c => c !== concern)
+        : [...prev, concern]
+    );
+  };
+
+  const toggleAllergy = (allergy: string) => {
+    setEditAllergies(prev =>
+      prev.includes(allergy)
+        ? prev.filter(a => a !== allergy)
+        : [...prev, allergy]
+    );
+  };
+
+  const addCustomAllergy = () => {
+    const trimmed = newAllergyInput.trim().toLowerCase();
+    if (trimmed && !editAllergies.includes(trimmed)) {
+      setEditAllergies(prev => [...prev, trimmed]);
+      setNewAllergyInput('');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-stone-50">
@@ -91,55 +226,298 @@ export const AccountPage: React.FC = () => {
         </motion.div>
 
         <div className="grid gap-6">
-          {/* ─── BEAUTY PROFILE ─── */}
+          {/* ─── BEAUTY PREFERENCES (Editable) ─── */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05 }}
             className="bg-white rounded-2xl p-6 shadow-sm"
           >
-            <h2 className="text-lg font-medium text-stone-900 mb-4">Beauty Profile</h2>
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="flex items-center justify-between mb-4">
               <div>
-                <span className="text-xs font-medium text-stone-400 uppercase tracking-wider">Skin Type</span>
-                <p className="text-sm text-stone-900 mt-0.5 capitalize">{bp.skinType}</p>
+                <h2 className="text-lg font-medium text-stone-900">Beauty Preferences</h2>
+                <p className="text-xs text-stone-500 mt-0.5">Your self-declared beauty profile helps us personalize recommendations</p>
               </div>
-              <div>
-                <span className="text-xs font-medium text-stone-400 uppercase tracking-wider">Fragrance</span>
-                <p className="text-sm text-stone-900 mt-0.5 capitalize">{bp.fragrancePreference || 'No preference'}</p>
-              </div>
-              {bp.concerns.length > 0 && (
-                <div className="sm:col-span-2">
-                  <span className="text-xs font-medium text-stone-400 uppercase tracking-wider">Concerns</span>
-                  <div className="flex flex-wrap gap-1.5 mt-1">
-                    {bp.concerns.map((c) => (
-                      <span key={c} className="text-xs bg-rose-50 text-rose-600 px-2 py-0.5 rounded-full">{c}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {bp.allergies.length > 0 && (
-                <div className="sm:col-span-2">
-                  <span className="text-xs font-medium text-stone-400 uppercase tracking-wider">Allergies</span>
-                  <div className="flex flex-wrap gap-1.5 mt-1">
-                    {bp.allergies.map((a) => (
-                      <span key={a} className="text-xs bg-red-50 text-red-600 px-2 py-0.5 rounded-full">{a}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {bp.preferredBrands.length > 0 && (
-                <div className="sm:col-span-2">
-                  <span className="text-xs font-medium text-stone-400 uppercase tracking-wider">Preferred Brands</span>
-                  <div className="flex flex-wrap gap-1.5 mt-1">
-                    {bp.preferredBrands.map((b) => (
-                      <span key={b} className="text-xs bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full">{b}</span>
-                    ))}
-                  </div>
-                </div>
+              {!isEditingPrefs && (
+                <button
+                  onClick={() => setIsEditingPrefs(true)}
+                  className="text-sm text-rose-600 hover:text-rose-700 font-medium"
+                >
+                  Edit
+                </button>
               )}
             </div>
+
+            {/* Success message */}
+            <AnimatePresence>
+              {saveSuccess && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mb-4 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-lg text-sm text-emerald-700"
+                >
+                  Preferences saved successfully!
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Error message */}
+            {saveError && (
+              <div className="mb-4 px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                {saveError}
+              </div>
+            )}
+
+            {isEditingPrefs ? (
+              /* ─── EDIT MODE ─── */
+              <div className="space-y-6">
+                {/* Skin Type */}
+                <div>
+                  <label className="text-xs font-medium text-stone-500 uppercase tracking-wider block mb-2">
+                    Skin Type
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {SKIN_TYPES.map(type => (
+                      <button
+                        key={type}
+                        onClick={() => setEditSkinType(type)}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                          editSkinType === type
+                            ? 'bg-rose-500 text-white'
+                            : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                        }`}
+                      >
+                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Skin Concerns */}
+                <div>
+                  <label className="text-xs font-medium text-stone-500 uppercase tracking-wider block mb-2">
+                    Skin Concerns <span className="text-stone-400 font-normal">(select all that apply)</span>
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {COMMON_CONCERNS.map(concern => (
+                      <button
+                        key={concern}
+                        onClick={() => toggleConcern(concern)}
+                        className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+                          editConcerns.includes(concern)
+                            ? 'bg-rose-100 text-rose-700 border-2 border-rose-300'
+                            : 'bg-stone-50 text-stone-600 border border-stone-200 hover:border-stone-300'
+                        }`}
+                      >
+                        {concern}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Allergies */}
+                <div>
+                  <label className="text-xs font-medium text-stone-500 uppercase tracking-wider block mb-2">
+                    Allergies & Sensitivities <span className="text-stone-400 font-normal">(helps us avoid recommending products with these ingredients)</span>
+                  </label>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {COMMON_ALLERGIES.map(allergy => (
+                      <button
+                        key={allergy}
+                        onClick={() => toggleAllergy(allergy)}
+                        className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+                          editAllergies.includes(allergy)
+                            ? 'bg-red-100 text-red-700 border-2 border-red-300'
+                            : 'bg-stone-50 text-stone-600 border border-stone-200 hover:border-stone-300'
+                        }`}
+                      >
+                        {allergy}
+                      </button>
+                    ))}
+                  </div>
+                  {/* Custom allergy input */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newAllergyInput}
+                      onChange={(e) => setNewAllergyInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && addCustomAllergy()}
+                      placeholder="Add other..."
+                      className="flex-1 px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200"
+                    />
+                    <button
+                      onClick={addCustomAllergy}
+                      disabled={!newAllergyInput.trim()}
+                      className="px-4 py-2 text-sm font-medium bg-stone-100 text-stone-600 rounded-lg hover:bg-stone-200 disabled:opacity-50"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  {/* Show custom allergies */}
+                  {editAllergies.filter(a => !COMMON_ALLERGIES.includes(a)).length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {editAllergies.filter(a => !COMMON_ALLERGIES.includes(a)).map(allergy => (
+                        <span
+                          key={allergy}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm bg-red-100 text-red-700 border-2 border-red-300"
+                        >
+                          {allergy}
+                          <button
+                            onClick={() => toggleAllergy(allergy)}
+                            className="ml-1 text-red-500 hover:text-red-700"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Communication Preferences */}
+                <div className="pt-4 border-t border-stone-100">
+                  <label className="text-xs font-medium text-stone-500 uppercase tracking-wider block mb-3">
+                    Communication Preferences
+                  </label>
+                  <div className="space-y-3">
+                    <label className="flex items-center justify-between cursor-pointer">
+                      <span className="text-sm text-stone-700">Email updates & offers</span>
+                      <button
+                        onClick={() => setEmailOptIn(!emailOptIn)}
+                        className={`relative w-12 h-6 rounded-full transition-colors ${
+                          emailOptIn ? 'bg-rose-500' : 'bg-stone-300'
+                        }`}
+                      >
+                        <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                          emailOptIn ? 'left-7' : 'left-1'
+                        }`} />
+                      </button>
+                    </label>
+                    <label className="flex items-center justify-between cursor-pointer">
+                      <span className="text-sm text-stone-700">SMS notifications</span>
+                      <button
+                        onClick={() => setSmsOptIn(!smsOptIn)}
+                        className={`relative w-12 h-6 rounded-full transition-colors ${
+                          smsOptIn ? 'bg-rose-500' : 'bg-stone-300'
+                        }`}
+                      >
+                        <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                          smsOptIn ? 'left-7' : 'left-1'
+                        }`} />
+                      </button>
+                    </label>
+                    <label className="flex items-center justify-between cursor-pointer">
+                      <span className="text-sm text-stone-700">Push notifications</span>
+                      <button
+                        onClick={() => setPushOptIn(!pushOptIn)}
+                        className={`relative w-12 h-6 rounded-full transition-colors ${
+                          pushOptIn ? 'bg-rose-500' : 'bg-stone-300'
+                        }`}
+                      >
+                        <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                          pushOptIn ? 'left-7' : 'left-1'
+                        }`} />
+                      </button>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Save/Cancel buttons */}
+                <div className="flex gap-3 pt-4">
+                  <button
+                    onClick={handleSavePreferences}
+                    disabled={isSaving}
+                    className="flex-1 px-6 py-2.5 bg-stone-900 text-white text-sm font-medium rounded-full hover:bg-stone-800 transition-colors disabled:opacity-50"
+                  >
+                    {isSaving ? 'Saving...' : 'Save Preferences'}
+                  </button>
+                  <button
+                    onClick={handleCancelEdit}
+                    disabled={isSaving}
+                    className="px-6 py-2.5 bg-stone-100 text-stone-600 text-sm font-medium rounded-full hover:bg-stone-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* ─── VIEW MODE ─── */
+              <div className="space-y-4">
+                <div>
+                  <span className="text-xs font-medium text-stone-400 uppercase tracking-wider">Skin Type</span>
+                  <p className="text-sm text-stone-900 mt-0.5 capitalize">{bp.skinType}</p>
+                </div>
+
+                {bp.concerns.length > 0 && (
+                  <div>
+                    <span className="text-xs font-medium text-stone-400 uppercase tracking-wider">Concerns</span>
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      {bp.concerns.map((c) => (
+                        <span key={c} className="text-xs bg-rose-50 text-rose-600 px-2 py-0.5 rounded-full">{c}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {bp.allergies.length > 0 && (
+                  <div>
+                    <span className="text-xs font-medium text-stone-400 uppercase tracking-wider">Allergies</span>
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      {bp.allergies.map((a) => (
+                        <span key={a} className="text-xs bg-red-50 text-red-600 px-2 py-0.5 rounded-full">{a}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Communication preferences display */}
+                <div className="pt-3 border-t border-stone-100">
+                  <span className="text-xs font-medium text-stone-400 uppercase tracking-wider">Communication</span>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${bp.communicationPrefs?.email !== false ? 'bg-emerald-50 text-emerald-600' : 'bg-stone-100 text-stone-400'}`}>
+                      {bp.communicationPrefs?.email !== false ? '✓' : '✗'} Email
+                    </span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${bp.communicationPrefs?.sms ? 'bg-emerald-50 text-emerald-600' : 'bg-stone-100 text-stone-400'}`}>
+                      {bp.communicationPrefs?.sms ? '✓' : '✗'} SMS
+                    </span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${bp.communicationPrefs?.push ? 'bg-emerald-50 text-emerald-600' : 'bg-stone-100 text-stone-400'}`}>
+                      {bp.communicationPrefs?.push ? '✓' : '✗'} Push
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
           </motion.div>
+
+          {/* ─── INFERRED PREFERENCES (Read-only) ─── */}
+          {bp.preferredBrands.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.08 }}
+              className="bg-gradient-to-br from-purple-50 to-rose-50 rounded-2xl p-6 border border-purple-100"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-sm font-medium text-stone-900">Brand Affinities</h3>
+                  <p className="text-xs text-stone-500 mt-0.5 mb-3">
+                    Based on your purchase history and browsing behavior
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {bp.preferredBrands.map((b) => (
+                      <span key={b} className="text-xs bg-white/80 text-purple-700 px-2.5 py-1 rounded-full border border-purple-200">{b}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
 
           {/* ─── LOYALTY ─── */}
           <motion.div
@@ -309,7 +687,6 @@ export const AccountPage: React.FC = () => {
                     <DataField label="Skin Type" value={bp.skinType} />
                     <DataField label="Concerns" value={bp.concerns.join(', ') || '—'} />
                     <DataField label="Allergies" value={bp.allergies.join(', ') || '—'} />
-                    <DataField label="Preferred Brands" value={bp.preferredBrands.join(', ') || '—'} />
                     {loyalty && (
                       <>
                         <DataField label="Loyalty Tier" value={loyalty.tier} />
@@ -385,6 +762,7 @@ export const AccountPage: React.FC = () => {
                     }
                   >
                     <DataField label="Orders" value={`${customer.orders.length} total`} />
+                    <DataField label="Preferred Brands" value={bp.preferredBrands.join(', ') || '—'} />
                     <DataField label="Browse Sessions" value={`${customer.browseSessions.length}`} />
                     {customer.browseSessions.length > 0 && (
                       <>

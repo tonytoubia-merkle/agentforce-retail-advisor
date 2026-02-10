@@ -420,6 +420,357 @@ export default async function handler(req, res) {
       return res.end(json);
     }
 
+    // --- POST /api/checkout — Create real Salesforce Order with OrderItems ---
+    if (url === '/api/checkout' && req.method === 'POST') {
+      const body = await readBody(req);
+      const { contactId, accountId: providedAccountId, items, paymentMethod, total } = JSON.parse(body.toString());
+
+      if (!items || !items.length) {
+        res.writeHead(400, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'Missing items' }));
+      }
+
+      const authHeader = req.headers.authorization;
+      const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '') : await getServerToken();
+      if (!token) {
+        res.writeHead(401, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'Unauthorized' }));
+      }
+
+      // 1. Resolve AccountId
+      let accountId = providedAccountId;
+      if (!accountId && contactId) {
+        const contactRes = await sfFetch(token, 'GET',
+          `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT AccountId FROM Contact WHERE Id = '${contactId.replace(/'/g, "\\'")}' LIMIT 1`)}`);
+        accountId = contactRes.data?.records?.[0]?.AccountId;
+      }
+      if (!accountId) {
+        res.writeHead(400, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'Could not resolve AccountId' }));
+      }
+
+      // 2. Get Standard Pricebook
+      const pbRes = await sfFetch(token, 'GET',
+        `/services/data/v60.0/query?q=${encodeURIComponent("SELECT Id FROM Pricebook2 WHERE IsStandard = true LIMIT 1")}`);
+      const pricebookId = pbRes.data?.records?.[0]?.Id;
+      if (!pricebookId) {
+        res.writeHead(500, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'Standard Price Book not found' }));
+      }
+
+      // 3. Create Order (Draft) with tracking fields
+      const today = new Date().toISOString().split('T')[0];
+      const estDelivery = new Date(Date.now() + 5 * 86400000).toISOString().split('T')[0];
+      const carriers = ['UPS', 'FedEx', 'USPS'];
+      const carrier = carriers[Math.floor(Math.random() * carriers.length)];
+      const trackingNumber = `1Z${Math.random().toString(36).substring(2, 11).toUpperCase()}`;
+
+      const orderRes = await sfFetch(token, 'POST', '/services/data/v60.0/sobjects/Order', {
+        AccountId: accountId,
+        Pricebook2Id: pricebookId,
+        Status: 'Draft',
+        EffectiveDate: today,
+        Payment_Method__c: paymentMethod || 'Test Card',
+        Shipping_Status__c: 'Processing',
+        Tracking_Number__c: trackingNumber,
+        Carrier__c: carrier,
+        Estimated_Delivery__c: estDelivery,
+      });
+      if (!orderRes.data?.id) {
+        res.writeHead(500, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'Failed to create Order', details: orderRes.data }));
+      }
+      const orderId = orderRes.data.id;
+      console.log(`[checkout] Created Order ${orderId}`);
+
+      // 4. Create PricebookEntries (if needed) + OrderItems
+      for (const item of items) {
+        const pbeCheck = await sfFetch(token, 'GET',
+          `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT Id FROM PricebookEntry WHERE Product2Id = '${item.product2Id}' AND Pricebook2Id = '${pricebookId}' AND IsActive = true LIMIT 1`)}`);
+        let pbeId = pbeCheck.data?.records?.[0]?.Id;
+
+        if (!pbeId) {
+          const pbeRes = await sfFetch(token, 'POST', '/services/data/v60.0/sobjects/PricebookEntry', {
+            Pricebook2Id: pricebookId,
+            Product2Id: item.product2Id,
+            UnitPrice: item.unitPrice,
+            IsActive: true,
+          });
+          pbeId = pbeRes.data?.id;
+        }
+
+        await sfFetch(token, 'POST', '/services/data/v60.0/sobjects/OrderItem', {
+          OrderId: orderId,
+          PricebookEntryId: pbeId,
+          Quantity: item.quantity,
+          UnitPrice: item.unitPrice,
+        });
+      }
+
+      // 5. Activate Order
+      await sfFetch(token, 'PATCH', `/services/data/v60.0/sobjects/Order/${orderId}`, { Status: 'Activated' });
+      console.log(`[checkout] Activated Order ${orderId}`);
+
+      // 6. Fetch OrderNumber
+      const orderQuery = await sfFetch(token, 'GET',
+        `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT OrderNumber FROM Order WHERE Id = '${orderId}' LIMIT 1`)}`);
+      const orderNumber = orderQuery.data?.records?.[0]?.OrderNumber;
+
+      // 7. Accrue loyalty points (10% back)
+      let pointsEarned = 0;
+      if (total > 0) {
+        const pts = Math.floor(total * 0.10);
+        if (pts >= 1) {
+          try {
+            const memberQuery = await sfFetch(token, 'GET',
+              `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT Id, ProgramId FROM LoyaltyProgramMember WHERE ContactId IN (SELECT Id FROM Contact WHERE AccountId = '${accountId}') AND MemberStatus = 'Active' LIMIT 1`)}`);
+            const member = memberQuery.data?.records?.[0];
+            if (member) {
+              const currencyQuery = await sfFetch(token, 'GET',
+                `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT Id FROM LoyaltyProgramCurrency WHERE LoyaltyProgramId = '${member.ProgramId}' AND IsActive = true LIMIT 1`)}`);
+              const currencyId = currencyQuery.data?.records?.[0]?.Id;
+              if (currencyId) {
+                const ledgerRes = await sfFetch(token, 'POST', '/services/data/v60.0/sobjects/LoyaltyLedger', {
+                  LoyaltyProgramMemberId: member.Id,
+                  LoyaltyProgramCurrencyId: currencyId,
+                  Points: pts,
+                  EventType: 'Credit',
+                  ActivityDate: new Date().toISOString(),
+                });
+                if (ledgerRes.data?.id) {
+                  pointsEarned = pts;
+                  console.log(`[checkout] Accrued ${pts} loyalty points for order ${orderNumber}`);
+                }
+              }
+            }
+          } catch (loyaltyErr) {
+            console.log(`[checkout] Loyalty points skipped: ${loyaltyErr.message}`);
+          }
+        }
+      }
+
+      const result = JSON.stringify({
+        success: true,
+        orderId,
+        orderNumber,
+        trackingNumber,
+        carrier,
+        estimatedDelivery: estDelivery,
+        shippingStatus: 'Processing',
+        pointsEarned,
+      });
+      res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+      return res.end(result);
+    }
+
+    // --- POST /api/order/simulate-shipment — Demo: advance shipping status ---
+    if (url === '/api/order/simulate-shipment' && req.method === 'POST') {
+      const body = await readBody(req);
+      const { orderId, newStatus } = JSON.parse(body.toString());
+      if (!orderId || !newStatus) {
+        res.writeHead(400, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'Missing orderId or newStatus' }));
+      }
+      const authHeader = req.headers.authorization;
+      const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '') : await getServerToken();
+      if (!token) {
+        res.writeHead(401, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'Unauthorized' }));
+      }
+      const fields = { Shipping_Status__c: newStatus };
+      if (newStatus === 'Shipped') fields.Shipped_Date__c = new Date().toISOString().split('T')[0];
+      if (newStatus === 'Delivered') fields.Delivered_Date__c = new Date().toISOString().split('T')[0];
+      await sfFetch(token, 'PATCH', `/services/data/v60.0/sobjects/Order/${orderId}`, fields);
+      const json = JSON.stringify({ success: true, orderId, newStatus });
+      res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+      return res.end(json);
+    }
+
+    // --- POST /api/loyalty/enroll ---
+    if (url === '/api/loyalty/enroll' && req.method === 'POST') {
+      const body = await readBody(req);
+      const { contactId, accountId: providedAcctId } = JSON.parse(body.toString());
+      if (!contactId) {
+        res.writeHead(400, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'Missing contactId' }));
+      }
+      const authHeader = req.headers.authorization;
+      const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '') : await getServerToken();
+      if (!token) {
+        res.writeHead(401, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'Unauthorized' }));
+      }
+      // Resolve account
+      let accountId = providedAcctId;
+      if (!accountId) {
+        const cRes = await sfFetch(token, 'GET',
+          `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT AccountId FROM Contact WHERE Id = '${contactId}' LIMIT 1`)}`);
+        accountId = cRes.data?.records?.[0]?.AccountId;
+      }
+      // Find loyalty program
+      const progRes = await sfFetch(token, 'GET',
+        `/services/data/v60.0/query?q=${encodeURIComponent("SELECT Id FROM LoyaltyProgram WHERE Status = 'Active' LIMIT 1")}`);
+      const programId = progRes.data?.records?.[0]?.Id;
+      if (!programId) {
+        res.writeHead(404, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'No active loyalty program found' }));
+      }
+      // Check existing membership
+      const existCheck = await sfFetch(token, 'GET',
+        `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT Id, MembershipNumber FROM LoyaltyProgramMember WHERE ContactId = '${contactId}' AND MemberStatus = 'Active' LIMIT 1`)}`);
+      if (existCheck.data?.records?.length > 0) {
+        const m = existCheck.data.records[0];
+        const json = JSON.stringify({ success: true, memberId: m.Id, membershipNumber: m.MembershipNumber, existing: true });
+        res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(json);
+      }
+      // Enroll
+      const memberRes = await sfFetch(token, 'POST', '/services/data/v60.0/sobjects/LoyaltyProgramMember', {
+        ProgramId: programId,
+        ContactId: contactId,
+        MemberStatus: 'Active',
+        EnrollmentDate: new Date().toISOString().split('T')[0],
+        MemberType: 'Individual',
+      });
+      if (!memberRes.data?.id) {
+        res.writeHead(500, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'Failed to enroll', details: memberRes.data }));
+      }
+      console.log(`[loyalty] Enrolled ${contactId} → member ${memberRes.data.id}`);
+      const json = JSON.stringify({ success: true, memberId: memberRes.data.id });
+      res.writeHead(201, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+      return res.end(json);
+    }
+
+    // --- GET /api/loyalty/member/:accountId ---
+    if (url.startsWith('/api/loyalty/member/') && req.method === 'GET') {
+      const accountId = url.split('/api/loyalty/member/')[1]?.split('?')[0];
+      const authHeader = req.headers.authorization;
+      const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '') : await getServerToken();
+      if (!token) {
+        res.writeHead(401, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'Unauthorized' }));
+      }
+      const memberQ = await sfFetch(token, 'GET',
+        `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT Id, MembershipNumber, EnrollmentDate, MemberStatus FROM LoyaltyProgramMember WHERE ContactId IN (SELECT Id FROM Contact WHERE AccountId = '${accountId}') AND MemberStatus = 'Active' LIMIT 1`)}`);
+      const member = memberQ.data?.records?.[0];
+      if (!member) {
+        res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ enrolled: false }));
+      }
+      const json = JSON.stringify({ enrolled: true, memberId: member.Id, membershipNumber: member.MembershipNumber, enrollmentDate: member.EnrollmentDate });
+      res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+      return res.end(json);
+    }
+
+    // --- GET /api/loyalty/balance/:accountId ---
+    if (url.startsWith('/api/loyalty/balance/') && req.method === 'GET') {
+      const accountId = url.split('/api/loyalty/balance/')[1]?.split('?')[0];
+      const authHeader = req.headers.authorization;
+      const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '') : await getServerToken();
+      if (!token) {
+        res.writeHead(401, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'Unauthorized' }));
+      }
+      const memberQ = await sfFetch(token, 'GET',
+        `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT Id FROM LoyaltyProgramMember WHERE ContactId IN (SELECT Id FROM Contact WHERE AccountId = '${accountId}') AND MemberStatus = 'Active' LIMIT 1`)}`);
+      const memberId = memberQ.data?.records?.[0]?.Id;
+      if (!memberId) {
+        res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ pointsBalance: 0, totalAccrued: 0 }));
+      }
+      const balQ = await sfFetch(token, 'GET',
+        `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT PointsBalance, TotalPointsAccrued FROM LoyaltyMemberCurrency WHERE LoyaltyMemberId = '${memberId}' LIMIT 1`)}`);
+      const bal = balQ.data?.records?.[0];
+      const json = JSON.stringify({ pointsBalance: bal?.PointsBalance || 0, totalAccrued: bal?.TotalPointsAccrued || 0 });
+      res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+      return res.end(json);
+    }
+
+    // --- POST /api/loyalty/accrue ---
+    if (url === '/api/loyalty/accrue' && req.method === 'POST') {
+      const body = await readBody(req);
+      const { accountId, points, reason } = JSON.parse(body.toString());
+      if (!accountId || !points) {
+        res.writeHead(400, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'Missing accountId or points' }));
+      }
+      const authHeader = req.headers.authorization;
+      const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '') : await getServerToken();
+      if (!token) {
+        res.writeHead(401, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'Unauthorized' }));
+      }
+      const memberQ = await sfFetch(token, 'GET',
+        `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT Id, ProgramId FROM LoyaltyProgramMember WHERE ContactId IN (SELECT Id FROM Contact WHERE AccountId = '${accountId}') AND MemberStatus = 'Active' LIMIT 1`)}`);
+      const member = memberQ.data?.records?.[0];
+      if (!member) {
+        res.writeHead(404, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'No active loyalty member found' }));
+      }
+      const currQ = await sfFetch(token, 'GET',
+        `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT Id FROM LoyaltyProgramCurrency WHERE LoyaltyProgramId = '${member.ProgramId}' AND IsActive = true LIMIT 1`)}`);
+      const currencyId = currQ.data?.records?.[0]?.Id;
+      if (!currencyId) {
+        res.writeHead(500, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'No active loyalty currency found' }));
+      }
+      const ledgerRes = await sfFetch(token, 'POST', '/services/data/v60.0/sobjects/LoyaltyLedger', {
+        LoyaltyProgramMemberId: member.Id,
+        LoyaltyProgramCurrencyId: currencyId,
+        Points: points,
+        EventType: 'Credit',
+        ActivityDate: new Date().toISOString(),
+      });
+      const json = JSON.stringify({ success: true, pointsAccrued: points, ledgerId: ledgerRes.data?.id });
+      res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+      return res.end(json);
+    }
+
+    // --- POST /api/loyalty/redeem ---
+    if (url === '/api/loyalty/redeem' && req.method === 'POST') {
+      const body = await readBody(req);
+      const { accountId, points, reason } = JSON.parse(body.toString());
+      if (!accountId || !points) {
+        res.writeHead(400, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'Missing accountId or points' }));
+      }
+      const authHeader = req.headers.authorization;
+      const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '') : await getServerToken();
+      if (!token) {
+        res.writeHead(401, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'Unauthorized' }));
+      }
+      const memberQ = await sfFetch(token, 'GET',
+        `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT Id, ProgramId FROM LoyaltyProgramMember WHERE ContactId IN (SELECT Id FROM Contact WHERE AccountId = '${accountId}') AND MemberStatus = 'Active' LIMIT 1`)}`);
+      const member = memberQ.data?.records?.[0];
+      if (!member) {
+        res.writeHead(404, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'No active loyalty member found' }));
+      }
+      // Check balance
+      const balQ = await sfFetch(token, 'GET',
+        `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT Id, PointsBalance FROM LoyaltyMemberCurrency WHERE LoyaltyMemberId = '${member.Id}' LIMIT 1`)}`);
+      const bal = balQ.data?.records?.[0];
+      if (!bal || bal.PointsBalance < points) {
+        res.writeHead(400, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'Insufficient points', available: bal?.PointsBalance || 0 }));
+      }
+      const currQ = await sfFetch(token, 'GET',
+        `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT Id FROM LoyaltyProgramCurrency WHERE LoyaltyProgramId = '${member.ProgramId}' AND IsActive = true LIMIT 1`)}`);
+      const currencyId = currQ.data?.records?.[0]?.Id;
+      const ledgerRes = await sfFetch(token, 'POST', '/services/data/v60.0/sobjects/LoyaltyLedger', {
+        LoyaltyProgramMemberId: member.Id,
+        LoyaltyProgramCurrencyId: currencyId,
+        Points: -points,
+        EventType: 'Debit',
+        ActivityDate: new Date().toISOString(),
+      });
+      const json = JSON.stringify({ success: true, pointsRedeemed: points, ledgerId: ledgerRes.data?.id });
+      res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+      return res.end(json);
+    }
+
     // --- Generic route-based proxy ---
     const route = findRoute(url);
     if (!route) {

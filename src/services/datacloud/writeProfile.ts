@@ -1,7 +1,21 @@
-import type { ChatSummary, MeaningfulEvent, CapturedProfileField } from '@/types/customer';
+import type { ChatSummary, MeaningfulEvent, CapturedProfileField, ProfilePreferences } from '@/types/customer';
 import type { DataCloudConfig } from './types';
 
 const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
+
+/** User-editable beauty preferences for the preference center */
+export interface BeautyPreferencesUpdate {
+  skinType?: ProfilePreferences['skinType'];
+  concerns?: string[];
+  allergies?: string[];
+}
+
+/** Communication preferences */
+export interface CommunicationPreferencesUpdate {
+  emailOptIn?: boolean;
+  smsOptIn?: boolean;
+  pushOptIn?: boolean;
+}
 
 export class DataCloudWriteService {
   private config: DataCloudConfig;
@@ -64,6 +78,25 @@ export class DataCloudWriteService {
     if (!response.ok) {
       const errText = await response.text();
       throw new Error(`Data Cloud write failed (${response.status}): ${errText}`);
+    }
+  }
+
+  private async patchJson(path: string, body: Record<string, unknown>): Promise<void> {
+    const token = await this.getAccessToken();
+    // Route through proxy to avoid CORS
+    const proxyPath = path.replace(/^\/services\/data\/v60\.0/, '/api/datacloud');
+    const response = await fetch(proxyPath, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Data Cloud patch failed (${response.status}): ${errText}`);
     }
   }
 
@@ -145,6 +178,83 @@ export class DataCloudWriteService {
       Confidence__c: field.confidence,
       Data_Type__c: dataType,
     });
+  }
+
+  /**
+   * Update Contact beauty preferences (user-editable fields in preference center).
+   * Maps to Contact custom fields in Salesforce.
+   *
+   * @param contactId - Salesforce Contact ID (starts with 003)
+   * @param preferences - Beauty preferences to update
+   */
+  async updateBeautyPreferences(
+    contactId: string,
+    preferences: BeautyPreferencesUpdate,
+  ): Promise<void> {
+    if (useMockData) {
+      console.log('[mock] Would update beauty preferences for', contactId, ':', preferences);
+      return;
+    }
+
+    // Map skinType values to Salesforce picklist format (capitalize first letter)
+    const skinTypeMap: Record<string, string> = {
+      dry: 'Dry',
+      oily: 'Oily',
+      combination: 'Combination',
+      sensitive: 'Sensitive',
+      normal: 'Normal',
+    };
+
+    const record: Record<string, unknown> = {};
+
+    if (preferences.skinType) {
+      record.Skin_Type__c = skinTypeMap[preferences.skinType] || preferences.skinType;
+    }
+    if (preferences.concerns !== undefined) {
+      record.Skin_Concerns__c = preferences.concerns.join(';');
+    }
+    if (preferences.allergies !== undefined) {
+      record.Allergies__c = preferences.allergies.join(';');
+    }
+
+    if (Object.keys(record).length === 0) return;
+
+    await this.patchJson(`/services/data/v60.0/sobjects/Contact/${contactId}`, record);
+    console.log('[datacloud] Updated beauty preferences for', contactId);
+  }
+
+  /**
+   * Update Contact communication preferences.
+   * Maps to Contact opt-in checkbox fields in Salesforce.
+   *
+   * @param contactId - Salesforce Contact ID (starts with 003)
+   * @param preferences - Communication opt-in preferences
+   */
+  async updateCommunicationPreferences(
+    contactId: string,
+    preferences: CommunicationPreferencesUpdate,
+  ): Promise<void> {
+    if (useMockData) {
+      console.log('[mock] Would update communication preferences for', contactId, ':', preferences);
+      return;
+    }
+
+    const record: Record<string, unknown> = {};
+
+    if (preferences.emailOptIn !== undefined) {
+      record.Email_Opt_In__c = preferences.emailOptIn;
+    }
+    if (preferences.smsOptIn !== undefined) {
+      record.SMS_Opt_In__c = preferences.smsOptIn;
+    }
+    if (preferences.pushOptIn !== undefined) {
+      record.Push_Opt_In__c = preferences.pushOptIn;
+    }
+
+    if (Object.keys(record).length === 0) return;
+
+    await this.patchJson(`/services/data/v60.0/sobjects/Contact/${contactId}`, record);
+    console.log('[datacloud] Updated communication preferences for', contactId);
   }
 }
 
