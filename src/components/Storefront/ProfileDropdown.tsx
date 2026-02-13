@@ -100,7 +100,7 @@ function renderProfileSections(customer: CustomerProfile) {
 
   if (bp?.skinType) {
     sections.push(
-      <ProfileSection key="beauty" title="Beauty Profile" source="CRM" defaultOpen>
+      <ProfileSection key="beauty" title="Beauty Profile" source="Contact" defaultOpen>
         <ProfileField label="Skin Type" value={bp.skinType} />
         <ProfileField label="Concerns" value={bp.concerns?.join(', ')} />
         <ProfileField label="Allergies" value={bp.allergies?.join(', ')} />
@@ -111,16 +111,91 @@ function renderProfileSections(customer: CustomerProfile) {
 
   if (customer.orders && customer.orders.length > 0) {
     sections.push(
-      <ProfileSection key="orders" title={`Orders (${customer.orders.length})`} source="CRM">
+      <ProfileSection key="orders" title={`Orders (${customer.orders.length})`} source="Order">
         {customer.orders.slice(0, 3).map((o, i) => (
           <div key={i} className="py-1 border-b border-stone-50 last:border-b-0">
             <div className="flex justify-between">
               <span className="text-[11px] text-stone-600">{o.orderId}</span>
-              <span className="text-[11px] text-stone-400">${o.totalAmount}</span>
+              <span className="text-[11px] text-stone-400">{o.orderDate}</span>
             </div>
             <div className="text-[10px] text-stone-400 truncate">
-              {o.lineItems.map(li => li.productName).join(', ')}
+              {o.lineItems.map(li => li.productName).join(', ')} — ${o.totalAmount}
             </div>
+          </div>
+        ))}
+      </ProfileSection>
+    );
+  }
+
+  if (customer.chatSummaries && customer.chatSummaries.length > 0) {
+    sections.push(
+      <ProfileSection key="chat" title={`Chat Summaries (${customer.chatSummaries.length})`} source="Chat_Summary__c">
+        {customer.chatSummaries.map((c, i) => (
+          <div key={i} className="py-1 border-b border-stone-50 last:border-b-0">
+            <div className="flex justify-between">
+              <span className="text-[10px] text-stone-400">{c.sessionDate}</span>
+              <span className={`text-[10px] ${c.sentiment === 'positive' ? 'text-green-600' : c.sentiment === 'negative' ? 'text-red-500' : 'text-stone-400'}`}>
+                {c.sentiment}
+              </span>
+            </div>
+            <p className="text-[11px] text-stone-600 mt-0.5 leading-snug">{c.summary}</p>
+          </div>
+        ))}
+      </ProfileSection>
+    );
+  }
+
+  if (customer.meaningfulEvents && customer.meaningfulEvents.length > 0) {
+    sections.push(
+      <ProfileSection key="events" title={`Meaningful Events (${customer.meaningfulEvents.length})`} source="Meaningful_Event__c">
+        {customer.meaningfulEvents.map((e, i) => (
+          <div key={i} className="py-1 border-b border-stone-50 last:border-b-0">
+            <div className="flex justify-between">
+              <span className="text-[10px] px-1 rounded bg-stone-100 text-stone-500">{e.eventType}</span>
+              <span className="text-[10px] text-stone-400">{e.capturedAt}</span>
+            </div>
+            <p className="text-[11px] text-stone-600 mt-0.5 leading-snug">{e.description}</p>
+            {e.agentNote && <p className="text-[10px] text-stone-400 italic mt-0.5">{e.agentNote}</p>}
+          </div>
+        ))}
+      </ProfileSection>
+    );
+  }
+
+  if (customer.agentCapturedProfile) {
+    const fields = Object.entries(customer.agentCapturedProfile).filter(([, v]) => v?.value);
+    if (fields.length > 0) {
+      sections.push(
+        <ProfileSection key="captured" title={`Agent Captured (${fields.length})`} source="Agent_Captured_Profile__c">
+          {fields.map(([key, field]) => (
+            <div key={key} className="py-1 border-b border-stone-50 last:border-b-0">
+              <div className="flex justify-between">
+                <span className="text-[11px] text-stone-500">{key}</span>
+                <span className={`text-[10px] ${field!.confidence === 'stated' ? 'text-blue-500' : 'text-amber-500'}`}>
+                  {field!.confidence}
+                </span>
+              </div>
+              <p className="text-[11px] text-stone-700">
+                {Array.isArray(field!.value) ? field!.value.join(', ') : String(field!.value)}
+              </p>
+            </div>
+          ))}
+        </ProfileSection>
+      );
+    }
+  }
+
+  if (customer.browseSessions && customer.browseSessions.length > 0) {
+    sections.push(
+      <ProfileSection key="browse" title={`Browse Sessions (${customer.browseSessions.length})`} source="Browse_Session__c">
+        {customer.browseSessions.map((b, i) => (
+          <div key={i} className="py-1 border-b border-stone-50 last:border-b-0">
+            <div className="flex justify-between">
+              <span className="text-[10px] text-stone-400">{b.sessionDate}</span>
+              <span className="text-[10px] text-stone-400">{b.durationMinutes}min / {b.device}</span>
+            </div>
+            <ProfileField label="Categories" value={b.categoriesBrowsed?.join(', ')} />
+            <ProfileField label="Products" value={b.productsViewed?.join(', ')} />
           </div>
         ))}
       </ProfileSection>
@@ -130,10 +205,9 @@ function renderProfileSections(customer: CustomerProfile) {
   if (customer.loyalty) {
     const l = customer.loyalty;
     sections.push(
-      <ProfileSection key="loyalty" title="Loyalty" source="CRM">
+      <ProfileSection key="loyalty" title="Loyalty" source="LoyaltyProgramMember">
         <ProfileField label="Tier" value={l.tier.charAt(0).toUpperCase() + l.tier.slice(1)} />
-        <ProfileField label="Points Balance" value={l.pointsBalance?.toLocaleString()} />
-        <ProfileField label="Lifetime Points" value={l.lifetimePoints?.toLocaleString()} />
+        <ProfileField label="Points" value={`${l.pointsBalance?.toLocaleString()} balance / ${l.lifetimePoints?.toLocaleString()} lifetime`} />
         <ProfileField label="Member Since" value={l.memberSince} />
       </ProfileSection>
     );
@@ -142,12 +216,13 @@ function renderProfileSections(customer: CustomerProfile) {
   if (customer.appendedProfile) {
     const ap = customer.appendedProfile;
     sections.push(
-      <ProfileSection key="appended" title="Merkury 3P Data" source="Merkury">
+      <ProfileSection key="appended" title="Merkury Appended (3P)" source="Merkury">
         <ProfileField label="Age Range" value={ap.ageRange} />
         <ProfileField label="Gender" value={ap.gender} />
         <ProfileField label="Income" value={ap.householdIncome} />
         <ProfileField label="Region" value={ap.geoRegion} />
         <ProfileField label="Interests" value={ap.interests?.join(', ')} />
+        <ProfileField label="Lifestyle" value={ap.lifestyleSignals?.join(', ')} />
       </ProfileSection>
     );
   }
