@@ -478,19 +478,24 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
         const response = await getAgentResponse(welcomeMsg);
 
-        // The real Agentforce agent may return CHANGE_SCENE or SHOW_PRODUCTS
-        // instead of WELCOME_SCENE on the first message. Since we know this IS
-        // the welcome flow, normalize it to WELCOME_SCENE so the welcome overlay
-        // renders. Preserve any products and scene context the agent provided.
-        if (response.uiDirective && response.uiDirective.action !== 'WELCOME_SCENE') {
+        // The real Agentforce agent may return CHANGE_SCENE, SHOW_PRODUCTS,
+        // or even plain text with no uiDirective on the first message. Since we
+        // know this IS the welcome flow, normalize it to WELCOME_SCENE so the
+        // welcome overlay renders.
+        if (!response.uiDirective || response.uiDirective.action !== 'WELCOME_SCENE') {
           const d = response.uiDirective;
+          const firstSentence = response.message?.split(/[.!?]/)[0]?.trim() || 'Welcome!';
           response.uiDirective = {
-            ...d,
+            ...(d || {}),
             action: 'WELCOME_SCENE' as UIAction,
             payload: {
-              ...d.payload,
-              welcomeMessage: d.payload?.welcomeMessage || response.message?.split('.')[0] || 'Welcome!',
-              welcomeSubtext: d.payload?.welcomeSubtext || response.message || '',
+              ...(d?.payload || {}),
+              welcomeMessage: d?.payload?.welcomeMessage || firstSentence,
+              welcomeSubtext: d?.payload?.welcomeSubtext || response.message || '',
+              sceneContext: d?.payload?.sceneContext || {
+                setting: 'neutral',
+                generateBackground: false,
+              },
             },
           };
         }
