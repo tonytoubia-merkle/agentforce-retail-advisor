@@ -23,6 +23,25 @@ function normalizeProducts(products: unknown[]): Product[] {
 }
 
 /**
+ * Scan the uiDirective object for a products array in any nested container.
+ * The agent uses arbitrary key names (productCarousel, productShowcase,
+ * productGrid, recommendations, etc.) — this handles all of them.
+ */
+function findNestedProducts(d: Record<string, unknown>): unknown[] | null {
+  const SKIP = new Set(['payload', 'action', 'scene', 'sceneContext', 'captures',
+    'welcomeMessage', 'welcomeSubtext', 'message', 'suggestionPrompt']);
+  for (const [key, val] of Object.entries(d)) {
+    if (SKIP.has(key)) continue;
+    if (val && typeof val === 'object' && !Array.isArray(val)) {
+      const nested = val as Record<string, unknown>;
+      if (Array.isArray(nested.products)) return nested.products;
+      if (Array.isArray(nested.items)) return nested.items;
+    }
+  }
+  return null;
+}
+
+/**
  * Infer the uiDirective action from the shape of the payload when the agent
  * omits the explicit `action` field.
  */
@@ -31,14 +50,13 @@ function inferAction(d: Record<string, unknown>): UIAction | undefined {
   if (d.action && typeof d.action === 'string') return d.action as UIAction;
 
   const payload = (d.payload || {}) as Record<string, unknown>;
-  const carousel = d.productCarousel as Record<string, unknown> | undefined;
 
-  // Has products (or items mapped to products, or productCarousel.products) → SHOW_PRODUCTS
+  // Has products in standard locations or any nested container → SHOW_PRODUCTS
   if (
     Array.isArray(payload.products) ||
     Array.isArray(d.products) ||
     Array.isArray(d.items) ||
-    (carousel && Array.isArray(carousel.products))
+    findNestedProducts(d)
   ) {
     return 'SHOW_PRODUCTS' as UIAction;
   }
@@ -87,11 +105,13 @@ function normalizePayload(
     console.warn('[parseDirectives] Moved root-level "products" into payload');
   }
 
-  // Map `d.productCarousel.products` → `products` (agent sometimes nests in carousel)
-  const carousel = d.productCarousel as Record<string, unknown> | undefined;
-  if (!existing.products && carousel && Array.isArray(carousel.products)) {
-    existing.products = carousel.products;
-    console.warn('[parseDirectives] Normalized "productCarousel.products" → "products"');
+  // Scan any nested container for products (productCarousel, productShowcase, etc.)
+  if (!existing.products) {
+    const nested = findNestedProducts(d);
+    if (nested) {
+      existing.products = nested;
+      console.warn('[parseDirectives] Extracted products from nested container');
+    }
   }
 
   // Map `d.scene` → `sceneContext` (agent sometimes uses "scene" instead of "sceneContext")

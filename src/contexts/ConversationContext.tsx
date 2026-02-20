@@ -537,8 +537,6 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         if (!actions.length && response.uiDirective?.action === 'WELCOME_SCENE') {
           if (sessionCtx.identityTier === 'known' && sessionCtx.recentPurchases?.length) {
             actions = ['Restock my favorites', "What's new for me?", 'Show me something different'];
-          } else if (sessionCtx.identityTier === 'appended') {
-            actions = ['What do you recommend?', 'Show me bestsellers', 'Help me find my routine'];
           } else {
             actions = ['Show me moisturizers', 'I need travel products', 'What do you recommend?'];
           }
