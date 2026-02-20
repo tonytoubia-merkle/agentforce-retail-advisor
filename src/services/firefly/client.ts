@@ -60,6 +60,7 @@ export class FireflyClient {
       headers: {
         'Authorization': `Bearer ${token}`,
         'x-api-key': this.config.clientId,
+        'x-model-version': 'image4_ultra',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -100,6 +101,7 @@ export class FireflyClient {
       headers: {
         'Authorization': `Bearer ${token}`,
         'x-api-key': this.config.clientId,
+        'x-model-version': 'image4_ultra',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({

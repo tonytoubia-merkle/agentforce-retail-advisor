@@ -771,6 +771,80 @@ export default async function handler(req, res) {
       return res.end(json);
     }
 
+    // --- POST /api/appointments — Book an in-store appointment ---
+    if (url === '/api/appointments' && req.method === 'POST') {
+      const body = await readBody(req);
+      const { contactId, storeLocation, appointmentDateTime, appointmentType, customerNotes } = JSON.parse(body.toString());
+      if (!contactId || !storeLocation || !appointmentDateTime || !appointmentType) {
+        res.writeHead(400, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'Missing required fields: contactId, storeLocation, appointmentDateTime, appointmentType' }));
+      }
+      const authHeader = req.headers.authorization;
+      const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '') : await getServerToken();
+      if (!token) {
+        res.writeHead(401, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'Unauthorized' }));
+      }
+      // Determine identity tier
+      let identityTier = 'Anonymous';
+      const contactQ = await sfFetch(token, 'GET',
+        `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT Demo_Profile__c, Email FROM Contact WHERE Id = '${contactId}' LIMIT 1`)}`);
+      const contact = contactQ.data?.records?.[0];
+      if (contact) {
+        if (contact.Demo_Profile__c === 'Merkury') identityTier = 'Appended';
+        else if (contact.Email) identityTier = 'Known';
+      }
+      const apptRes = await sfFetch(token, 'POST', '/services/data/v60.0/sobjects/Store_Appointment__c', {
+        Contact__c: contactId,
+        Store_Location__c: storeLocation,
+        Appointment_DateTime__c: appointmentDateTime,
+        Type__c: appointmentType,
+        Status__c: 'Booked',
+        Channel__c: 'Online',
+        Customer_Notes__c: customerNotes || null,
+        Identity_Tier__c: identityTier,
+      });
+      if (!apptRes.data?.id) {
+        res.writeHead(500, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'Failed to create appointment', details: apptRes.data }));
+      }
+      console.log(`[appointments] Created Store_Appointment__c ${apptRes.data.id} for ${contactId}`);
+      const json = JSON.stringify({ success: true, appointmentId: apptRes.data.id });
+      res.writeHead(201, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+      return res.end(json);
+    }
+
+    // --- GET /api/appointments?contactId=xxx — Get customer's appointments ---
+    if (url.startsWith('/api/appointments') && req.method === 'GET') {
+      const urlObj = new URL(url, 'http://localhost');
+      const contactId = urlObj.searchParams.get('contactId');
+      if (!contactId) {
+        res.writeHead(400, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'Missing contactId query parameter' }));
+      }
+      const authHeader = req.headers.authorization;
+      const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '') : await getServerToken();
+      if (!token) {
+        res.writeHead(401, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'Unauthorized' }));
+      }
+      const soql = `SELECT Id, Name, Store_Location__c, Appointment_DateTime__c, Type__c, Status__c, Channel__c, Customer_Notes__c FROM Store_Appointment__c WHERE Contact__c = '${contactId.replace(/'/g, "\\'")}' AND Status__c NOT IN ('Cancelled') ORDER BY Appointment_DateTime__c DESC LIMIT 10`;
+      const result = await sfFetch(token, 'GET', `/services/data/v60.0/query?q=${encodeURIComponent(soql)}`);
+      const appointments = (result.data?.records || []).map(r => ({
+        id: r.Id,
+        name: r.Name,
+        storeLocation: r.Store_Location__c,
+        appointmentDateTime: r.Appointment_DateTime__c,
+        type: r.Type__c,
+        status: r.Status__c,
+        channel: r.Channel__c,
+        customerNotes: r.Customer_Notes__c,
+      }));
+      const json = JSON.stringify({ appointments });
+      res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+      return res.end(json);
+    }
+
     // --- Generic route-based proxy ---
     const route = findRoute(url);
     if (!route) {
@@ -782,7 +856,7 @@ export default async function handler(req, res) {
     const remotePath = route.rewrite + url.slice(route.prefix.length);
 
     const headers = { host: targetUrl.hostname };
-    const forwardHeaders = ['content-type', 'content-length', 'authorization', 'x-goog-api-key', 'x-api-key', 'accept'];
+    const forwardHeaders = ['content-type', 'content-length', 'authorization', 'x-goog-api-key', 'x-api-key', 'x-model-version', 'accept'];
     for (const h of forwardHeaders) {
       if (req.headers[h]) headers[h] = req.headers[h];
     }
