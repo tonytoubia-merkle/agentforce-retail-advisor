@@ -16,8 +16,13 @@
             <div class="slds-no-flex slds-grid slds-grid_vertical-align-center">
                 <!-- Channel Badge -->
                 <span class={channelBadgeClass}>
-                    <lightning-icon icon-name={channelIcon} size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
-                    {channel}
+                    <template if:true={isMediaChannel}>
+                        <img src={merkuryLogoUrl} alt="Merkury" class="merkury-logo-badge slds-m-right_xx-small"/>
+                    </template>
+                    <template if:false={isMediaChannel}>
+                        <lightning-icon icon-name={channelIcon} size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                    </template>
+                    {channelDisplayName}
                 </span>
                 <template if:true={showUrgencyBadge}>
                     <span class={approval.urgencyClass}>{approval.Urgency__c}</span>

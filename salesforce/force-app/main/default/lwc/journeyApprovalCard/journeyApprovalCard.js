@@ -213,6 +213,10 @@ export default class JourneyApprovalCard extends LightningElement {
         return this.channel === 'Media';
     }
 
+    get channelDisplayName() {
+        return this.channel === 'Media' ? 'Media (powered by Merkury\u2122)' : this.channel;
+    }
+
     get merkuryLogoUrl() {
         return 'https://agentforce-retail-advisor.vercel.app/assets/merkury-logo.png';
     }

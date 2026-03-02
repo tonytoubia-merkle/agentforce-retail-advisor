@@ -49,6 +49,10 @@ export default class JourneyEmailPreview extends LightningElement {
         return 'https://agentforce-retail-advisor.vercel.app/assets/merkury-logo.png';
     }
 
+    get channelDisplayName() {
+        return this.channel === 'Media' ? 'Media (powered by Merkury\u2122)' : this.channel;
+    }
+
     get hasVideo() {
         return !!this.videoUrl;
     }

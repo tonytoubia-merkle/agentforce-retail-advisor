@@ -536,3 +536,10 @@
     object-fit: contain;
     flex-shrink: 0;
 }
+
+.merkury-logo-badge {
+    width: 14px;
+    height: 14px;
+    object-fit: contain;
+    vertical-align: middle;
+}

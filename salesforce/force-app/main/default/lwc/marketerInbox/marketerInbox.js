@@ -137,6 +137,7 @@ export default class MarketerInbox extends LightningElement {
             urgencyClass: this.getUrgencyClass(approval.Urgency__c),
             channelIcon: this.getChannelIcon(approval.Channel__c),
             isMediaChannel: approval.Channel__c === 'Media',
+            channelDisplayName: approval.Channel__c === 'Media' ? 'Media (powered by Merkury\u2122)' : approval.Channel__c,
             merkuryLogoUrl: 'https://agentforce-retail-advisor.vercel.app/assets/merkury-logo.png',
             confidenceClass: this.getConfidenceClass(approval.Confidence_Score__c),
             deadlineDisplay: this.getDeadlineDisplay(approval.Auto_Send_Deadline__c),
