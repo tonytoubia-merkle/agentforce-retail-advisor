@@ -225,6 +225,33 @@
     vertical-align: middle;
 }
 
+.marketing-flow-banner {
+    margin-top: 4px;
+}
+
+.marketing-flow-link-inline {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    background: linear-gradient(135deg, #1b96ff 0%, #0176d3 100%);
+    color: white;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.marketing-flow-link-inline:hover {
+    background: linear-gradient(135deg, #0176d3 0%, #014486 100%);
+    text-decoration: none;
+    color: white;
+}
+
+.marketing-flow-link-inline lightning-icon {
+    --slds-c-icon-color-foreground-default: white;
+}
+
 .subject-text {
     font-size: 13px;
     color: #3e3e3c;

@@ -556,7 +556,8 @@ public with sharing class JourneyApprovalService {
             // Get all pending steps for this journey
             List<Journey_Approval__c> steps = [
                 SELECT Id, Status__c, Step_Number__c, Send_Delay_Days__c,
-                       Suggested_Subject__c, Suggested_Body__c
+                       Suggested_Subject__c, Suggested_Body__c,
+                       Approved_Subject__c, Approved_Body__c
                 FROM Journey_Approval__c
                 WHERE Journey_Id__c = :journeyId
                 AND Status__c = 'Pending'

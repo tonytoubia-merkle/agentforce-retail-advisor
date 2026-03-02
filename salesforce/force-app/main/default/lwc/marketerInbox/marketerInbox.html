@@ -211,6 +211,17 @@
                                                 <p class="journey-context-text slds-text-color_weak slds-text-body_small">{group.eventSummary}</p>
                                             </div>
                                         </template>
+
+                                        <!-- Marketing Flow Link (after flow is sent) -->
+                                        <template if:true={group.hasMarketingFlow}>
+                                            <div class="marketing-flow-banner slds-m-top_xx-small slds-m-left_x-large slds-p-left_medium">
+                                                <a href={group.marketingFlowUrl} class="marketing-flow-link-inline">
+                                                    <lightning-icon icon-name="utility:flow" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                                    <span>{group.marketingFlowName}</span>
+                                                    <lightning-icon icon-name="utility:new_window" size="xx-small" class="slds-m-left_xx-small"></lightning-icon>
+                                                </a>
+                                            </div>
+                                        </template>
                                     </div>
                                 </div>
 

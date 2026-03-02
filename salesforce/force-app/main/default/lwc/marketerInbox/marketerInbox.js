@@ -275,6 +275,11 @@ export default class MarketerInbox extends LightningElement {
                     // Past due tracking
                     isPastDue: false,
                     hasAnyPastDue: false,
+                    // Marketing Flow tracking
+                    hasMarketingFlow: false,
+                    marketingFlowId: null,
+                    marketingFlowName: null,
+                    marketingFlowUrl: null,
                     // Expansion state
                     isExpanded: this.expandedJourneys.has(journeyId),
                     expandIcon: this.expandedJourneys.has(journeyId) ? 'utility:chevrondown' : 'utility:chevronright'
@@ -316,6 +321,14 @@ export default class MarketerInbox extends LightningElement {
             // Track past due status
             if (approval.isPastDue) {
                 group.hasAnyPastDue = true;
+            }
+
+            // Track Marketing Flow (any step with a flow means the journey was sent)
+            if (!group.hasMarketingFlow && approval.Marketing_Flow__c) {
+                group.hasMarketingFlow = true;
+                group.marketingFlowId = approval.Marketing_Flow__c;
+                group.marketingFlowName = approval.Marketing_Flow__r?.Name || 'Marketing Flow';
+                group.marketingFlowUrl = '/lightning/r/Marketing_Flow__c/' + approval.Marketing_Flow__c + '/view';
             }
         }
 
