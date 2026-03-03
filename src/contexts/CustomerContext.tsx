@@ -344,6 +344,8 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       try {
         const dataCloudService = getDataCloudService();
         const fresh = await dataCloudService.getCustomerProfileById(selectedPersonaId);
+        // Flag as refresh so ConversationContext skips session reset
+        isRefreshRef.current = true;
         // Merge fresh data into existing customer — keep auth state, merkury, appended untouched
         setCustomer(prev => prev ? {
           ...prev,
@@ -355,14 +357,19 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           beautyProfile: fresh.beautyProfile ?? prev.beautyProfile,
           loyalty: fresh.loyalty ?? prev.loyalty,
         } : prev);
+        // Clear flag after React processes the state update
+        setTimeout(() => { isRefreshRef.current = false; }, 0);
       } catch (err) {
         console.error('[customer] Lightweight refresh failed:', err);
+        isRefreshRef.current = false;
       }
     } else if (useMockData) {
       // Mock mode: just re-read persona data
       const persona = getPersonaById(selectedPersonaId);
       if (persona) {
+        isRefreshRef.current = true;
         setCustomer(prev => prev ? { ...prev, ...persona.profile, id: prev.id, name: prev.name, email: prev.email } : prev);
+        setTimeout(() => { isRefreshRef.current = false; }, 0);
       }
     }
   }, [selectedPersonaId, customer]);

@@ -2,16 +2,26 @@
     <div class="note-capture">
         <h3 class="capture-title">Quick Note</h3>
         <div class="capture-form">
-            <lightning-combobox
-                name="noteType"
-                label="Type"
-                value={noteType}
-                options={noteTypeOptions}
-                onchange={handleTypeChange}
-                variant="label-hidden"
-                placeholder="Note type..."
-                class="type-select"
-            ></lightning-combobox>
+            <!-- Custom upward-opening dropdown (lightning-combobox clips at panel bottom) -->
+            <div class="type-select">
+                <button class="type-trigger" onclick={toggleDropdown} type="button">
+                    {noteType}
+                    <span class="trigger-icon">&#9662;</span>
+                </button>
+                <template if:true={isDropdownOpen}>
+                    <ul class="type-dropdown" role="listbox">
+                        <template for:each={noteTypeOptions} for:item="opt">
+                            <li key={opt.value}
+                                class="type-option"
+                                role="option"
+                                data-value={opt.value}
+                                onclick={handleOptionClick}>
+                                {opt.label}
+                            </li>
+                        </template>
+                    </ul>
+                </template>
+            </div>
             <div class="note-input-row">
                 <lightning-textarea
                     label="Note"

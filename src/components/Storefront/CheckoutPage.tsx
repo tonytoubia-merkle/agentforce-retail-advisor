@@ -64,7 +64,7 @@ export const CheckoutPage: React.FC = () => {
         setTimeout(() => {
           const orderId = `ORD-${Date.now().toString(36).toUpperCase()}`;
           trackPurchase(orderId, total, items.map((item) => ({
-            product2Id: item.product.id,
+            product2Id: item.product.salesforceId || item.product.id,
             productName: item.product.name,
             quantity: item.quantity,
             unitPrice: item.product.price,
@@ -86,7 +86,7 @@ export const CheckoutPage: React.FC = () => {
       const payload = {
         contactId: customer?.id || undefined,
         items: items.map((item) => ({
-          product2Id: item.product.id,
+          product2Id: item.product.salesforceId || item.product.id,
           productName: item.product.name,
           quantity: item.quantity,
           unitPrice: item.product.price,
@@ -110,7 +110,7 @@ export const CheckoutPage: React.FC = () => {
               result.orderNumber || result.orderId,
               total,
               items.map((item) => ({
-                product2Id: item.product.id,
+                product2Id: item.product.salesforceId || item.product.id,
                 productName: item.product.name,
                 quantity: item.quantity,
                 unitPrice: item.product.price,

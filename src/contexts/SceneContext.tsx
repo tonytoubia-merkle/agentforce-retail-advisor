@@ -35,6 +35,7 @@ function buildBgOptions(sc?: UIDirective['payload']['sceneContext']): Background
     mood: raw.mood as string | undefined,
     customerContext: (raw.customerContext as string) || (raw.context as string) || undefined,
     sceneType: raw.sceneType as string | undefined,
+    forceGenerate: sc.generateBackground === true,
   };
 }
 
@@ -206,13 +207,14 @@ export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
 
         // Skip regeneration if we already have (or are generating) an image for the same setting,
-        // OR if we have a valid image and agent didn't explicitly request a new background
+        // UNLESS the agent explicitly requested a new background (e.g. conversation topic changed)
         const cur = sceneRef.current;
         const hasValidImage = cur.background.type === 'image' && cur.background.value && !cur.background.value.includes('default');
         const isGenerating = cur.background.type === 'generative' && cur.background.isLoading;
         const agentRequestedGeneration = payload.sceneContext?.generateBackground === true;
-        const alreadyHasImage = (cur.setting === setting && (hasValidImage || isGenerating)) ||
-          (hasValidImage && !agentRequestedGeneration); // preserve existing image unless explicitly asked to regenerate
+        const alreadyHasImage = agentRequestedGeneration ? false :
+          (cur.setting === setting && (hasValidImage || isGenerating)) ||
+          (hasValidImage); // preserve existing image unless agent explicitly asked to regenerate
 
         dispatch({ type: 'SET_SETTING', setting });
 

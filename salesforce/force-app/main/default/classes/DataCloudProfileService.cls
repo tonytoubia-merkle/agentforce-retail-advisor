@@ -388,15 +388,24 @@ global with sharing class DataCloudProfileService {
         String relativeTimeText, Date eventDate,
         String urgency, Date eventEndDate
     ) {
-        // Deduplication: skip if an identical event already exists for this customer.
-        // Description__c is a long text area (not filterable in SOQL), so we query by
-        // customer + event type and compare descriptions in Apex.
+        // Deduplication: skip if an identical or near-identical event already exists.
+        // Two dedup strategies:
+        //   1. Exact description match (any time) — catches re-sends of the same event
+        //   2. Time-window match (same event type within 5 min) — catches agent multi-call
+        //      within a single conversation turn where descriptions vary slightly
+        //      (e.g., "Anniversary trip to Paris" vs "Going to Paris on anniversary trip")
+        Datetime fiveMinAgo = Datetime.now().addMinutes(-5);
         for (Meaningful_Event__c e : [
-            SELECT Id, Description__c FROM Meaningful_Event__c
+            SELECT Id, Description__c, Captured_At__c FROM Meaningful_Event__c
             WHERE Customer_Id__c = :customerId AND Event_Type__c = :eventType
             ORDER BY Captured_At__c DESC LIMIT 20
         ]) {
             if (e.Description__c == description) {
+                return e.Id;
+            }
+            // Same event type created within 5-minute window = likely duplicate from
+            // agent calling the action multiple times in the same conversation turn
+            if (e.Captured_At__c != null && e.Captured_At__c >= fiveMinAgo) {
                 return e.Id;
             }
         }

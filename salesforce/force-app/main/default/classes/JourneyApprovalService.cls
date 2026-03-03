@@ -73,7 +73,8 @@ public with sharing class JourneyApprovalService {
                            // Media activation fields
                            Media_Platform__c, Media_Ad_Format__c, Media_Creative_Brief__c,
                            Media_Audience_Signals__c, Media_Estimated_Reach__c,
-                           Merkury_Activation_Status__c
+                           Merkury_Activation_Status__c,
+                           MC_Flow_Definition_Id__c
                     FROM Journey_Approval__c
                     WHERE Id = :req.approvalId
                     LIMIT 1
@@ -553,26 +554,47 @@ public with sharing class JourneyApprovalService {
         }
 
         try {
-            // Get all pending steps for this journey (include fields needed for image generation)
+            // Get all steps for this journey that haven't been sent yet
             List<Journey_Approval__c> steps = [
-                SELECT Id, Status__c, Step_Number__c, Send_Delay_Days__c,
+                SELECT Id, Status__c, Step_Number__c, Send_Delay_Days__c, Total_Steps__c,
                        Suggested_Subject__c, Suggested_Body__c,
                        Approved_Subject__c, Approved_Body__c,
                        Channel__c, Firefly_Prompt__c, Recommended_Products__c,
                        Generated_Image_URL__c, Image_Content_Version_Id__c,
-                       Event_Type__c
+                       Event_Type__c, SMS_Body__c,
+                       Contact__c, Contact__r.Email, Contact__r.FirstName,
+                       Meaningful_Event__c,
+                       Media_Platform__c, Media_Ad_Format__c, Media_Creative_Brief__c,
+                       Media_Audience_Signals__c, Media_Estimated_Reach__c,
+                       Merkury_Activation_Status__c
                 FROM Journey_Approval__c
                 WHERE Journey_Id__c = :journeyId
-                AND Status__c = 'Pending'
+                AND Status__c IN ('Pending', 'Approved')
+                ORDER BY Step_Number__c ASC
             ];
 
             if (steps.isEmpty()) {
                 result.success = false;
-                result.errorMessage = 'No pending steps found for this journey';
+                result.errorMessage = 'No steps found for this journey';
                 return result;
             }
 
-            // Generate images for Email steps that don't have one yet (callouts first, before DML)
+            // Validate contact email
+            Contact contact = [
+                SELECT Id, Email, FirstName, LastName
+                FROM Contact
+                WHERE Id = :steps[0].Contact__c
+                LIMIT 1
+            ];
+
+            if (String.isBlank(contact.Email)) {
+                result.success = false;
+                result.errorMessage = 'Contact has no email address';
+                return result;
+            }
+
+            // ── Phase 1: Callouts (before any DML) ──
+            // Generate images for Email steps that don't have one yet
             Integer imagesGenerated = 0;
             for (Journey_Approval__c step : steps) {
                 if (step.Channel__c == 'Email'
@@ -612,17 +634,85 @@ public with sharing class JourneyApprovalService {
                         }
                     } catch (Exception imgEx) {
                         System.debug(LoggingLevel.WARN, 'Image generation failed for step ' + step.Step_Number__c + ': ' + imgEx.getMessage());
-                        // Continue with approval even if image generation fails
                     }
                 }
             }
 
-            // Now do DML: approve all steps and set scheduled dates
-            DateTime baseTime = DateTime.now();
+            // ── Phase 1b: Callout — Create Salesforce Flow via Tooling API ──
+            MarketingFlowBuilderService.FlowResult flowResult;
+            try {
+                flowResult = MarketingFlowBuilderService.createDraftFlow(journeyId, steps, contact);
+                if (flowResult.success) {
+                    System.debug('Created Salesforce Flow: ' + flowResult.flowId);
+                    // Activate the flow immediately since we're approving
+                    if (String.isNotBlank(flowResult.flowDefinitionId)) {
+                        MarketingFlowBuilderService.FlowResult activateResult =
+                            MarketingFlowBuilderService.activateFlow(flowResult.flowDefinitionId);
+                        if (!activateResult.success) {
+                            System.debug(LoggingLevel.WARN, 'Flow activation failed: ' + activateResult.errorMessage);
+                        }
+                    }
+                } else {
+                    System.debug(LoggingLevel.WARN, 'Flow creation failed: ' + flowResult.errorMessage);
+                }
+            } catch (Exception flowEx) {
+                System.debug(LoggingLevel.WARN, 'Salesforce Flow creation failed: ' + flowEx.getMessage());
+                flowResult = null; // Continue with approval even if flow creation fails
+            }
+
+            // ── Phase 2: DML — Create Marketing Flow tracking record ──
+            Marketing_Flow__c marketingFlow = new Marketing_Flow__c(
+                Journey_Id__c = journeyId,
+                Contact__c = contact.Id,
+                Status__c = 'Pending',
+                Steps_Count__c = steps.size(),
+                Event_Type__c = steps[0].Event_Type__c,
+                Sent_Date__c = Datetime.now()
+            );
+            // Link to the actual Salesforce Flow if created
+            if (flowResult != null && flowResult.success) {
+                marketingFlow.MC_Flow_Id__c = flowResult.flowId;
+                marketingFlow.Flow_URL__c = flowResult.flowUrl;
+                marketingFlow.Status__c = 'Active';
+            }
+            insert marketingFlow;
+
+            // ── Phase 3: DML — Publish platform events ──
+            List<Journey_Send_Request__e> events = new List<Journey_Send_Request__e>();
             for (Journey_Approval__c step : steps) {
-                step.Status__c = 'Approved';
+                String subject = String.isNotBlank(step.Approved_Subject__c) ?
+                    step.Approved_Subject__c : step.Suggested_Subject__c;
+                String body = step.Channel__c == 'Email' ?
+                    (String.isNotBlank(step.Approved_Body__c) ? step.Approved_Body__c : step.Suggested_Body__c) :
+                    step.SMS_Body__c;
+
+                Journey_Send_Request__e sendEvent = new Journey_Send_Request__e(
+                    Contact_Id__c = String.valueOf(contact.Id),
+                    Email__c = contact.Email,
+                    First_Name__c = contact.FirstName,
+                    Subject__c = subject,
+                    Body__c = body,
+                    Image_URL__c = step.Generated_Image_URL__c,
+                    Approval_Id__c = String.valueOf(step.Id),
+                    Event_Type__c = step.Event_Type__c,
+                    Journey_Id__c = journeyId,
+                    Step_Number__c = step.Step_Number__c,
+                    Total_Steps__c = step.Total_Steps__c,
+                    Channel__c = step.Channel__c,
+                    Send_Delay_Days__c = step.Send_Delay_Days__c
+                );
+                events.add(sendEvent);
+            }
+
+            List<Database.SaveResult> publishResults = EventBus.publish(events);
+
+            // ── Phase 4: DML — Update steps to Sent ──
+            DateTime baseTime = DateTime.now();
+            Integer successCount = 0;
+            for (Integer i = 0; i < steps.size(); i++) {
+                Journey_Approval__c step = steps[i];
                 step.Reviewed_By__c = UserInfo.getUserId();
-                step.Reviewed_At__c = DateTime.now();
+                step.Reviewed_At__c = baseTime;
 
                 // Copy suggested to approved if not already set
                 if (String.isBlank(step.Approved_Subject__c)) {
@@ -636,14 +726,38 @@ public with sharing class JourneyApprovalService {
                 Integer delayDays = step.Send_Delay_Days__c != null ?
                     (Integer)step.Send_Delay_Days__c : 0;
                 step.Scheduled_Send_Date__c = baseTime.addDays(delayDays);
+
+                // Store the Salesforce Flow ID on each step
+                if (flowResult != null && flowResult.success) {
+                    step.MC_Flow_Definition_Id__c = flowResult.flowId;
+                }
+
+                if (publishResults[i].isSuccess()) {
+                    step.Status__c = 'Sent';
+                    step.Sent_At__c = baseTime;
+                    step.MC_Journey_Key__c = 'pe-' + publishResults[i].getId();
+                    step.Marketing_Flow__c = marketingFlow.Id;
+                    successCount++;
+                } else {
+                    step.Status__c = 'Failed';
+                }
             }
 
             update steps;
 
+            // ── Phase 5: DML — Update Marketing Flow status ──
+            marketingFlow.Status__c = successCount > 0 ? 'Created' : 'Failed';
+            update marketingFlow;
+
+            // Update source event
+            if (steps[0].Meaningful_Event__c != null) {
+                updateSourceEvent(steps[0].Meaningful_Event__c, 'Journey Sent');
+            }
+
             String imageMsg = imagesGenerated > 0 ? ' (' + imagesGenerated + ' image(s) generated)' : '';
             result.success = true;
-            result.message = 'Approved ' + steps.size() + ' journey steps' + imageMsg;
-            result.newStatus = 'Approved';
+            result.message = 'Approved & sent ' + successCount + ' of ' + steps.size() + ' journey steps to Marketing Flow' + imageMsg;
+            result.newStatus = 'Sent';
 
         } catch (Exception e) {
             result.success = false;
@@ -668,16 +782,26 @@ public with sharing class JourneyApprovalService {
 
         try {
             List<Journey_Approval__c> steps = [
-                SELECT Id, Status__c
+                SELECT Id, Status__c, MC_Flow_Definition_Id__c
                 FROM Journey_Approval__c
                 WHERE Journey_Id__c = :journeyId
-                AND Status__c = 'Pending'
+                AND Status__c IN ('Pending', 'Approved')
             ];
 
             if (steps.isEmpty()) {
                 result.success = false;
-                result.errorMessage = 'No pending steps found for this journey';
+                result.errorMessage = 'No steps found for this journey';
                 return result;
+            }
+
+            // Delete the associated Salesforce Flow if one exists (callout before DML)
+            String flowId = steps[0].MC_Flow_Definition_Id__c;
+            if (String.isNotBlank(flowId)) {
+                try {
+                    MarketingFlowBuilderService.deleteFlow(flowId);
+                } catch (Exception flowEx) {
+                    System.debug(LoggingLevel.WARN, 'Flow deletion failed: ' + flowEx.getMessage());
+                }
             }
 
             for (Journey_Approval__c step : steps) {
@@ -926,7 +1050,7 @@ public with sharing class JourneyApprovalService {
 
             // Validate contact email
             Contact contact = [
-                SELECT Id, Email, FirstName
+                SELECT Id, Email, FirstName, LastName
                 FROM Contact
                 WHERE Id = :steps[0].Contact__c
                 LIMIT 1

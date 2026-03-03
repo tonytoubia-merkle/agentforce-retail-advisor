@@ -78,7 +78,10 @@ public with sharing class JourneyPromptBuilder {
                 ProductRecommendation rec = new ProductRecommendation();
                 rec.name = affinity.Product_Name__c;
                 rec.productCode = affinity.Product_Code__c;
-                rec.imageUrl = affinity.Product_Image_URL__c;
+                // Use stored URL, or reconstruct from productCode if missing
+                rec.imageUrl = String.isNotBlank(affinity.Product_Image_URL__c)
+                    ? affinity.Product_Image_URL__c
+                    : APP_BASE_URL + '/assets/products/' + affinity.Product_Code__c + '.png';
                 rec.affinityType = affinity.Affinity_Type__c;
                 rec.score = affinity.Affinity_Score__c;
                 recommendations.add(rec);
@@ -119,23 +122,7 @@ public with sharing class JourneyPromptBuilder {
      */
     private static String getSceneTemplate(String eventType, String eventContext) {
         String contextLower = eventContext != null ? eventContext.toLowerCase() : '';
-
-        // Check for specific destinations/themes in context
-        if (contextLower.contains('paris') || contextLower.contains('france')) {
-            return 'Elegant open travel bag on luxury Parisian hotel bed, {products} artfully arranged inside, ' +
-                   'Eiffel Tower visible through sheer curtains, soft morning light, croissant on nightstand, ' +
-                   'premium lifestyle photography, rose gold accents';
-        }
-
-        if (contextLower.contains('beach') || contextLower.contains('tropical') || contextLower.contains('hawaii')) {
-            return 'Beach vacation scene, {products} arranged on white linen beside straw hat and sunglasses, ' +
-                   'turquoise ocean visible through open villa doors, tropical flowers, golden hour lighting';
-        }
-
-        if (contextLower.contains('ski') || contextLower.contains('mountain') || contextLower.contains('winter')) {
-            return 'Cozy mountain chalet scene, {products} on wooden vanity near frosted window, ' +
-                   'snow-capped peaks visible outside, warm firelight glow, cashmere throw, luxury après-ski atmosphere';
-        }
+        String normalizedType = normalizeEventType(eventType);
 
         // Event type templates
         Map<String, String> templates = new Map<String, String>{
@@ -158,7 +145,34 @@ public with sharing class JourneyPromptBuilder {
                             'clean minimalist background, natural lighting, premium product photography'
         };
 
-        String template = templates.get(eventType);
+        // For specific event types (wedding, birthday, anniversary, baby), use the
+        // event template directly — destination keywords should NOT override these
+        if (normalizedType != 'travel' && normalizedType != 'life-event') {
+            String template = templates.get(normalizedType);
+            if (template != null) {
+                return template;
+            }
+        }
+
+        // For travel/generic events, check destination keywords for richer scene context
+        if (contextLower.contains('paris') || contextLower.contains('france')) {
+            return 'Elegant open travel bag on luxury Parisian hotel bed, {products} artfully arranged inside, ' +
+                   'Eiffel Tower visible through sheer curtains, soft morning light, croissant on nightstand, ' +
+                   'premium lifestyle photography, rose gold accents';
+        }
+
+        if (contextLower.contains('beach') || contextLower.contains('tropical') || contextLower.contains('hawaii')) {
+            return 'Beach vacation scene, {products} arranged on white linen beside straw hat and sunglasses, ' +
+                   'turquoise ocean visible through open villa doors, tropical flowers, golden hour lighting';
+        }
+
+        if (contextLower.contains('ski') || contextLower.contains('mountain') || contextLower.contains('winter')) {
+            return 'Cozy mountain chalet scene, {products} on wooden vanity near frosted window, ' +
+                   'snow-capped peaks visible outside, warm firelight glow, cashmere throw, luxury après-ski atmosphere';
+        }
+
+        // Fall back to event type template or generic
+        String template = templates.get(normalizedType);
         if (template == null) {
             template = templates.get('life-event');
         }
@@ -397,21 +411,39 @@ public with sharing class JourneyPromptBuilder {
             position = 'middle';
         }
 
-        // Check for destination-specific override first
         String contextLower = eventContext != null ? eventContext.toLowerCase() : '';
-        String template = getDestinationOverride(contextLower, position);
+        String eventKey = normalizeEventType(eventType);
+
+        // If eventType normalizes to generic 'life-event', also check the description
+        // for contextual keywords (e.g., "traveling to Dubai" → 'travel')
+        if (eventKey == 'life-event' && String.isNotBlank(contextLower)) {
+            String contextKey = normalizeEventType(contextLower);
+            if (contextKey != 'life-event') {
+                eventKey = contextKey;
+            }
+        }
+
+        String template = null;
+
+        // For specific event types (wedding, birthday, anniversary, baby), use event
+        // templates directly — destination keywords should NOT override these
+        if (eventKey != 'travel' && eventKey != 'life-event') {
+            Map<String, String> typeTemplates = getStepTemplates().get(eventKey);
+            if (typeTemplates != null) {
+                template = typeTemplates.get(position);
+                if (template == null) {
+                    template = typeTemplates.get('single');
+                }
+            }
+        }
+
+        // For travel/generic events, check destination-specific overrides
+        if (template == null) {
+            template = getDestinationOverride(contextLower, position);
+        }
 
         // Fall back to event type template
         if (template == null) {
-            String eventKey = normalizeEventType(eventType);
-            // If eventType normalizes to generic 'life-event', also check the description
-            // for contextual keywords (e.g., "traveling to Dubai" → 'travel')
-            if (eventKey == 'life-event' && String.isNotBlank(contextLower)) {
-                String contextKey = normalizeEventType(contextLower);
-                if (contextKey != 'life-event') {
-                    eventKey = contextKey;
-                }
-            }
             Map<String, String> typeTemplates = getStepTemplates().get(eventKey);
             if (typeTemplates == null) {
                 typeTemplates = getStepTemplates().get('life-event');

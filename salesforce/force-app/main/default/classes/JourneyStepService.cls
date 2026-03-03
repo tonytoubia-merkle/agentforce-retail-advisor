@@ -31,6 +31,7 @@ public with sharing class JourneyStepService {
                    Media_Platform__c, Media_Ad_Format__c, Media_Creative_Brief__c,
                    Media_Audience_Signals__c, Media_Estimated_Reach__c,
                    Merkury_Activation_Status__c,
+                   MC_Flow_Definition_Id__c,
                    CreatedDate, LastModifiedDate
             FROM Journey_Approval__c
             WHERE Journey_Id__c = :journeyId
@@ -64,6 +65,7 @@ public with sharing class JourneyStepService {
                    Media_Platform__c, Media_Ad_Format__c, Media_Creative_Brief__c,
                    Media_Audience_Signals__c, Media_Estimated_Reach__c,
                    Merkury_Activation_Status__c,
+                   MC_Flow_Definition_Id__c,
                    CreatedDate, LastModifiedDate
             FROM Journey_Approval__c
             WHERE Journey_Id__c = :journeyId

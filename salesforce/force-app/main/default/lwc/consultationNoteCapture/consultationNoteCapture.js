@@ -8,6 +8,7 @@ export default class ConsultationNoteCapture extends LightningElement {
     @track noteType = 'Observation';
     @track noteText = '';
     @track isSaving = false;
+    @track isDropdownOpen = false;
 
     get noteTypeOptions() {
         return [
@@ -23,8 +24,27 @@ export default class ConsultationNoteCapture extends LightningElement {
         return !this.noteText || !this.contactId || this.isSaving;
     }
 
-    handleTypeChange(event) {
-        this.noteType = event.detail.value;
+    toggleDropdown() {
+        this.isDropdownOpen = !this.isDropdownOpen;
+    }
+
+    handleOptionClick(event) {
+        this.noteType = event.currentTarget.dataset.value;
+        this.isDropdownOpen = false;
+    }
+
+    // Close dropdown when clicking outside
+    connectedCallback() {
+        this._closeHandler = () => {
+            if (this.isDropdownOpen) {
+                this.isDropdownOpen = false;
+            }
+        };
+        document.addEventListener('click', this._closeHandler);
+    }
+
+    disconnectedCallback() {
+        document.removeEventListener('click', this._closeHandler);
     }
 
     handleTextChange(event) {

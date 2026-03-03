@@ -251,7 +251,8 @@ public with sharing class PortfolioAssignmentService {
                    // Media activation fields
                    Media_Platform__c, Media_Ad_Format__c, Media_Creative_Brief__c,
                    Media_Audience_Signals__c, Media_Estimated_Reach__c,
-                   Merkury_Activation_Status__c
+                   Merkury_Activation_Status__c,
+                   MC_Flow_Definition_Id__c
             FROM Journey_Approval__c
             WHERE Assigned_Portfolio__c IN :portfolioIds
             AND Status__c = 'Pending'
@@ -806,7 +807,8 @@ public with sharing class PortfolioAssignmentService {
                    // Media activation fields
                    Media_Platform__c, Media_Ad_Format__c, Media_Creative_Brief__c,
                    Media_Audience_Signals__c, Media_Estimated_Reach__c,
-                   Merkury_Activation_Status__c
+                   Merkury_Activation_Status__c,
+                   MC_Flow_Definition_Id__c
             FROM Journey_Approval__c
             WHERE Assigned_Portfolio__c IN :portfolioIds
             AND Status__c IN :getStatusValues(statusFilter)
@@ -820,15 +822,13 @@ public with sharing class PortfolioAssignmentService {
      */
     private static List<String> getStatusValues(String statusFilter) {
         if (String.isBlank(statusFilter) || statusFilter == 'pending') {
-            return new List<String>{ 'Pending' };
+            return new List<String>{ 'Pending', 'Approved' };
         } else if (statusFilter == 'in-progress') {
-            return new List<String>{ 'Approved' };
-        } else if (statusFilter == 'sent') {
             return new List<String>{ 'Sent' };
         } else if (statusFilter == 'all-statuses') {
             return new List<String>{ 'Pending', 'Approved', 'Sent', 'Failed' };
         }
-        return new List<String>{ 'Pending' };
+        return new List<String>{ 'Pending', 'Approved' };
     }
 
     /**

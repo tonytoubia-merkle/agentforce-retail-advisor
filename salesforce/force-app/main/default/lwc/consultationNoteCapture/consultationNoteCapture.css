@@ -15,10 +15,72 @@
     gap: 6px;
 }
 
+/* Custom upward-opening dropdown */
 .type-select {
+    position: relative;
     max-width: 180px;
 }
 
+.type-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 5px 10px;
+    font-size: 13px;
+    color: #333;
+    background: #fff;
+    border: 1px solid #d8dde6;
+    border-radius: 4px;
+    cursor: pointer;
+    line-height: 1.5;
+}
+
+.type-trigger:hover {
+    border-color: #1b96ff;
+}
+
+.type-trigger:focus {
+    outline: none;
+    border-color: #1b96ff;
+    box-shadow: 0 0 3px 0 #1b96ff;
+}
+
+.trigger-icon {
+    font-size: 10px;
+    color: #706e6b;
+    margin-left: 8px;
+}
+
+/* Dropdown opens UPWARD */
+.type-dropdown {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    right: 0;
+    margin-bottom: 2px;
+    background: #fff;
+    border: 1px solid #d8dde6;
+    border-radius: 4px;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.12);
+    list-style: none;
+    padding: 4px 0;
+    margin-top: 0;
+    z-index: 9001;
+}
+
+.type-option {
+    padding: 6px 12px;
+    font-size: 13px;
+    color: #333;
+    cursor: pointer;
+}
+
+.type-option:hover {
+    background: #f3f3f3;
+}
+
+/* Rest of note capture styles */
 .note-input-row {
     display: flex;
     gap: 8px;

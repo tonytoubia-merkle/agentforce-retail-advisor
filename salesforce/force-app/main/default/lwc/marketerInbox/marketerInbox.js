@@ -129,13 +129,12 @@ export default class MarketerInbox extends LightningElement {
         return [
             { label: 'Pending', value: 'pending' },
             { label: 'In Progress', value: 'in-progress' },
-            { label: 'Sent', value: 'sent' },
             { label: 'All Statuses', value: 'all-statuses' }
         ];
     }
 
     get isReadOnlyView() {
-        return this.selectedStatus === 'sent';
+        return this.selectedStatus === 'in-progress';
     }
 
     get isInProgressView() {
@@ -356,7 +355,10 @@ export default class MarketerInbox extends LightningElement {
                 group.hasMarketingFlow = true;
                 group.marketingFlowId = approval.Marketing_Flow__c;
                 group.marketingFlowName = approval.Marketing_Flow__r?.Name || 'Marketing Flow';
-                group.marketingFlowUrl = '/lightning/r/Marketing_Flow__c/' + approval.Marketing_Flow__c + '/view';
+                // Use the Flow Builder URL if a real Salesforce Flow was created
+                const flowUrl = approval.Marketing_Flow__r?.Flow_URL__c;
+                group.marketingFlowUrl = flowUrl || ('/lightning/r/Marketing_Flow__c/' + approval.Marketing_Flow__c + '/view');
+                group.hasRealFlow = !!flowUrl;
             }
         }
 
@@ -606,11 +608,11 @@ export default class MarketerInbox extends LightningElement {
             const result = await approveAllJourneySteps({ journeyId: journeyId });
 
             if (result.success) {
-                this.showToastMessage(`Approved all ${group.stepCount} steps for ${group.contactName}`, 'success');
+                this.showToastMessage(result.message || `Approved & sent ${group.stepCount}-step journey for ${group.contactName} to Marketing Flow`, 'success');
                 await refreshApex(this.wiredApprovalsResult);
                 await refreshApex(this.wiredStatsResult);
             } else {
-                this.showToastMessage(result.errorMessage || 'Bulk approval failed', 'error');
+                this.showToastMessage(result.errorMessage || 'Approval failed', 'error');
             }
         } catch (error) {
             this.showToastMessage('Error: ' + (error.body?.message || error.message), 'error');

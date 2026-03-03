@@ -19,7 +19,7 @@ public with sharing class FireflyApexService {
 
     private static final String TOKEN_URL = 'https://ims-na1.adobelogin.com/ims/token/v3';
     private static final String GENERATE_URL = 'https://firefly-api.adobe.io/v3/images/generate-async';
-    private static final String VIDEO_GENERATE_URL = 'https://firefly-api.adobe.io/v3/videos/generate-async';
+    private static final String VIDEO_GENERATE_URL = 'https://firefly-api.adobe.io/v3/videos/generate';
     private static final String STATUS_URL = 'https://firefly-api.adobe.io/v3/status/';
     private static final String VERCEL_APP_URL = 'https://agentforce-retail-advisor.vercel.app';
 
@@ -268,58 +268,117 @@ public with sharing class FireflyApexService {
     }
 
     /**
-     * Generate a personalized video using Adobe Firefly Video API.
-     * Full orchestration: submit async job → poll → download → store in SF Files → create public URL.
+     * Submit a video generation job to Firefly. Returns immediately with the jobId.
+     * The LWC should then poll checkVideoJobStatus() until the video is ready.
      *
      * @param prompt The video generation prompt
-     * @return VideoGenerationResult with URLs and ContentVersion ID
+     * @return VideoGenerationResult with jobId (videoUrl will be null until polling completes)
      */
-    public static VideoGenerationResult generateVideo(String prompt) {
+    @AuraEnabled
+    public static VideoGenerationResult submitVideoJob(String prompt) {
         VideoGenerationResult result = new VideoGenerationResult();
 
         try {
-            // Submit async video generation job
-            String jobId = callFireflyVideoAPI(prompt);
-
-            // Poll for completion
-            String token = getAccessToken();
-            String clientId = getCredential('Firefly_Client_Id');
-            String videoUrl = pollForVideoResult(jobId, token, clientId);
-
-            result.videoUrl = videoUrl;
-
-            // Download and save to Salesforce Files
-            String fileName = 'skincare-video-' + System.currentTimeMillis() + '.mp4';
-            String cvId = downloadAndSaveVideo(videoUrl, fileName);
-            result.contentVersionId = cvId;
-
-            // Create public URL for embedding in emails
-            String publicUrl = createPublicUrl(cvId);
-            result.publicUrl = publicUrl;
-
+            Map<String, String> jobInfo = callFireflyVideoAPI(prompt);
             result.success = true;
+            result.videoUrl = jobInfo.get('jobId'); // Store jobId in videoUrl temporarily
+            result.publicUrl = jobInfo.get('statusUrl'); // Store statusUrl in publicUrl temporarily
         } catch (Exception e) {
             result.success = false;
             result.errorMessage = e.getMessage();
-            System.debug(LoggingLevel.ERROR, 'Video generation failed: ' + e.getMessage());
+            System.debug(LoggingLevel.ERROR, 'Video job submission failed: ' + e.getMessage());
         }
 
         return result;
     }
 
     /**
-     * AuraEnabled wrapper for LWC to generate video.
+     * Check the status of a video generation job. Called repeatedly by the LWC.
+     * Returns the status: 'running', 'succeeded', or 'failed'.
+     * When succeeded, downloads the video, saves to SF Files, and returns the URLs.
+     *
+     * @param jobId The Firefly job ID
+     * @return VideoGenerationResult with status info and URLs when complete
      */
     @AuraEnabled
-    public static VideoGenerationResult generateVideoFromLWC(String prompt) {
-        return generateVideo(prompt);
+    public static VideoGenerationResult checkVideoJobStatus(String jobId) {
+        VideoGenerationResult result = new VideoGenerationResult();
+
+        try {
+            String token = getAccessToken();
+            String clientId = getCredential('Firefly_Client_Id');
+
+            // Poll using the standard status endpoint
+            String pollUrl = STATUS_URL + jobId;
+
+            HttpRequest req = new HttpRequest();
+            req.setEndpoint(pollUrl);
+            req.setMethod('GET');
+            req.setHeader('Authorization', 'Bearer ' + token);
+            req.setHeader('x-api-key', clientId);
+            req.setHeader('Accept', 'application/json');
+            req.setTimeout(15000);
+
+            Http http = new Http();
+            HttpResponse res = http.send(req);
+
+            System.debug(LoggingLevel.INFO, '[checkVideoJobStatus] Status: ' + res.getStatusCode() + ' Body: ' + res.getBody().left(500));
+
+            if (res.getStatusCode() != 200) {
+                // Not ready yet or transient error — return running status
+                result.success = true;
+                result.errorMessage = 'running';
+                return result;
+            }
+
+            Map<String, Object> status = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+            String jobStatus = (String) status.get('status');
+            System.debug(LoggingLevel.INFO, '[checkVideoJobStatus] Job status: ' + jobStatus);
+
+            if (jobStatus == 'succeeded') {
+                String videoUrl = extractVideoUrl(status);
+                if (String.isBlank(videoUrl) && status.containsKey('result')) {
+                    videoUrl = extractVideoUrl((Map<String, Object>) status.get('result'));
+                }
+                if (String.isBlank(videoUrl)) {
+                    result.success = false;
+                    result.errorMessage = 'Video job succeeded but returned no video URL. Response: ' + res.getBody().left(500);
+                    return result;
+                }
+
+                // Download and save to Salesforce Files
+                String fileName = 'skincare-video-' + System.currentTimeMillis() + '.mp4';
+                String cvId = downloadAndSaveVideo(videoUrl, fileName);
+                String publicUrl = createPublicUrl(cvId);
+
+                result.success = true;
+                result.videoUrl = '/sfc/servlet.shepherd/version/download/' + cvId;
+                result.contentVersionId = cvId;
+                result.publicUrl = publicUrl;
+                result.errorMessage = 'succeeded';
+            } else if (jobStatus == 'failed' || jobStatus == 'cancelled') {
+                String errMsg = status.containsKey('message') ? (String) status.get('message') : 'unknown error';
+                result.success = false;
+                result.errorMessage = 'Firefly video job ' + jobStatus + ': ' + errMsg;
+            } else {
+                // Still running (status is 'running' or 'pending')
+                result.success = true;
+                result.errorMessage = 'running';
+            }
+        } catch (Exception e) {
+            result.success = false;
+            result.errorMessage = e.getMessage();
+            System.debug(LoggingLevel.ERROR, 'Video status check failed: ' + e.getMessage());
+        }
+
+        return result;
     }
 
     /**
      * Submit async video generation job to Firefly Video API.
-     * Returns the jobId for polling.
+     * Returns a map with 'jobId' and 'statusUrl' from the API response.
      */
-    private static String callFireflyVideoAPI(String prompt) {
+    private static Map<String, String> callFireflyVideoAPI(String prompt) {
         String token = getAccessToken();
         String clientId = getCredential('Firefly_Client_Id');
 
@@ -328,14 +387,14 @@ public with sharing class FireflyApexService {
         req.setMethod('POST');
         req.setHeader('Authorization', 'Bearer ' + token);
         req.setHeader('x-api-key', clientId);
+        req.setHeader('x-model-version', 'video1_standard');
         req.setHeader('Content-Type', 'application/json');
         req.setHeader('Accept', 'application/json');
         req.setTimeout(30000);
 
         Map<String, Object> requestBody = new Map<String, Object>{
             'prompt' => prompt,
-            'contentClass' => 'photo',
-            'duration' => 5
+            'bitRateFactor' => 18
         };
 
         req.setBody(JSON.serialize(requestBody));
@@ -343,67 +402,29 @@ public with sharing class FireflyApexService {
         Http http = new Http();
         HttpResponse res = http.send(req);
 
+        System.debug(LoggingLevel.INFO, '[callFireflyVideoAPI] Response status: ' + res.getStatusCode());
+        System.debug(LoggingLevel.INFO, '[callFireflyVideoAPI] Response body: ' + res.getBody().left(1000));
+
         if (res.getStatusCode() != 202 && res.getStatusCode() != 200) {
-            throw new FireflyException('Firefly video generate-async failed (' + res.getStatusCode() + '): ' + res.getBody());
+            throw new FireflyException('Firefly video generate failed (' + res.getStatusCode() + '): ' + res.getBody());
         }
 
         Map<String, Object> responseData = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
         String jobId = (String) responseData.get('jobId');
+        String statusUrl = (String) responseData.get('statusUrl');
 
         if (String.isBlank(jobId)) {
             throw new FireflyException('Firefly video API returned no jobId. Response: ' + res.getBody().left(500));
         }
 
         System.debug(LoggingLevel.INFO, '[callFireflyVideoAPI] Async video job submitted: ' + jobId);
-        return jobId;
-    }
+        System.debug(LoggingLevel.INFO, '[callFireflyVideoAPI] Status URL: ' + statusUrl);
 
-    /**
-     * Poll for video generation result.
-     * Videos take longer than images — allow more attempts.
-     */
-    private static String pollForVideoResult(String jobId, String token, String clientId) {
-        Integer maxAttempts = 60; // Videos may take 30-60 seconds
-        Http http = new Http();
-
-        for (Integer attempt = 0; attempt < maxAttempts; attempt++) {
-            HttpRequest req = new HttpRequest();
-            req.setEndpoint(STATUS_URL + jobId);
-            req.setMethod('GET');
-            req.setHeader('Authorization', 'Bearer ' + token);
-            req.setHeader('x-api-key', clientId);
-            req.setHeader('Accept', 'application/json');
-            req.setTimeout(10000);
-
-            HttpResponse res = http.send(req);
-
-            if (res.getStatusCode() != 200) {
-                System.debug(LoggingLevel.WARN, '[pollForVideoResult] Poll ' + (attempt + 1) + ' returned ' + res.getStatusCode());
-                continue;
-            }
-
-            Map<String, Object> status = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
-            String jobStatus = (String) status.get('status');
-            System.debug(LoggingLevel.INFO, '[pollForVideoResult] Job ' + jobId + ' status: ' + jobStatus + ' (attempt ' + (attempt + 1) + ')');
-
-            if (jobStatus == 'succeeded') {
-                String videoUrl = extractVideoUrl(status);
-                if (String.isBlank(videoUrl) && status.containsKey('result')) {
-                    videoUrl = extractVideoUrl((Map<String, Object>) status.get('result'));
-                }
-                if (String.isBlank(videoUrl)) {
-                    throw new FireflyException('Video job succeeded but returned no video URL');
-                }
-                return videoUrl;
-            }
-
-            if (jobStatus == 'failed' || jobStatus == 'cancelled') {
-                String errMsg = status.containsKey('message') ? (String) status.get('message') : 'unknown error';
-                throw new FireflyException('Firefly video job ' + jobStatus + ': ' + errMsg);
-            }
-        }
-
-        throw new FireflyException('Firefly video job timed out after ' + maxAttempts + ' poll attempts');
+        Map<String, String> result = new Map<String, String>{
+            'jobId' => jobId,
+            'statusUrl' => statusUrl
+        };
+        return result;
     }
 
     /**

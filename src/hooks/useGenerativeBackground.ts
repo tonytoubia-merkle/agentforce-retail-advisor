@@ -73,6 +73,8 @@ export interface BackgroundOptions {
   sceneType?: string;
   /** If set, use this existing background instead of generating a new one. */
   existingBackground?: string;
+  /** When true, the agent explicitly requested generation — bypass novelty check. */
+  forceGenerate?: boolean;
 }
 
 export function useGenerativeBackground() {
@@ -91,7 +93,8 @@ export function useGenerativeBackground() {
       // Whether the agent provided a rich scene description
       const hasPrompt = !!options?.backgroundPrompt;
       // Whether the prompt describes something truly novel (not a standard beauty scene)
-      const isNovel = hasPrompt && isNovelPrompt(options!.backgroundPrompt!, setting);
+      // If the agent explicitly requested generation (forceGenerate), always treat as novel
+      const isNovel = options?.forceGenerate || (hasPrompt && isNovelPrompt(options!.backgroundPrompt!, setting));
 
       if (cacheRef.current[cacheKey]) {
         return cacheRef.current[cacheKey];

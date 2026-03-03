@@ -513,28 +513,44 @@ export default async function handler(req, res) {
       console.log(`[checkout] Created Order ${orderId}`);
 
       // 4. Create PricebookEntries (if needed) + OrderItems
+      let itemsCreated = 0;
       for (const item of items) {
-        const pbeCheck = await sfFetch(token, 'GET',
-          `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT Id FROM PricebookEntry WHERE Product2Id = '${item.product2Id}' AND Pricebook2Id = '${pricebookId}' AND IsActive = true LIMIT 1`)}`);
-        let pbeId = pbeCheck.data?.records?.[0]?.Id;
+        try {
+          const pbeCheck = await sfFetch(token, 'GET',
+            `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT Id FROM PricebookEntry WHERE Product2Id = '${item.product2Id}' AND Pricebook2Id = '${pricebookId}' AND IsActive = true LIMIT 1`)}`);
+          let pbeId = pbeCheck.data?.records?.[0]?.Id;
 
-        if (!pbeId) {
-          const pbeRes = await sfFetch(token, 'POST', '/services/data/v60.0/sobjects/PricebookEntry', {
-            Pricebook2Id: pricebookId,
-            Product2Id: item.product2Id,
+          if (!pbeId) {
+            const pbeRes = await sfFetch(token, 'POST', '/services/data/v60.0/sobjects/PricebookEntry', {
+              Pricebook2Id: pricebookId,
+              Product2Id: item.product2Id,
+              UnitPrice: item.unitPrice,
+              IsActive: true,
+            });
+            pbeId = pbeRes.data?.id;
+          }
+
+          if (!pbeId) {
+            console.error(`[checkout] Failed to get/create PricebookEntry for product ${item.product2Id} (${item.productName})`);
+            continue;
+          }
+
+          const oiRes = await sfFetch(token, 'POST', '/services/data/v60.0/sobjects/OrderItem', {
+            OrderId: orderId,
+            PricebookEntryId: pbeId,
+            Quantity: item.quantity,
             UnitPrice: item.unitPrice,
-            IsActive: true,
           });
-          pbeId = pbeRes.data?.id;
+          if (oiRes.data?.id) {
+            itemsCreated++;
+          } else {
+            console.error(`[checkout] Failed to create OrderItem for ${item.productName}:`, oiRes.data);
+          }
+        } catch (itemErr) {
+          console.error(`[checkout] Error creating OrderItem for ${item.productName}:`, itemErr.message);
         }
-
-        await sfFetch(token, 'POST', '/services/data/v60.0/sobjects/OrderItem', {
-          OrderId: orderId,
-          PricebookEntryId: pbeId,
-          Quantity: item.quantity,
-          UnitPrice: item.unitPrice,
-        });
       }
+      console.log(`[checkout] Created ${itemsCreated}/${items.length} OrderItems`);
 
       // 5. Activate Order
       await sfFetch(token, 'PATCH', `/services/data/v60.0/sobjects/Order/${orderId}`, { Status: 'Activated' });
@@ -546,6 +562,8 @@ export default async function handler(req, res) {
       const orderNumber = orderQuery.data?.records?.[0]?.OrderNumber;
 
       // 7. Accrue loyalty points (10% back)
+      // Updates LoyaltyMemberCurrency directly since the demo org doesn't run
+      // the Loyalty Management accrual engine that would process LoyaltyLedger entries.
       let pointsEarned = 0;
       if (total > 0) {
         const pts = Math.floor(total * 0.10);
@@ -555,21 +573,21 @@ export default async function handler(req, res) {
               `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT Id, ProgramId FROM LoyaltyProgramMember WHERE ContactId IN (SELECT Id FROM Contact WHERE AccountId = '${accountId}') AND MemberStatus = 'Active' LIMIT 1`)}`);
             const member = memberQuery.data?.records?.[0];
             if (member) {
-              const currencyQuery = await sfFetch(token, 'GET',
-                `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT Id FROM LoyaltyProgramCurrency WHERE LoyaltyProgramId = '${member.ProgramId}' AND IsActive = true LIMIT 1`)}`);
-              const currencyId = currencyQuery.data?.records?.[0]?.Id;
-              if (currencyId) {
-                const ledgerRes = await sfFetch(token, 'POST', '/services/data/v60.0/sobjects/LoyaltyLedger', {
-                  LoyaltyProgramMemberId: member.Id,
-                  LoyaltyProgramCurrencyId: currencyId,
-                  Points: pts,
-                  EventType: 'Credit',
-                  ActivityDate: new Date().toISOString(),
+              // Find or create LoyaltyMemberCurrency and update balance directly
+              const memberCurrencyQuery = await sfFetch(token, 'GET',
+                `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT Id, PointsBalance, TotalPointsAccrued FROM LoyaltyMemberCurrency WHERE LoyaltyMemberId = '${member.Id}' LIMIT 1`)}`);
+              const memberCurrency = memberCurrencyQuery.data?.records?.[0];
+              if (memberCurrency) {
+                const newBalance = (memberCurrency.PointsBalance || 0) + pts;
+                const newAccrued = (memberCurrency.TotalPointsAccrued || 0) + pts;
+                await sfFetch(token, 'PATCH', `/services/data/v60.0/sobjects/LoyaltyMemberCurrency/${memberCurrency.Id}`, {
+                  PointsBalance: newBalance,
+                  TotalPointsAccrued: newAccrued,
                 });
-                if (ledgerRes.data?.id) {
-                  pointsEarned = pts;
-                  console.log(`[checkout] Accrued ${pts} loyalty points for order ${orderNumber}`);
-                }
+                pointsEarned = pts;
+                console.log(`[checkout] Updated LoyaltyMemberCurrency: +${pts} pts (balance: ${newBalance}, accrued: ${newAccrued})`);
+              } else {
+                console.log(`[checkout] No LoyaltyMemberCurrency found for member ${member.Id}`);
               }
             }
           } catch (loyaltyErr) {
