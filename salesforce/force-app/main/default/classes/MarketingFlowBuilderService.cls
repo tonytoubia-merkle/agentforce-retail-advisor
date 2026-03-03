@@ -301,7 +301,6 @@ public with sharing class MarketingFlowBuilderService {
 
         // Build flow elements
         List<Map<String, Object>> actionCalls = new List<Map<String, Object>>();
-        List<Map<String, Object>> waits = new List<Map<String, Object>>();
         List<Map<String, Object>> assignments = new List<Map<String, Object>>();
 
         // Start element
@@ -318,36 +317,28 @@ public with sharing class MarketingFlowBuilderService {
             String channel = step.Channel__c != null ? step.Channel__c : 'Email';
             Integer delayDays = step.Send_Delay_Days__c != null ? (Integer) step.Send_Delay_Days__c : 0;
 
-            // Add Wait element if delay > 0 and not the first step
+            // Add delay marker as Assignment element (visual placeholder for the wait)
             if (delayDays > 0 && i > 0) {
-                String waitName = 'Wait_Step_' + stepNum;
-                Map<String, Object> waitElement = new Map<String, Object>();
-                waitElement.put('name', waitName);
-                waitElement.put('label', 'Wait ' + delayDays + ' day(s) before Step ' + stepNum);
-                waitElement.put('locationX', 176);
-                waitElement.put('locationY', yPos);
+                String delayName = 'Delay_Step_' + stepNum;
+                Map<String, Object> delayAssign = new Map<String, Object>();
+                delayAssign.put('name', delayName);
+                delayAssign.put('label', 'Wait ' + delayDays + ' Day(s)');
+                delayAssign.put('locationX', 176);
+                delayAssign.put('locationY', yPos);
 
-                // Wait event (alarm-based)
-                Map<String, Object> waitEvent = new Map<String, Object>();
-                waitEvent.put('name', waitName + '_Alarm');
-                waitEvent.put('eventType', 'AlarmEvent');
-                waitEvent.put('conditionLogic', 'and');
+                List<Map<String, Object>> delayItems = new List<Map<String, Object>>();
+                Map<String, Object> delayItem = new Map<String, Object>();
+                delayItem.put('assignToReference', 'journeyLog');
+                delayItem.put('operator', 'Assign');
+                Map<String, Object> delayValue = new Map<String, Object>();
+                delayValue.put('stringValue', 'Pause ' + delayDays + ' day(s) before Step ' + stepNum + ' (' + channel + ')');
+                delayItem.put('value', delayValue);
+                delayItems.add(delayItem);
+                delayAssign.put('assignmentItems', delayItems);
 
-                List<Map<String, Object>> waitInputParams = new List<Map<String, Object>>();
-                waitInputParams.add(makeParam('TimeOffset', delayDays));
-                waitInputParams.add(makeParamStr('TimeOffsetUnit', 'Days'));
-                waitEvent.put('inputParameters', waitInputParams);
-
-                waitElement.put('waitEvents', new List<Map<String, Object>>{ waitEvent });
-                waits.add(waitElement);
-
+                assignments.add(delayAssign);
                 yPos += 100;
-
-                // Connect previous element to this wait
-                if (previousElementName != null) {
-                    // Connector is set via the connector property on the previous element
-                }
-                previousElementName = waitName;
+                previousElementName = delayName;
             }
 
             // Build the action based on channel
@@ -429,14 +420,22 @@ public with sharing class MarketingFlowBuilderService {
             yPos += 100;
         }
 
-        // Wire up connectors: Start → Step1 → Wait → Step2 → ...
+        // Wire up connectors: Start → Delay → Step1 → Delay → Step2 → ...
         List<Object> allElements = new List<Object>();
         String firstElementName = null;
 
-        // Interleave waits and actions in order
-        Integer waitIdx = 0;
+        // Build ordered element list from assignments (delays + media) and actionCalls (email/sms)
+        // The assignments list has delay markers first, then media assignments
+        // We need to interleave them in step order
+        Integer delayIdx = 0;
         Integer actionIdx = 0;
-        Integer assignIdx = 0;
+        Integer mediaIdx = 0;
+
+        // Count delay assignments (they have names starting with 'Delay_')
+        Integer delayCount = 0;
+        for (Map<String, Object> a : assignments) {
+            if (((String) a.get('name')).startsWith('Delay_')) delayCount++;
+        }
 
         for (Integer i = 0; i < steps.size(); i++) {
             Journey_Approval__c step = steps[i];
@@ -444,28 +443,26 @@ public with sharing class MarketingFlowBuilderService {
             Integer delayDays = step.Send_Delay_Days__c != null ? (Integer) step.Send_Delay_Days__c : 0;
             String channel = step.Channel__c != null ? step.Channel__c : 'Email';
 
-            // Wait element (if any)
-            if (delayDays > 0 && i > 0 && waitIdx < waits.size()) {
-                Map<String, Object> waitEl = waits[waitIdx];
-                allElements.add(waitEl);
-                if (firstElementName == null) firstElementName = (String) waitEl.get('name');
-                waitIdx++;
+            // Delay marker (if any)
+            if (delayDays > 0 && i > 0 && delayIdx < delayCount) {
+                allElements.add(assignments[delayIdx]);
+                if (firstElementName == null) firstElementName = (String) assignments[delayIdx].get('name');
+                delayIdx++;
             }
 
             // Action element
-            String actionName = 'Send_' + channel + '_Step_' + stepNum;
             if (channel == 'Media') {
-                if (assignIdx < assignments.size()) {
-                    Map<String, Object> assignEl = assignments[assignIdx];
-                    allElements.add(assignEl);
-                    if (firstElementName == null) firstElementName = (String) assignEl.get('name');
-                    assignIdx++;
+                // Media assignments come after delay assignments in the list
+                Integer mediaAssignIdx = delayCount + mediaIdx;
+                if (mediaAssignIdx < assignments.size()) {
+                    allElements.add(assignments[mediaAssignIdx]);
+                    if (firstElementName == null) firstElementName = (String) assignments[mediaAssignIdx].get('name');
+                    mediaIdx++;
                 }
             } else {
                 if (actionIdx < actionCalls.size()) {
-                    Map<String, Object> actionEl = actionCalls[actionIdx];
-                    allElements.add(actionEl);
-                    if (firstElementName == null) firstElementName = (String) actionEl.get('name');
+                    allElements.add(actionCalls[actionIdx]);
+                    if (firstElementName == null) firstElementName = (String) actionCalls[actionIdx].get('name');
                     actionIdx++;
                 }
             }
@@ -476,20 +473,9 @@ public with sharing class MarketingFlowBuilderService {
             Map<String, Object> el = (Map<String, Object>) allElements[i];
             Map<String, Object> nextEl = (Map<String, Object>) allElements[i + 1];
             String nextName = (String) nextEl.get('name');
-
-            // For wait elements, the connector goes on the waitEvent
-            if (el.containsKey('waitEvents')) {
-                List<Map<String, Object>> events = (List<Map<String, Object>>) el.get('waitEvents');
-                if (!events.isEmpty()) {
-                    events[0].put('connector', new Map<String, Object>{
-                        'targetReference' => nextName
-                    });
-                }
-            } else {
-                el.put('connector', new Map<String, Object>{
-                    'targetReference' => nextName
-                });
-            }
+            el.put('connector', new Map<String, Object>{
+                'targetReference' => nextName
+            });
         }
 
         // Start connector
@@ -502,14 +488,11 @@ public with sharing class MarketingFlowBuilderService {
 
         // Separate elements by type for the metadata structure
         List<Map<String, Object>> finalActions = new List<Map<String, Object>>();
-        List<Map<String, Object>> finalWaits = new List<Map<String, Object>>();
         List<Map<String, Object>> finalAssignments = new List<Map<String, Object>>();
 
         for (Object el : allElements) {
             Map<String, Object> elMap = (Map<String, Object>) el;
-            if (elMap.containsKey('waitEvents')) {
-                finalWaits.add(elMap);
-            } else if (elMap.containsKey('actionName')) {
+            if (elMap.containsKey('actionName')) {
                 finalActions.add(elMap);
             } else if (elMap.containsKey('assignmentItems')) {
                 finalAssignments.add(elMap);
@@ -517,16 +500,27 @@ public with sharing class MarketingFlowBuilderService {
         }
 
         if (!finalActions.isEmpty()) metadata.put('actionCalls', finalActions);
-        if (!finalWaits.isEmpty()) metadata.put('waits', finalWaits);
         if (!finalAssignments.isEmpty()) metadata.put('assignments', finalAssignments);
 
-        // Add a variable for media activation logging
+        // Add variables for assignment targets
+        List<Map<String, Object>> variables = new List<Map<String, Object>>();
+
+        // journeyLog variable (used by delay marker assignments)
+        Map<String, Object> logVar = new Map<String, Object>();
+        logVar.put('name', 'journeyLog');
+        logVar.put('dataType', 'String');
+        logVar.put('isCollection', false);
+        logVar.put('isInput', false);
+        logVar.put('isOutput', false);
+        logVar.put('description', 'Journey execution log');
+        variables.add(logVar);
+
+        // Media activation log variable (if needed)
         Boolean hasMedia = false;
         for (Journey_Approval__c step : steps) {
             if (step.Channel__c == 'Media') { hasMedia = true; break; }
         }
         if (hasMedia) {
-            List<Map<String, Object>> variables = new List<Map<String, Object>>();
             Map<String, Object> mediaVar = new Map<String, Object>();
             mediaVar.put('name', 'mediaActivationLog');
             mediaVar.put('dataType', 'String');
@@ -535,8 +529,8 @@ public with sharing class MarketingFlowBuilderService {
             mediaVar.put('isOutput', false);
             mediaVar.put('description', 'Logs Merkury media activation details');
             variables.add(mediaVar);
-            metadata.put('variables', variables);
         }
+        metadata.put('variables', variables);
 
         return metadata;
     }
@@ -583,6 +577,18 @@ public with sharing class MarketingFlowBuilderService {
         param.put('name', name);
         Map<String, Object> value = new Map<String, Object>();
         value.put('stringValue', val != null ? val : '');
+        param.put('value', value);
+        return param;
+    }
+
+    /**
+     * Helper to create an element reference input parameter for flow actions.
+     */
+    private static Map<String, Object> makeParamRef(String name, String ref) {
+        Map<String, Object> param = new Map<String, Object>();
+        param.put('name', name);
+        Map<String, Object> value = new Map<String, Object>();
+        value.put('elementReference', ref);
         param.put('value', value);
         return param;
     }
