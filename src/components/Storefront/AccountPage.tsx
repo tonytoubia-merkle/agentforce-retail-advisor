@@ -699,7 +699,7 @@ export const AccountPage: React.FC = () => {
                     }
                   >
                     <DataField label="Orders" value={`${customer.orders.length} total`} />
-                    <DataField label="Preferred Brands" value={bp.preferredBrands.join(', ') || '—'} />
+                    <DataField label="Preferred Brands" value={hp?.preferredBrands?.join(', ') || '—'} />
                     <DataField label="Browse Sessions" value={`${customer.browseSessions.length}`} />
                     {customer.browseSessions.length > 0 && (
                       <>
@@ -841,20 +841,22 @@ function DataField({ label, value }: { label: string; value: string }) {
 
 function renderCapturedFields(profile: AgentCapturedProfile): React.ReactNode {
   const fields: { label: string; field: CapturedProfileField | CapturedProfileField<string[]> | undefined }[] = [
-    { label: 'Birthday', field: profile.birthday },
-    { label: 'Anniversary', field: profile.anniversary },
-    { label: 'Partner Name', field: profile.partnerName },
-    { label: 'Gifts For', field: profile.giftsFor },
-    { label: 'Occasions', field: profile.upcomingOccasions },
-    { label: 'Morning Routine', field: profile.morningRoutineTime },
-    { label: 'Makeup Frequency', field: profile.makeupFrequency },
-    { label: 'Exercise', field: profile.exerciseRoutine },
+    { label: 'Daily Intake Goal', field: profile.dailyIntakeGoal },
+    { label: 'Activity Level', field: profile.activityLevel },
     { label: 'Work Environment', field: profile.workEnvironment },
-    { label: 'Beauty Priority', field: profile.beautyPriority },
-    { label: 'Price Range', field: profile.priceRange },
-    { label: 'Sustainability', field: profile.sustainabilityPref },
     { label: 'Climate', field: profile.climateContext },
-    { label: 'Sleep', field: profile.sleepPattern },
+    { label: 'Hydration Challenges', field: profile.hydrationChallenges },
+    { label: 'Flavor Preference', field: profile.flavorsPreferred },
+    { label: 'Sparkling Preference', field: profile.sparklingPreference },
+    { label: 'Tap Water Quality', field: profile.tapWaterQuality },
+    { label: 'Delivery Preference', field: profile.deliveryPreference },
+    { label: 'Household Context', field: profile.householdContext },
+    { label: 'Office Context', field: profile.officeContext },
+    { label: 'Sustainability', field: profile.sustainabilityGoals },
+    { label: 'Budget Context', field: profile.budgetContext },
+    { label: 'Price Range', field: profile.priceRange },
+    { label: 'Birthday', field: profile.birthday },
+    { label: 'Occasions', field: profile.upcomingOccasions },
   ];
 
   const populated = fields.filter((f) => f.field?.value);
