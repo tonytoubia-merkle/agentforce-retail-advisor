@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Last_Agent_Action__c</fullName>
+    <label>Last Agent Action</label>
+    <description>Timestamp of the most recent action taken by the AI agent for this customer.</description>
+    <type>DateTime</type>
+    <required>false</required>
+</CustomField>

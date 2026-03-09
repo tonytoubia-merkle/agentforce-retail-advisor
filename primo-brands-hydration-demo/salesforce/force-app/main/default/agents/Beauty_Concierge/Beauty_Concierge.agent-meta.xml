@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Agent xmlns="http://soap.sforce.com/2006/04/metadata">
+    <masterLabel>Beauty Concierge</masterLabel>
+    <description>AI-powered beauty concierge for personalized skincare recommendations, routine building, and checkout assistance.</description>
+    <agentType>ExternalClientAgent</agentType>
+    <isActive>true</isActive>
+</Agent>

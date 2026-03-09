@@ -1,0 +1,592 @@
+/* Email Preview Container */
+.preview-container {
+    border: 1px solid #d8dde6;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f3f2f2;
+}
+
+.channel-badge-container {
+    padding: 8px 12px;
+    background: #fff;
+    border-bottom: 1px solid #d8dde6;
+}
+
+/* Email Preview Styles */
+.email-preview {
+    background: #ffffff;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.email-header {
+    padding: 16px;
+    border-bottom: 1px solid #e5e5e5;
+    background: #fafafa;
+}
+
+.email-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.email-from {
+    font-weight: 600;
+    color: #333;
+}
+
+.email-date {
+    font-size: 12px;
+    color: #666;
+}
+
+.email-to {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.email-subject {
+    font-size: 16px;
+    color: #1a1a1a;
+}
+
+.email-body {
+    padding: 0;
+}
+
+.hero-image-container {
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+}
+
+.hero-image {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Hero Text Overlay */
+.hero-text-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 80px 24px 40px 24px;
+    text-align: center;
+    background: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0.5) 0%,
+        rgba(0, 0, 0, 0.35) 40%,
+        rgba(0, 0, 0, 0.15) 70%,
+        transparent 100%
+    );
+}
+
+.hero-headline {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 28px;
+    font-weight: 500;
+    color: #ffffff;
+    margin: 0 0 8px 0;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    letter-spacing: 0.5px;
+    line-height: 1.2;
+}
+
+.hero-subheadline {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 14px;
+    color: #f5f5f5;
+    margin: 0 0 16px 0;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    font-style: italic;
+}
+
+.hero-cta {
+    display: inline-block;
+    padding: 10px 28px;
+    background: #f43f5e;
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-radius: 2px;
+    transition: background 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.hero-cta:hover {
+    background: #e11d48;
+    color: #ffffff;
+    text-decoration: none;
+}
+
+/* Email Content Wrapper */
+.email-content-wrapper {
+    padding: 32px 24px;
+    background: #ffffff;
+    max-width: 520px;
+    margin: 0 auto;
+}
+
+.email-content {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 15px;
+    line-height: 1.7;
+    color: #333;
+    text-align: center;
+}
+
+.email-content p {
+    margin-bottom: 16px;
+}
+
+/* Hide AI-generated product lists - we show actual products instead */
+.email-content ul, .email-content ol {
+    display: none;
+}
+
+.email-content li {
+    display: none;
+}
+
+/* Letter-style signature styling */
+.email-content br + br {
+    display: block;
+    margin-top: 8px;
+}
+
+/* Inline Product Section - flows with letter */
+.product-section-inline {
+    margin: 28px 0;
+    padding: 24px 0;
+    border-top: 1px solid #f0ebe3;
+    border-bottom: 1px solid #f0ebe3;
+}
+
+.product-section-title-inline {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 13px;
+    text-align: center;
+    margin-bottom: 20px;
+    color: #999;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 400;
+    font-style: italic;
+}
+
+.product-grid-inline {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.product-card-inline {
+    width: 100px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.product-card-inline:hover {
+    transform: translateY(-2px);
+}
+
+.product-card-image-inline {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    margin: 0 auto 8px auto;
+    display: block;
+}
+
+.product-card-name-inline {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 11px;
+    color: #666;
+    line-height: 1.3;
+}
+
+/* Email Signature */
+.email-signature {
+    text-align: center;
+    margin-top: 24px;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 14px;
+    color: #666;
+    font-style: italic;
+}
+
+.email-signature p {
+    margin: 4px 0;
+}
+
+.signature-name {
+    color: #f43f5e;
+    font-style: normal;
+    font-weight: 500;
+}
+
+/* Legacy product section styles removed - using inline versions above */
+
+/* Email Footer */
+.email-footer {
+    padding: 32px 24px;
+    text-align: center;
+    background: #2d2d2d;
+    color: #999;
+    font-size: 12px;
+}
+
+.footer-logo {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 24px;
+    color: #f43f5e;
+    letter-spacing: 4px;
+    margin-bottom: 4px;
+}
+
+.footer-tagline {
+    font-style: italic;
+    margin-bottom: 16px;
+    color: #ccc;
+}
+
+.footer-links a {
+    color: #999;
+    text-decoration: none;
+}
+
+.footer-links a:hover {
+    color: #f43f5e;
+}
+
+.footer-address {
+    margin-top: 16px;
+    font-size: 11px;
+}
+
+/* SMS Preview Styles */
+.sms-preview {
+    padding: 16px;
+    display: flex;
+    justify-content: center;
+}
+
+.sms-phone-frame {
+    width: 320px;
+    background: #fff;
+    border-radius: 24px;
+    border: 3px solid #1a1a1a;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.sms-phone-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #f7f7f7;
+    border-bottom: 1px solid #e5e5e5;
+    font-size: 13px;
+}
+
+.sms-carrier {
+    font-weight: 600;
+    color: #333;
+}
+
+.sms-time {
+    color: #666;
+}
+
+.sms-messages {
+    padding: 16px;
+    min-height: 150px;
+    background: #fff;
+}
+
+.sms-bubble {
+    background: #007aff;
+    color: white;
+    padding: 12px 16px;
+    border-radius: 18px;
+    border-bottom-right-radius: 4px;
+    max-width: 85%;
+    margin-left: auto;
+    font-size: 15px;
+    line-height: 1.4;
+}
+
+.sms-text {
+    margin: 0;
+}
+
+.sms-char-count {
+    padding: 8px 16px;
+    text-align: center;
+    font-size: 11px;
+    color: #999;
+    background: #f7f7f7;
+    border-top: 1px solid #e5e5e5;
+}
+
+/* Push Notification Preview */
+.push-preview {
+    padding: 24px;
+    display: flex;
+    justify-content: center;
+}
+
+.push-notification {
+    width: 360px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: #fff;
+    padding: 16px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+}
+
+.push-icon {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, #fb7185 0%, #a855f7 100%);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.push-icon-text {
+    color: white;
+    font-size: 20px;
+    font-weight: 600;
+    font-family: 'Playfair Display', Georgia, serif;
+}
+
+.push-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.push-app-name {
+    font-size: 11px;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+.push-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.push-body {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.3;
+}
+
+.push-time {
+    font-size: 12px;
+    color: #999;
+    flex-shrink: 0;
+}
+
+/* Video Preview Styles */
+.video-preview {
+    background: #ffffff;
+    padding: 16px;
+}
+
+.video-preview-frame {
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fafafa;
+}
+
+.video-preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #1a1a1a;
+    color: #ffffff;
+}
+
+.video-brand {
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 1px;
+}
+
+.video-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #c5a572;
+}
+
+.video-player-container {
+    background: #000;
+}
+
+.video-player-preview {
+    width: 100%;
+    display: block;
+    max-height: 320px;
+}
+
+.video-placeholder-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+    background: #f3f2f2;
+}
+
+.video-companion-text {
+    padding: 16px;
+    border-top: 1px solid #e5e5e5;
+}
+
+.video-companion-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #706e6b;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.video-companion-body {
+    font-size: 14px;
+    color: #3e3e3c;
+    line-height: 1.5;
+}
+
+/* ─── Media Preview ──────────────────────────────────────────────────── */
+
+.channel-badge-media {
+    background: #fff3e0;
+    color: #e65100;
+}
+
+.media-preview {
+    padding: 0;
+}
+
+.media-preview-frame {
+    background: white;
+    border-radius: 0 0 8px 8px;
+}
+
+.media-preview-header {
+    background: linear-gradient(135deg, #e65100 0%, #ff6d00 100%);
+    color: white;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.media-brand {
+    font-weight: 800;
+    font-size: 14px;
+    letter-spacing: 2px;
+}
+
+.media-label {
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    opacity: 0.8;
+}
+
+.media-preview-body {
+    padding: 16px;
+}
+
+.media-platform-row {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    background: #fff3e0;
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.media-platform-row lightning-icon {
+    --slds-c-icon-color-foreground-default: #e65100;
+}
+
+.merkury-logo-icon {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.media-platform-name {
+    font-weight: 700;
+    font-size: 16px;
+    color: #181818;
+}
+
+.media-format-name {
+    font-size: 12px;
+    color: #706e6b;
+}
+
+.media-reach-tag {
+    margin-left: auto;
+    background: #e65100;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.media-creative-brief {
+    margin-top: 8px;
+}
+
+.media-brief-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #706e6b;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.media-brief-text {
+    font-family: Georgia, serif;
+    font-size: 13px;
+    color: #3e3e3c;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    background: #fafafa;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #e5e5e5;
+}

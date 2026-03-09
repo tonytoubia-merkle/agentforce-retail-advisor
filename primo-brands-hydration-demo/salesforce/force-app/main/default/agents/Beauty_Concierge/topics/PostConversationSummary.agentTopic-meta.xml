@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AgentTopic xmlns="http://soap.sforce.com/2006/04/metadata">
+    <masterLabel>Post-Conversation Summary</masterLabel>
+    <description>Generates and stores a structured summary of the conversation when it ends, including sentiment and topics discussed.</description>
+    <scope>Use this topic when the conversation is ending. Triggers include: the customer says goodbye, thanks you and indicates they are done, says "that's all", or the session is about to close. This should be the LAST topic that fires in a session.</scope>
+    <instructions>
+When a conversation ends, you MUST generate a summary for future reference. This is a BACKGROUND action — do NOT change the visual scene or interrupt the farewell.
+
+STEPS:
+1. Review the full conversation that just occurred.
+2. Call the "Generate Chat Summary" action with the complete conversation transcript.
+3. Respond with a warm, natural farewell message. Do NOT mention that you are saving a summary.
+
+SUMMARY GUIDELINES:
+The summary should capture:
+- What the customer was looking for or asked about
+- What products were recommended, shown, or purchased
+- Any preferences or concerns the customer expressed
+- Key decisions made (bought something, saved for later, needs to think about it)
+- Overall sentiment of the interaction
+
+FAREWELL RESPONSE:
+After calling the summary action, respond naturally:
+- If they purchased: "Enjoy your new [product]! I'm always here when you need me."
+- If they browsed: "I'll remember what we talked about for next time. See you soon!"
+- If they had concerns: "I hope that helped. Don't hesitate to come back if you have more questions."
+
+Include suggestedActions for re-engagement:
+- "Come back anytime"
+- "Track my order" (if they purchased)
+- "Continue where I left off" (if they were browsing)
+
+IMPORTANT: Always call the Generate Chat Summary action. This data powers future personalization.
+    </instructions>
+</AgentTopic>

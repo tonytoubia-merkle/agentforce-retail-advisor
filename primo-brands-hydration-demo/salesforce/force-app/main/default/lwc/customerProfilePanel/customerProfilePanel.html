@@ -1,0 +1,63 @@
+<template>
+    <!-- Empty State -->
+    <template if:false={hasSelectedCustomer}>
+        <div class="empty-panel">
+            <lightning-icon icon-name="utility:user" size="large" class="empty-icon"></lightning-icon>
+            <p class="empty-text">Search for a customer above or select an appointment to begin</p>
+        </div>
+    </template>
+
+    <!-- Selected Customer Profile -->
+    <template if:true={hasSelectedCustomer}>
+        <div class="panel-header-compact">
+            <h2 class="customer-name-compact">{profile.name}</h2>
+            <span class={identityBadgeClass}>{profile.identityTier}</span>
+            <template if:true={profile.clientellingTier}>
+                <span class="clientelling-tier">{profile.clientellingTier}</span>
+            </template>
+            <template if:true={profile.email}>
+                <span class="contact-inline">
+                    <lightning-icon icon-name="utility:email" size="xx-small"></lightning-icon>
+                    {profile.email}
+                </span>
+            </template>
+            <template if:true={profile.phone}>
+                <span class="contact-inline">
+                    <lightning-icon icon-name="utility:call" size="xx-small"></lightning-icon>
+                    {profile.phone}
+                </span>
+            </template>
+        </div>
+
+        <!-- Loading -->
+        <template if:true={isLoading}>
+            <div class="loading-area slds-align_absolute-center">
+                <lightning-spinner alternative-text="Loading profile" size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <!-- 360 Profile Sections -->
+        <template if:false={isLoading}>
+            <div class="profile-content">
+                <template if:true={hasTodaysAppointment}>
+                    <div class="appointment-banner slds-m-bottom_xx-small">
+                        <lightning-icon icon-name="utility:event" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                        <span class="appt-type">{profile.todaysAppointment.type_x}</span>
+                        <span class="appt-time">{profile.todaysAppointment.appointmentDateTime}</span>
+                        <span class={appointmentStatusClass}>{profile.todaysAppointment.status}</span>
+                    </div>
+                </template>
+                <c-profile-section360 profile={profile}></c-profile-section360>
+            </div>
+
+            <!-- Consultation Note Capture -->
+            <div class="note-capture-section">
+                <c-consultation-note-capture
+                    contact-id={selectedContactId}
+                    appointment-id={currentAppointmentId}
+                    onnoteadded={handleNoteAdded}
+                ></c-consultation-note-capture>
+            </div>
+        </template>
+    </template>
+</template>

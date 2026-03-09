@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomTab xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customObject>true</customObject>
+    <label>Agent Activities</label>
+    <description>View all AI agent activities across portfolios.</description>
+    <motif>Custom82: Bot</motif>
+</CustomTab>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Is_Portfolio__c</fullName>
+    <label>Is Portfolio</label>
+    <description>Checkbox to identify this Campaign as a Portfolio for agent-assisted marketing. Enables portfolio-specific features and views.</description>
+    <type>Checkbox</type>
+    <defaultValue>false</defaultValue>
+</CustomField>

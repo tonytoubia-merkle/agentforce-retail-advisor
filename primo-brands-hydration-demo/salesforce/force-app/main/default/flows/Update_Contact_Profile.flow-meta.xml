@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>60.0</apiVersion>
+    <description>Updates profile fields on a Contact record. The agent planner extracts values from conversation and passes them as inputs. Only non-empty inputs are written.</description>
+    <interviewLabel>Update Contact Profile {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Update Contact Profile</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value><stringValue>LightningFlowBuilder</stringValue></value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <runInMode>SystemModeWithoutSharing</runInMode>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Check_Contact_Id</targetReference>
+        </connector>
+    </start>
+
+    <!-- Decision: Skip if no contactId (anonymous user) -->
+    <decisions>
+        <name>Check_Contact_Id</name>
+        <label>Check Contact Id</label>
+        <locationX>176</locationX>
+        <locationY>80</locationY>
+        <defaultConnector>
+            <targetReference>Set_Skipped</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>No Contact Id</defaultConnectorLabel>
+        <rules>
+            <name>Has_Contact_Id</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>contactId</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue><booleanValue>false</booleanValue></rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>contactId</leftValueReference>
+                <operator>NotEqualTo</operator>
+                <rightValue><stringValue></stringValue></rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_Contact_Record</targetReference>
+            </connector>
+            <label>Has Contact Id</label>
+        </rules>
+    </decisions>
+
+    <status>Active</status>
+
+    <!-- Input Variables -->
+    <variables>
+        <name>contactId</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <description>The Salesforce Contact record ID to update</description>
+    </variables>
+    <variables>
+        <name>skinType</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <description>Skin type value: Normal, Dry, Oily, Combination, Sensitive, Acne-Prone, or Mature</description>
+    </variables>
+    <variables>
+        <name>skinConcerns</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <description>Semicolon-separated skin concerns (e.g. acne;dryness;redness)</description>
+    </variables>
+    <variables>
+        <name>beautyPriority</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <description>Primary beauty priority or goal</description>
+    </variables>
+    <variables>
+        <name>allergies</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <description>Semicolon-separated known allergies or sensitivities</description>
+    </variables>
+    <variables>
+        <name>preferredBrands</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <description>Semicolon-separated preferred brands</description>
+    </variables>
+    <variables>
+        <name>sustainabilityPreference</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <description>Sustainability preference (e.g. vegan, cruelty-free, clean beauty)</description>
+    </variables>
+    <variables>
+        <name>climateContext</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <description>Climate or environment context (e.g. humid tropical, dry desert)</description>
+    </variables>
+    <variables>
+        <name>priceRange</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <description>Preferred price range: budget, mid-range, or luxury</description>
+    </variables>
+    <variables>
+        <name>birthday</name>
+        <dataType>Date</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <description>Customer birthday as a Date value (YYYY-MM-DD)</description>
+    </variables>
+
+    <!-- Output Variables -->
+    <variables>
+        <name>outputSuccess</name>
+        <dataType>Boolean</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>true</isOutput>
+        <value><booleanValue>false</booleanValue></value>
+    </variables>
+    <variables>
+        <name>outputError</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>true</isOutput>
+    </variables>
+    <variables>
+        <name>outputFieldsUpdated</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>true</isOutput>
+        <description>Comma-separated list of field names that were updated</description>
+    </variables>
+
+    <!-- Update Record -->
+    <recordUpdates>
+        <name>Update_Contact_Record</name>
+        <label>Update Contact Record</label>
+        <locationX>176</locationX>
+        <locationY>158</locationY>
+        <connector>
+            <targetReference>Set_Success</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Set_Error</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value><elementReference>contactId</elementReference></value>
+        </filters>
+        <inputAssignments>
+            <field>Skin_Type__c</field>
+            <value><elementReference>skinType</elementReference></value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Skin_Concerns__c</field>
+            <value><elementReference>skinConcerns</elementReference></value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Beauty_Priority__c</field>
+            <value><elementReference>beautyPriority</elementReference></value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Allergies__c</field>
+            <value><elementReference>allergies</elementReference></value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Preferred_Brands__c</field>
+            <value><elementReference>preferredBrands</elementReference></value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Sustainability_Preference__c</field>
+            <value><elementReference>sustainabilityPreference</elementReference></value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Climate_Context__c</field>
+            <value><elementReference>climateContext</elementReference></value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Price_Range__c</field>
+            <value><elementReference>priceRange</elementReference></value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Birthdate</field>
+            <value><elementReference>birthday</elementReference></value>
+        </inputAssignments>
+        <object>Contact</object>
+    </recordUpdates>
+
+    <!-- Success Assignment -->
+    <assignments>
+        <name>Set_Success</name>
+        <label>Set Success</label>
+        <locationX>176</locationX>
+        <locationY>350</locationY>
+        <assignmentItems>
+            <assignToReference>outputSuccess</assignToReference>
+            <operator>Assign</operator>
+            <value><booleanValue>true</booleanValue></value>
+        </assignmentItems>
+    </assignments>
+
+    <!-- Error Assignment -->
+    <assignments>
+        <name>Set_Error</name>
+        <label>Set Error</label>
+        <locationX>400</locationX>
+        <locationY>350</locationY>
+        <assignmentItems>
+            <assignToReference>outputSuccess</assignToReference>
+            <operator>Assign</operator>
+            <value><booleanValue>false</booleanValue></value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>outputError</assignToReference>
+            <operator>Assign</operator>
+            <value><elementReference>$Flow.FaultMessage</elementReference></value>
+        </assignmentItems>
+    </assignments>
+
+    <!-- Skipped Assignment (anonymous user) -->
+    <assignments>
+        <name>Set_Skipped</name>
+        <label>Set Skipped</label>
+        <locationX>400</locationX>
+        <locationY>80</locationY>
+        <assignmentItems>
+            <assignToReference>outputSuccess</assignToReference>
+            <operator>Assign</operator>
+            <value><booleanValue>false</booleanValue></value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>outputError</assignToReference>
+            <operator>Assign</operator>
+            <value><stringValue>Skipped: No contactId provided (anonymous user)</stringValue></value>
+        </assignmentItems>
+    </assignments>
+</Flow>

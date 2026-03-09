@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <label>Browse Session</label>
+    <nameField>
+        <displayFormat>BS-{0000}</displayFormat>
+        <label>Browse Session Name</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Browse Sessions</pluralLabel>
+    <sharingModel>ReadWrite</sharingModel>
+</CustomObject>

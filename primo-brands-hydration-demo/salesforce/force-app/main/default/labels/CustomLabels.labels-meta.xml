@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
+    <labels>
+        <fullName>Tooling_API_Client_Id</fullName>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>Tooling API Client Id</shortDescription>
+        <value>PlatformCLI</value>
+    </labels>
+    <labels>
+        <fullName>Tooling_API_Refresh_Token</fullName>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>Tooling API Refresh Token</shortDescription>
+        <value>82b284543170b3e638eb6aeb44c543752d92924aba63b379f89c621fc640efdfc33315ee1039327c279d12dd0e3ee4e95a416b490ddb05cc74f8a4223ec544627b3ae19ee349c2a69884cc0c154744923f0c00c35af47a3e78b104457f:be22d606b88ac25a1c9e5c8e631f0d4a</value>
+    </labels>
+</CustomLabels>
