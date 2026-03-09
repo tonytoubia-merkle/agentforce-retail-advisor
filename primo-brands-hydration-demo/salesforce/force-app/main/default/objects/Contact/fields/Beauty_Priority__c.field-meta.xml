@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Beauty_Priority__c</fullName>
+    <label>Beauty Priority</label>
+    <length>255</length>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <type>Text</type>
+    <unique>false</unique>
+    <description>Customer's primary beauty priority (e.g. anti-aging, hydration, clean beauty)</description>
+</CustomField>

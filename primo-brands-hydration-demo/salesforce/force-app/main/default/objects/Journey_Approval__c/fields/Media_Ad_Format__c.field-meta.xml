@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Media_Ad_Format__c</fullName>
+    <description>Ad format/placement within the selected media platform</description>
+    <externalId>false</externalId>
+    <label>Media Ad Format</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Pre-Roll Video</fullName>
+                <default>false</default>
+                <label>Pre-Roll Video</label>
+            </value>
+            <value>
+                <fullName>Story Ad</fullName>
+                <default>false</default>
+                <label>Story Ad</label>
+            </value>
+            <value>
+                <fullName>Feed Ad</fullName>
+                <default>false</default>
+                <label>Feed Ad</label>
+            </value>
+            <value>
+                <fullName>Sponsored Post</fullName>
+                <default>false</default>
+                <label>Sponsored Post</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

@@ -1,0 +1,26 @@
+[
+  {
+    "Name": "Hydrated",
+    "Description": "Entry level — earn points on every order, access to member pricing",
+    "MinPoints": 0,
+    "Program": "Primo Perks"
+  },
+  {
+    "Name": "Active",
+    "Description": "5% off accessories, priority delivery windows, Hydration Concierge access",
+    "MinPoints": 1000,
+    "Program": "Primo Perks"
+  },
+  {
+    "Name": "Elite",
+    "Description": "10% off everything, free annual sanitizer kit, exclusive wellness content",
+    "MinPoints": 2500,
+    "Program": "Primo Perks"
+  },
+  {
+    "Name": "Champion",
+    "Description": "Free delivery upgrades, dedicated Hydration Intelligence Concierge, wellness events",
+    "MinPoints": 5000,
+    "Program": "Primo Perks"
+  }
+]

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Lifetime_Value__c</fullName>
+    <label>Lifetime Value</label>
+    <description>Customer's lifetime value at time of portfolio assignment. Can be synced from Data Cloud.</description>
+    <type>Currency</type>
+    <precision>18</precision>
+    <scale>2</scale>
+    <required>false</required>
+</CustomField>

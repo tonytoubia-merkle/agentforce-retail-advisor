@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env.local
+.sfdx/
+.vercel
+.env.vercel.local
+.env.temp
+.sf/

@@ -1,0 +1,1 @@
+export { LoyaltyWidget } from './LoyaltyWidget';

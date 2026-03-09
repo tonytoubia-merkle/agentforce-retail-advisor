@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Portfolio_Type__c</fullName>
+    <label>Portfolio Type</label>
+    <description>Categorizes the campaign as a marketing portfolio type for agent-assisted marketing.</description>
+    <type>Picklist</type>
+    <required>false</required>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>VIP Relationships</fullName>
+                <default>false</default>
+                <label>VIP Relationships</label>
+            </value>
+            <value>
+                <fullName>Retention &amp; Winback</fullName>
+                <default>false</default>
+                <label>Retention &amp; Winback</label>
+            </value>
+            <value>
+                <fullName>New Customer Nurture</fullName>
+                <default>false</default>
+                <label>New Customer Nurture</label>
+            </value>
+            <value>
+                <fullName>Service Recovery</fullName>
+                <default>false</default>
+                <label>Service Recovery</label>
+            </value>
+            <value>
+                <fullName>Meaningful Events</fullName>
+                <default>false</default>
+                <label>Meaningful Events</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>
