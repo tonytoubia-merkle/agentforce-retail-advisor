@@ -18,60 +18,62 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$RootDir    = Resolve-Path (Join-Path $PSScriptRoot "..\..")
-$Manifest   = Join-Path $RootDir "salesforce\manifest\package.xml"
-$OutputDir  = Join-Path $RootDir "salesforce\force-app"
+$RootDir   = Resolve-Path (Join-Path $PSScriptRoot "..\..")
+$Manifest  = Join-Path $RootDir "salesforce\manifest\package.xml"
+$OutputDir = Join-Path $RootDir "salesforce\force-app"
 
 Write-Host ""
-Write-Host "╔══════════════════════════════════════════════════════════╗" -ForegroundColor Magenta
-Write-Host "║   AGENTFORCE RETAIL ADVISOR — ORG METADATA RETRIEVE     ║" -ForegroundColor Magenta
-Write-Host "╚══════════════════════════════════════════════════════════╝" -ForegroundColor Magenta
+Write-Host "============================================================" -ForegroundColor Magenta
+Write-Host "   AGENTFORCE RETAIL ADVISOR - ORG METADATA RETRIEVE" -ForegroundColor Magenta
+Write-Host "============================================================" -ForegroundColor Magenta
 Write-Host ""
 Write-Host "  Source org  : $Org"
 Write-Host "  Manifest    : $Manifest"
 Write-Host "  Output dir  : $OutputDir"
 Write-Host ""
 
-# ─── Verify org ───────────────────────────────────────────────
-Write-Host "► Verifying org authentication..." -ForegroundColor Cyan
+# ----------------------------------------------------------------
+# Verify org
+# ----------------------------------------------------------------
+Write-Host "Verifying org authentication..." -ForegroundColor Cyan
 sf org display --target-org $Org --json | Out-Null
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERROR: Org '$Org' not authenticated. Run: sf org login web -a $Org" -ForegroundColor Red
     exit 1
 }
-Write-Host "  ✓ Org authenticated" -ForegroundColor Green
+Write-Host "  OK - org authenticated" -ForegroundColor Green
 Write-Host ""
 
-# ─── Retrieve metadata via manifest ───────────────────────────
-Write-Host "► Retrieving metadata from org (this may take 2-5 minutes)..." -ForegroundColor Cyan
+# ----------------------------------------------------------------
+# Retrieve metadata via manifest
+# ----------------------------------------------------------------
+Write-Host "Retrieving metadata from org (this may take 2-5 minutes)..." -ForegroundColor Cyan
 sf project retrieve start `
     --manifest $Manifest `
     --target-org $Org `
     --output-dir $OutputDir `
     --wait 30
-Write-Host "  ✓ Metadata retrieved to: $OutputDir" -ForegroundColor Green
+Write-Host "  OK - metadata retrieved to: $OutputDir" -ForegroundColor Green
 Write-Host ""
 
-# ─── Attempt agent metadata retrieve ──────────────────────────
-Write-Host "► Attempting agent metadata retrieve (Bot/BotVersion)..." -ForegroundColor Cyan
-sf project retrieve start `
-    --metadata "Bot" "BotVersion" `
-    --target-org $Org `
-    --output-dir $OutputDir `
-    --wait 30 2>$null
+# ----------------------------------------------------------------
+# Attempt agent metadata retrieve
+# ----------------------------------------------------------------
+Write-Host "Attempting agent metadata retrieve (Bot/BotVersion)..." -ForegroundColor Cyan
+sf project retrieve start --metadata "Bot" "BotVersion" --target-org $Org --output-dir $OutputDir --wait 30 2>$null
 if ($LASTEXITCODE -eq 0) {
-    Write-Host "  ✓ Agent metadata retrieved" -ForegroundColor Green
+    Write-Host "  OK - agent metadata retrieved" -ForegroundColor Green
 } else {
-    Write-Host "  ⚠ Agent metadata unavailable via source retrieve — activate manually in Setup" -ForegroundColor Yellow
+    Write-Host "  WARN - agent metadata unavailable via source retrieve. Activate manually in Setup." -ForegroundColor Yellow
 }
 Write-Host ""
 
-Write-Host "══════════════════════════════════════════════════════════" -ForegroundColor Green
-Write-Host "  RETRIEVE COMPLETE" -ForegroundColor Green
-Write-Host "══════════════════════════════════════════════════════════" -ForegroundColor Green
+Write-Host "============================================================" -ForegroundColor Green
+Write-Host "   RETRIEVE COMPLETE" -ForegroundColor Green
+Write-Host "============================================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "Next steps:"
-Write-Host "  1. Review: git diff salesforce/force-app/"
-Write-Host "  2. Commit: git add salesforce/force-app/ && git commit -m 'chore: retrieve org metadata'"
-Write-Host "  3. Deploy: .\salesforce\scripts\deploy.ps1 -Org <target-org>"
+Write-Host "  1. Review:  git diff salesforce/force-app/"
+Write-Host "  2. Commit:  git add salesforce/force-app/ && git commit -m 'retrieve org metadata'"
+Write-Host "  3. Deploy:  .\salesforce\scripts\deploy.ps1 -Org <target-org>"
 Write-Host ""
