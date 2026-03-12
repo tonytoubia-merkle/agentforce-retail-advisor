@@ -323,7 +323,7 @@ export class CommerceClient {
       salesforceId: raw.salesforceId,
       name: raw.product_name || raw.name || '',
       brand: raw.brand || 'Unknown',
-      category: raw.primary_category_id || 'moisturizer',
+      category: (raw.primary_category_id || 'moisturizer') as import('@/types/product').ProductCategory,
       price: raw.price || 0,
       currency: raw.currency || 'USD',
       description: raw.long_description || raw.description || '',
@@ -331,7 +331,7 @@ export class CommerceClient {
       imageUrl: raw.image?.link || raw.imageUrl || '',
       images: raw.image_groups?.[0]?.images?.map((img) => img.link) || [],
       attributes: {
-        skinType: raw.c_skinType || [],
+        skinType: (raw.c_skinType || []) as ('dry' | 'oily' | 'combination' | 'sensitive' | 'normal')[],
         concerns: raw.c_concerns || [],
         ingredients: raw.c_ingredients || [],
         size: raw.c_size || '',

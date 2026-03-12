@@ -104,7 +104,7 @@ export class DataCloudCustomerService {
       name: raw.FirstName || 'Guest',
       email: raw.Email || '',
       beautyProfile: {
-        skinType: (raw.Skin_Type__c || 'normal').toLowerCase(),
+        skinType: (raw.Skin_Type__c || 'normal').toLowerCase() as 'dry' | 'oily' | 'combination' | 'sensitive' | 'normal',
         concerns: this.parseSemicolon(raw.Skin_Concerns__c),
         allergies: this.parseSemicolon(raw.Allergies__c),
         preferredBrands: this.parseSemicolon(raw.Preferred_Brands__c),
@@ -233,7 +233,7 @@ export class DataCloudCustomerService {
         orderId: (record.OrderNumber || record.Id) as string,
         orderNumber: record.OrderNumber as string,
         orderDate: record.EffectiveDate as string,
-        channel: (record.Channel__c as string) || 'online',
+        channel: ((record.Channel__c as string) || 'online') as 'online' | 'in-store' | 'mobile-app',
         lineItems,
         totalAmount: (record.TotalAmount as number) || 0,
         status: record.Status === 'Activated' ? 'completed' : ((record.Status as string)?.toLowerCase() as OrderRecord['status']) || 'completed',
@@ -273,7 +273,7 @@ export class DataCloudCustomerService {
 
     return ((data.records || []) as Record<string, string | null>[]).map((r) => ({
       id: r.Id as string,
-      eventType: r.Event_Type__c as string,
+      eventType: r.Event_Type__c as MeaningfulEvent['eventType'],
       description: r.Description__c as string,
       capturedAt: r.Captured_At__c as string,
       agentNote: r.Agent_Note__c as string | undefined,
@@ -393,15 +393,15 @@ export class DataCloudCustomerService {
         try {
           value = JSON.parse(value);
         } catch {
-          value = value.split(',').map((s: string) => s.trim());
+          value = (value as string).split(',').map((s: string) => s.trim());
         }
       }
 
       const field: CapturedProfileField = {
-        value,
-        capturedAt: r.Captured_At__c,
-        capturedFrom: r.Captured_From__c,
-        confidence: r.Confidence__c,
+        value: (Array.isArray(value) ? value.join(',') : value) as string,
+        capturedAt: r.Captured_At__c as string,
+        capturedFrom: r.Captured_From__c as string,
+        confidence: (r.Confidence__c as 'stated' | 'inferred') || 'inferred',
       };
 
       (profile as Record<string, CapturedProfileField>)[fieldName] = field;

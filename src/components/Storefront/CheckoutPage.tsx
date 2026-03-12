@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useStore } from '@/contexts/StoreContext';
+import { useStore, type OrderResult } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
 import { useCustomer } from '@/contexts/CustomerContext';
 import { ProductImage } from './ProductImage';
@@ -101,7 +101,16 @@ export const CheckoutPage: React.FC = () => {
         .then((result) => {
           trackPurchase(result.orderId, total, lineItemsForTracking);
           clearCart();
-          navigateToOrderConfirmation(result.orderId, result);
+          navigateToOrderConfirmation(result.orderId, {
+            success: result.status === 'confirmed',
+            orderId: result.orderId,
+            orderNumber: result.orderId,
+            trackingNumber: '',
+            carrier: '',
+            estimatedDelivery: result.estimatedDelivery,
+            shippingStatus: 'Processing',
+            pointsEarned: 0,
+          } satisfies OrderResult);
         })
         .catch((err) => {
           console.error('[checkout] Commerce Cloud checkout failed:', err);
