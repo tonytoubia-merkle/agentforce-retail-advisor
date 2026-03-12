@@ -81,7 +81,7 @@ export function useGenerativeBackground() {
   const cacheRef = useRef<Record<string, string>>({});
   // Tracks in-flight promises so concurrent requests for the same key
   // share a single generation call instead of firing multiple API requests.
-  const pendingRef = useRef<Record<string, Promise<string>>>({});
+  const pendingRef = useRef<Record<string, Promise<string> | undefined>>({});
 
   const generateBackground = useCallback(
     async (setting: SceneSetting, products: Product[], options?: BackgroundOptions): Promise<string> => {
