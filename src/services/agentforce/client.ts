@@ -1,7 +1,92 @@
 import type { AgentResponse, UIAction, UIDirective } from '@/types/agent';
 import type { AgentforceConfig } from './types';
 import type { CustomerSessionContext } from '@/types/customer';
-import { parseUIDirective } from './parseDirectives';
+import { parseUIDirective, normalizeProducts } from './parseDirectives';
+
+/**
+ * Parse Adaptive Response Format messages (Card Carousel, Choices, Buttons)
+ * into a UIDirective. Returns null if no structured messages are present.
+ *
+ * Card Carousel items map to products with images (Rich Choice With Images).
+ * Choices/Buttons map to a product list without images, or to suggestedActions
+ * if the choices look like navigation options rather than product selections.
+ */
+function parseStructuredMessages(rawMessages: unknown[]): UIDirective | null {
+  for (const m of rawMessages) {
+    const msg = m as Record<string, unknown>;
+    const type = ((msg.type as string) || '').toLowerCase().trim();
+
+    // Card Carousel — Rich Choice With Images
+    if (type === 'card carousel' || type === 'cardcarousel' || type === 'card_carousel') {
+      const choices = (msg.choices || msg.items || msg.cards || []) as unknown[];
+      if (!Array.isArray(choices) || choices.length === 0) continue;
+
+      const rawProducts = choices.map((c: unknown, i: number) => {
+        const item = c as Record<string, unknown>;
+        return {
+          id: (item.value as string) || (item.id as string) || `carousel-${i}`,
+          name: (item.title as string) || (item.label as string) || (item.itemName as string) || `Product ${i + 1}`,
+          description: (item.description as string) || (item.itemDescriptionText as string) || '',
+          shortDescription: (item.description as string) || (item.itemDescriptionText as string) || '',
+          imageUrl: (item.imageUrl as string) || (item.itemImageUrl as string) || '',
+          images: [(item.imageUrl as string) || (item.itemImageUrl as string) || ''].filter(Boolean),
+          brand: '',
+          category: 'moisturizer',
+          price: 0,
+          currency: 'USD',
+          attributes: {},
+          rating: 0,
+          reviewCount: 0,
+          inStock: true,
+        };
+      });
+
+      const products = normalizeProducts(rawProducts);
+      console.log('[agentforce] Card Carousel → mapped', products.length, 'products');
+
+      return {
+        action: 'SHOW_PRODUCTS' as UIAction,
+        payload: { products } as UIDirective['payload'],
+      };
+    }
+
+    // Choices / Buttons — Rich Choice Response (text-only)
+    if (type === 'choices' || type === 'buttons' || type === 'list selector' || type === 'list_selector') {
+      const choices = (msg.choices || msg.items || msg.options || []) as unknown[];
+      if (!Array.isArray(choices) || choices.length === 0) continue;
+
+      const rawProducts = choices.map((c: unknown, i: number) => {
+        const item = c as Record<string, unknown>;
+        return {
+          id: (item.value as string) || (item.id as string) || `choice-${i}`,
+          name: (item.label as string) || (item.title as string) || (item.text as string) || `Option ${i + 1}`,
+          description: (item.description as string) || '',
+          shortDescription: '',
+          imageUrl: '',
+          images: [],
+          brand: '',
+          category: 'moisturizer',
+          price: 0,
+          currency: 'USD',
+          attributes: {},
+          rating: 0,
+          reviewCount: 0,
+          inStock: true,
+        };
+      });
+
+      const products = normalizeProducts(rawProducts);
+      console.log('[agentforce] Choices →', products.length, 'options');
+
+      return {
+        action: 'SHOW_PRODUCTS' as UIAction,
+        payload: { products } as UIDirective['payload'],
+      };
+    }
+  }
+
+  return null;
+}
 
 export class AgentforceClient {
   private config: AgentforceConfig;
@@ -55,7 +140,12 @@ export class AgentforceClient {
     const sessionBody: Record<string, unknown> = {
       externalSessionKey: customerContext?.customerId || crypto.randomUUID(),
       instanceConfig: { endpoint: this.config.instanceUrl },
-      streamingCapabilities: { chunkTypes: ['Text'] },
+      // Declare support for structured message formats (Adaptive Response Formats).
+      // This enables the agent to return Card Carousel and Choices messages instead
+      // of embedding JSON in text — more reliable than prompt-template JSON output.
+      streamingCapabilities: {
+        chunkTypes: ['Text', 'Choices', 'Card Carousel', 'Rich Link', 'TimePicker'],
+      },
       bypassUser: true,
     };
 
@@ -148,6 +238,33 @@ export class AgentforceClient {
       if (typeof flat === 'string' && flat.trim()) {
         agentMessages.push({ type: 'Text', message: flat });
       }
+    }
+
+    // ─── Adaptive Response Formats: structured message parsing ────────────
+    // When the agent returns Card Carousel or Choices messages (Rich Choice
+    // With Images / Rich Choice Response), parse them directly into a
+    // SHOW_PRODUCTS directive — no JSON-in-text extraction needed.
+    //
+    // Message type names used by the Enhanced Chat REST API:
+    //   "Card Carousel"  → Rich Choice With Images (products with images)
+    //   "Choices"        → Rich Choice Response (text-only choices)
+    //   "Buttons"        → same as Choices but rendered as buttons
+    const structuredDirective = parseStructuredMessages(rawMessages);
+    if (structuredDirective) {
+      console.log('[agentforce] Parsed structured message directive:', structuredDirective.action, `(${structuredDirective.payload?.products?.length ?? 0} products)`);
+      // Extract any preceding Text message as display text
+      const precedingText = agentMessages
+        .filter(m => m.type === 'Text' || m.type === '' || m.type === 'text')
+        .map(m => m.message)
+        .join('\n')
+        .trim();
+      return {
+        sessionId: this.sessionId,
+        message: precedingText || '',
+        uiDirective: structuredDirective,
+        suggestedActions: data.suggestedActions || [],
+        confidence: data.confidence || 1,
+      };
     }
 
     // Concatenate all message chunks (agent may split long responses across multiple messages)
