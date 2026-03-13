@@ -117,7 +117,8 @@ export class CommerceClient {
     );
 
     if (!response.ok) {
-      throw new Error(`Product search failed: ${response.statusText}`);
+      const errBody = await response.text().catch(() => '');
+      throw new Error(`Product search failed (${response.status}): ${errBody || response.statusText}`);
     }
 
     const data = await response.json() as ConnectProductSearchResponse;
