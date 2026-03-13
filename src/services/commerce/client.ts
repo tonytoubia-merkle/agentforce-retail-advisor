@@ -221,7 +221,12 @@ export class CommerceClient {
     // SKU matches the local asset filename (e.g. 'moisturizer-sensitive' → /assets/products/moisturizer-sensitive.png)
     const sku = raw.sku || (raw.fields?.['StockKeepingUnit'] as string) || '';
     const localImage = sku ? `/assets/products/${sku}.png` : '';
-    const imageUrl = raw.defaultImage?.url || localImage;
+    // Image_URL__c is set on Product2 to the absolute Vercel asset URL; prefer it over the
+    // defaultImage field (which requires ProductMedia/ElectronicMedia) and the SKU-based fallback.
+    const sfImageUrl = (raw.fields?.['Image_URL__c'] as string) || '';
+    const rawDefaultImage = raw.defaultImage?.url;
+    const defaultImageIsPlaceholder = !rawDefaultImage || rawDefaultImage.includes('default-product-image');
+    const imageUrl = sfImageUrl || (defaultImageIsPlaceholder ? localImage : rawDefaultImage);
     return {
       id: raw.id || '',
       salesforceId: raw.id,
