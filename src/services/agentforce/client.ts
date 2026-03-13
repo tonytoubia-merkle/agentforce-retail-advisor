@@ -144,7 +144,7 @@ export class AgentforceClient {
       // This enables the agent to return Card Carousel and Choices messages instead
       // of embedding JSON in text — more reliable than prompt-template JSON output.
       streamingCapabilities: {
-        chunkTypes: ['Text', 'Choices', 'Card Carousel', 'Rich Link', 'TimePicker'],
+        chunkTypes: ['Text'],
       },
       bypassUser: true,
     };
