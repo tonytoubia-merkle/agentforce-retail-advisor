@@ -102,7 +102,7 @@ export class CommerceClient {
   async searchProducts(params: ProductSearchParams): Promise<Product[]> {
     // Commerce Connect API product search uses POST with a JSON body
     const body = JSON.stringify({
-      searchTerm: params.query || '',
+      searchTerm: params.query || '*',
       page: 0,
       pageSize: params.limit || 20,
     });
