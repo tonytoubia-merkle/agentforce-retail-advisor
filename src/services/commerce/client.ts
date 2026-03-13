@@ -100,13 +100,20 @@ export class CommerceClient {
   // ─── Product Catalog ────────────────────────────────────────────────────
 
   async searchProducts(params: ProductSearchParams): Promise<Product[]> {
-    const searchParams = new URLSearchParams();
-    if (params.query) searchParams.set('searchTerm', params.query);
-    if (params.limit) searchParams.set('pageSize', String(params.limit));
+    // Commerce Connect API product search uses POST with a JSON body
+    const body = JSON.stringify({
+      searchTerm: params.query || '',
+      page: 0,
+      pageSize: params.limit || 20,
+    });
 
     const response = await fetch(
-      `${this.baseUrl}/search/product-search?${searchParams.toString()}`,
-      { headers: await this.authHeaders() }
+      `${this.baseUrl}/search/product-search`,
+      {
+        method: 'POST',
+        headers: await this.authHeaders(),
+        body,
+      }
     );
 
     if (!response.ok) {
