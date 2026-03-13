@@ -6,7 +6,7 @@ import https from 'node:https';
 const SF_INSTANCE = process.env.VITE_AGENTFORCE_INSTANCE_URL || 'https://me1769724439764.my.salesforce.com';
 const CLIENT_ID = process.env.VITE_AGENTFORCE_CLIENT_ID;
 const CLIENT_SECRET = process.env.VITE_AGENTFORCE_CLIENT_SECRET;
-const WEBSTORE_ID = process.env.VITE_COMMERCE_SITE_ID || '';
+const WEBSTORE_ID = (process.env.VITE_COMMERCE_SITE_ID || '').trim();
 
 const routes = [
   // Commerce on Core (B2B/D2C Commerce) — same SF instance, Connect API
