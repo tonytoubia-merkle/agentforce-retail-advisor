@@ -86,7 +86,6 @@ function AnimatedRoutes({ products }: { products: Product[] }) {
 function AppShell({ initialCampaign }: { initialCampaign: CampaignAttribution | null }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (useMockData) {
@@ -108,21 +107,8 @@ function AppShell({ initialCampaign }: { initialCampaign: CampaignAttribution | 
         }
       })
       .catch((err) => {
-        console.error('[commerce] Failed to load products from Commerce Cloud:', err);
-        setLoadError('Failed to load product catalog. Retrying...');
-        // Retry once after a short delay, then fall back to local catalog
-        setTimeout(() => {
-          commerceClient.searchProducts({ limit: 200 })
-            .then((results) => {
-              setProducts(results.length > 0 ? results : MOCK_PRODUCTS);
-              setLoadError(null);
-            })
-            .catch(() => {
-              console.warn('[commerce] Retry failed, using local catalog');
-              setProducts(MOCK_PRODUCTS);
-              setLoadError(null);
-            });
-        }, 2000);
+        console.warn('[commerce] Commerce Cloud unavailable, using local catalog:', err.message);
+        setProducts(MOCK_PRODUCTS);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -137,7 +123,7 @@ function AppShell({ initialCampaign }: { initialCampaign: CampaignAttribution | 
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
           </div>
-          <p className="text-stone-500">{loadError || 'Loading products...'}</p>
+          <p className="text-stone-500">Loading products...</p>
         </div>
       </div>
     );
