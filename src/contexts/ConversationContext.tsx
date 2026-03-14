@@ -527,12 +527,12 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
 
         // Known-but-not-authenticated: Merkury identified them but they haven't
-        // signed in. Show the generic landing page, but fire the welcome message
-        // in the background so the agent calls IdentifyCustomerByEmail and resolves
-        // the Contact ID. When the user sends their first message, the agent already
-        // has full context and a resolved contactId for event capture.
+        // signed in. Await the welcome message so the agent resolves the Contact ID
+        // and establishes full context before the user can send a message. The
+        // WelcomeLoader stays visible throughout — same loading experience as
+        // authenticated users — then the default chat view appears when ready.
         if (sessionCtx.identityTier === 'known' && !isAuthenticated) {
-          getAgentResponse(welcomeMsg).catch(err => {
+          await getAgentResponse(welcomeMsg).catch(err => {
             console.error('[welcome] Background identity resolution failed:', err);
           });
           setBackground({ type: 'image', value: '/assets/backgrounds/default.png' });
@@ -585,7 +585,9 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           timestamp: new Date(),
           uiDirective: response.uiDirective,
         };
-        setMessages([agentMessage]);
+        // Prepend welcome message — preserve any user message the visitor
+        // typed via the WelcomeLoader queue-ahead input while loading.
+        setMessages(prev => prev.length === 0 ? [agentMessage] : [agentMessage, ...prev]);
         let actions = response.suggestedActions || [];
         // Build context-aware fallback suggestions if agent didn't provide any
         if (!actions.length && response.uiDirective?.action === 'WELCOME_SCENE') {
