@@ -195,7 +195,10 @@ export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const setting: SceneSetting = agentExplicitSetting
           || prodInferred
           || (hasExistingImage ? curBg.setting : inferSettingFromProducts(payload.products || []));
-        const shouldGenerate = payload.sceneContext?.generateBackground !== false;
+        // Only generate a background when the agent explicitly opts in.
+        // Product queries should NOT trigger scene regeneration by default —
+        // the existing background stays in place until a CHANGE_SCENE is requested.
+        const shouldGenerate = payload.sceneContext?.generateBackground === true;
 
         // Auto-generate a backgroundPrompt if the agent didn't provide one
         // but respect the agent's generateBackground flag
