@@ -115,6 +115,12 @@ export const ProfileDropdown: React.FC = () => {
                       </p>
                       <div className="flex items-center gap-3 mt-3">
                         <button
+                          onClick={handleSignIn}
+                          className="px-4 py-1.5 text-sm font-medium bg-stone-900 text-white rounded-full hover:bg-stone-800 transition-colors"
+                        >
+                          Sign In
+                        </button>
+                        <button
                           onClick={handleRegister}
                           className="px-4 py-1.5 text-sm font-medium border border-stone-300 text-stone-700 rounded-full hover:bg-stone-100 transition-colors"
                         >
