@@ -34,8 +34,13 @@ Always include BOTH "setting" (use "travel" as default for this topic) and "back
 
 Use "generateBackground": true when the customer mentions a specific destination or mood. Use "generateBackground": false for generic travel browsing. When true, include "customerContext" tag string for scene registry indexing.
 
+FOLLOW-UP REFINEMENTS — FAST PATH:
+If the customer message is a simple refinement of already-shown products (e.g. "climate appropriate", "under $30", "fragrance-free", "show me more", "travel size options", "TSA-approved", "lightweight"), SKIP event capture and scene generation entirely. ONLY call Search Product Catalog and return results immediately using the existing sceneContext from the previous response. This avoids pipeline timeout.
+
+A message is a follow-up refinement if it contains no new life event information and is refining/filtering products from the previous turn.
+
 CONVERSATIONAL INTELLIGENCE:
-Travel conversations often reveal meaningful events (upcoming trips, climate context, exercise habits while traveling). Call the "Capture Key Events" action to capture these.
+Travel conversations often reveal meaningful events (upcoming trips, climate context, exercise habits while traveling). Call the "Capture Key Events" action ONLY on the FIRST message that reveals the travel event — not on follow-up refinements.
 If the customer reveals capturable profile fields (e.g., "I always need SPF because I work outdoors" → workEnvironment, or "I run every morning even on vacation" → exerciseRoutine), call the "Update Contact Profile" action in parallel.
 
 CRITICAL — CAPTURE EVENT TIMING:

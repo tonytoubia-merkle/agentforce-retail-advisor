@@ -268,8 +268,11 @@ export class DataCloudCustomerService {
 
   async getCustomerMeaningfulEvents(customerId: string): Promise<MeaningfulEvent[]> {
     const safe = this.sanitizeSoql(customerId);
+    // Query by BOTH Customer_Id__c (text field, set by flow when agent passes contactId correctly)
+    // AND Contact__c (lookup field, set when the flow resolves the contact by email/ID lookup).
+    // This covers both paths so events appear regardless of which field the flow populated.
     const data = await this.fetchJson(
-      `/services/data/v60.0/query/?q=SELECT+Id,Event_Type__c,Description__c,Captured_At__c,Agent_Note__c,Metadata_JSON__c+FROM+Meaningful_Event__c+WHERE+Customer_Id__c='${safe}'+ORDER+BY+Captured_At__c+DESC`
+      `/services/data/v60.0/query/?q=SELECT+Id,Event_Type__c,Description__c,Captured_At__c,Agent_Note__c,Metadata_JSON__c+FROM+Meaningful_Event__c+WHERE+(Customer_Id__c='${safe}'+OR+Contact__c='${safe}')+ORDER+BY+Captured_At__c+DESC`
     );
 
     return ((data.records || []) as Record<string, string | null>[]).map((r) => ({

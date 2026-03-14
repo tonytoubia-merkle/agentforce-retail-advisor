@@ -43,7 +43,7 @@
             </value>
         </assignmentItems>
         <connector>
-            <targetReference>Create_Event_Record</targetReference>
+            <targetReference>Check_Duplicate_Event</targetReference>
         </connector>
     </assignments>
 
@@ -67,7 +67,7 @@
             </value>
         </assignmentItems>
         <connector>
-            <targetReference>Create_Event_Record</targetReference>
+            <targetReference>Check_Duplicate_Event</targetReference>
         </connector>
     </assignments>
 
@@ -91,7 +91,7 @@
             </value>
         </assignmentItems>
         <connector>
-            <targetReference>Create_Event_Record</targetReference>
+            <targetReference>Check_Duplicate_Event</targetReference>
         </connector>
     </assignments>
 
@@ -115,7 +115,7 @@
             </value>
         </assignmentItems>
         <connector>
-            <targetReference>Create_Event_Record</targetReference>
+            <targetReference>Check_Duplicate_Event</targetReference>
         </connector>
     </assignments>
 
@@ -174,6 +174,28 @@
             <operator>Assign</operator>
             <value>
                 <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </assignmentItems>
+    </assignments>
+
+    <!-- Duplicate found — return the existing record as success rather than creating a new one -->
+    <assignments>
+        <name>Set_Already_Exists</name>
+        <label>Set Already Exists</label>
+        <locationX>400</locationX>
+        <locationY>508</locationY>
+        <assignmentItems>
+            <assignToReference>outputSuccess</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>outputRecordId</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Check_Duplicate_Event.Id</elementReference>
             </value>
         </assignmentItems>
     </assignments>
@@ -308,6 +330,43 @@
         </rules>
     </decisions>
 
+    <!-- Skip creation if a matching event was already created in the last 10 minutes
+         (catches duplicate Agentforce pipeline calls within a single conversation turn) -->
+    <decisions>
+        <name>Is_Duplicate</name>
+        <label>Is Duplicate?</label>
+        <locationX>176</locationX>
+        <locationY>408</locationY>
+        <defaultConnector>
+            <targetReference>Create_Event_Record</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>No Duplicate — Create</defaultConnectorLabel>
+        <rules>
+            <name>Duplicate_Found</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Check_Duplicate_Event.Id</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Set_Already_Exists</targetReference>
+            </connector>
+            <label>Duplicate Found — Skip</label>
+        </rules>
+    </decisions>
+
+    <!-- ─── Formulas ─────────────────────────────────────────── -->
+
+    <!-- 10 minutes ago — used to detect duplicate calls within a single Agentforce pipeline run -->
+    <formulas>
+        <name>tenMinutesAgo</name>
+        <dataType>DateTime</dataType>
+        <expression>NOW() - (10/1440)</expression>
+    </formulas>
+
     <!-- ─── Record Creates ──────────────────────────────────── -->
 
     <recordCreates>
@@ -435,6 +494,42 @@
         </filters>
         <getFirstRecordOnly>true</getFirstRecordOnly>
         <object>Contact</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+
+    <!-- Check for an existing event with same Contact + EventType created within 10 minutes -->
+    <recordLookups>
+        <name>Check_Duplicate_Event</name>
+        <label>Check Duplicate Event</label>
+        <locationX>176</locationX>
+        <locationY>308</locationY>
+        <connector>
+            <targetReference>Is_Duplicate</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Contact__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>resolvedContactId</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>Event_Type__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>eventType</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>CreatedDate</field>
+            <operator>GreaterThanOrEqualTo</operator>
+            <value>
+                <elementReference>tenMinutesAgo</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Meaningful_Event__c</object>
         <storeOutputAutomatically>true</storeOutputAutomatically>
     </recordLookups>
 
