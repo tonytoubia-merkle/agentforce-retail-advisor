@@ -444,6 +444,17 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         'What do you recommend?',
       ]);
       setIsLoadingWelcome(false);
+
+      // Eagerly create the Agentforce session in the background so the first
+      // message doesn't pay the session-creation round trip cost.
+      if (!useMockData && !sessionInitialized) {
+        getAgentforceClient().initSession().then(() => {
+          sessionInitialized = true;
+          console.log('[session] Anonymous session pre-initialized');
+        }).catch(err => {
+          console.warn('[session] Anonymous pre-init failed (will retry on first message):', err);
+        });
+      }
       return;
     }
 

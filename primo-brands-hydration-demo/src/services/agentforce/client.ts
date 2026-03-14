@@ -177,7 +177,9 @@ export class AgentforceClient {
       }
       if (jsonEnd >= 0 && jsonEnd < fullText.length - 1) {
         const after = fullText.slice(jsonEnd + 1).trim();
-        if (after) textParts.push(after);
+        if (after && !after.includes('"') && !after.includes('{') && !after.includes('}')) {
+          textParts.push(after);
+        }
       }
     }
 
@@ -205,28 +207,12 @@ export class AgentforceClient {
       }
     }
     if (!displayMessage && uiDirective) {
-      const products = uiDirective.payload?.products;
-      if (products && products.length > 0) {
-        const names = products.slice(0, 3).map(p => p.name).join(', ');
-        displayMessage = products.length === 1
-          ? `I'd recommend the ${products[0].name} — ${products[0].description || 'a great choice for you.'}`
-          : `Here are ${products.length} products I've curated for you, including ${names}.`;
-      } else if (uiDirective.action === 'CHANGE_SCENE') {
-        displayMessage = 'Let me set the scene for you.';
-      } else if (uiDirective.action === 'WELCOME_SCENE') {
+      if (uiDirective.action === 'WELCOME_SCENE') {
         const parts = [uiDirective.payload?.welcomeMessage || 'Welcome!'];
         if (uiDirective.payload?.welcomeSubtext) parts.push(uiDirective.payload.welcomeSubtext);
         displayMessage = parts.join(' ');
-      } else if (uiDirective.action === 'INITIATE_CHECKOUT') {
-        displayMessage = 'Let me start the checkout process.';
       } else if (uiDirective.action === 'IDENTIFY_CUSTOMER') {
         displayMessage = "Great, I've saved your profile! Now I can give you more personalized recommendations.";
-      } else if (uiDirective.action === 'CAPTURE_ONLY') {
-        // Captures-only directive — agent prose was already extracted as displayMessage above.
-        // If somehow empty, use a generic fallback.
-        displayMessage = 'How can I help you further?';
-      } else {
-        displayMessage = "Here's what I found for you.";
       }
     }
 
