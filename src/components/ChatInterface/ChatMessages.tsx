@@ -39,6 +39,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, sceneLayou
 
         return (
           <div key={msg.id}>
+            {msg.content.trim() && (
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -52,6 +53,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, sceneLayou
             >
               {msg.content}
             </motion.div>
+            )}
             {hasProducts && isLatestDirective && (
               <ProductShowcase products={products} layout={sceneLayout} />
             )}

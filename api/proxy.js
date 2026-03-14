@@ -8,11 +8,17 @@ const CLIENT_ID = process.env.VITE_AGENTFORCE_CLIENT_ID;
 const CLIENT_SECRET = process.env.VITE_AGENTFORCE_CLIENT_SECRET;
 const WEBSTORE_ID = (process.env.VITE_COMMERCE_SITE_ID || '').trim();
 
+// Server-side token cache — persists across requests within the same warm function instance
+let _cachedToken = null;
+let _tokenExpiresAt = 0;
+
 const routes = [
   // Commerce on Core (B2B/D2C Commerce) — same SF instance, Connect API
   ...(WEBSTORE_ID ? [{ prefix: '/api/commerce', target: SF_INSTANCE, rewrite: `/services/data/v60.0/commerce/webstores/${WEBSTORE_ID}` }] : []),
   { prefix: '/api/oauth/token',            target: SF_INSTANCE,                                 rewrite: '/services/oauth2/token' },
-  { prefix: '/api/agentforce',             target: 'https://api.salesforce.com',                rewrite: '/einstein/ai-agent/v1' },
+  // Route Agentforce directly to the org instance instead of the global gateway
+  // (api.salesforce.com adds an extra routing hop that increases latency significantly)
+  { prefix: '/api/agentforce',             target: SF_INSTANCE,                                 rewrite: '/einstein/ai-agent/v1' },
   { prefix: '/api/cms-media',              target: SF_INSTANCE,                                 rewrite: '/cms/delivery/media' },
   { prefix: '/api/cms',                    target: SF_INSTANCE,                                 rewrite: '/services/data/v60.0/connect/cms' },
   { prefix: '/api/imagen/generate',        target: 'https://generativelanguage.googleapis.com', rewrite: '/v1beta/models/imagen-4.0-generate-001:predict' },
@@ -212,10 +218,16 @@ export default async function handler(req, res) {
   }
 
   // --- Salesforce OAuth token (server-side, keeps secrets out of client) ---
+  // Cache the token in module scope so warm function instances skip the round trip.
   if (url === '/api/sf/token' && req.method === 'POST') {
     if (!CLIENT_ID || !CLIENT_SECRET) {
       res.writeHead(500, { 'Content-Type': 'application/json', ...CORS_HEADERS });
       return res.end(JSON.stringify({ error: 'Missing CLIENT_ID or CLIENT_SECRET' }));
+    }
+    // Serve cached token if still valid (expire 5 min early)
+    if (_cachedToken && Date.now() < _tokenExpiresAt) {
+      res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+      return res.end(JSON.stringify({ access_token: _cachedToken, expires_in: Math.floor((_tokenExpiresAt - Date.now()) / 1000) }));
     }
     const sfUrl = new URL(SF_INSTANCE);
     const tokenBody = 'grant_type=client_credentials';
@@ -232,6 +244,16 @@ export default async function handler(req, res) {
         accept: 'application/json',
       },
     }, tokenBody);
+    // Cache on success
+    if (tokenResult.statusCode === 200) {
+      try {
+        const parsed = JSON.parse(tokenResult.body.toString());
+        if (parsed.access_token) {
+          _cachedToken = parsed.access_token;
+          _tokenExpiresAt = Date.now() + ((parsed.expires_in || 7200) * 1000) - 300_000;
+        }
+      } catch { /* ignore parse error, return raw */ }
+    }
     res.writeHead(tokenResult.statusCode, { 'Content-Type': 'application/json', ...CORS_HEADERS });
     return res.end(tokenResult.body);
   }
