@@ -234,6 +234,11 @@ function buildWelcomeMessage(ctx: CustomerSessionContext): string {
     lines.push(`[INSTRUCTION] Keep your welcome greeting SHORT — 2 sentences maximum. Greet by first name. If there is ONE standout context item (an upcoming trip, a recent life event, a loyalty milestone), acknowledge it briefly in a warm, natural way. Do NOT list multiple preferences, product types, or questions. End with a single warm invitation or open question. Be conversational, not encyclopedic.`);
     lines.push(`[INSTRUCTION — PRODUCTS FIRST] When a customer asks about any product category (e.g., "show me lipstick", "I need a moisturizer", "looking for serums"), ALWAYS respond with product recommendations immediately using the SHOW_PRODUCTS directive. Do NOT ask clarifying questions first (e.g., "what shade?", "what finish?", "what concerns?"). Instead, show the top products in that category right away and include suggestedActions as filter buttons for refinement (e.g., "Matte finish", "Bold shades", "Under $30", "Travel size"). Let the customer browse first and refine from there.`);
     lines.push(`[INSTRUCTION — EVENT CAPTURE] Only capture meaningful LIFE EVENTS — things like travel plans, anniversaries, birthdays, weddings, moves, graduations, pregnancies, or other time-bound personal milestones. Do NOT capture conversational preferences (e.g., "open to options", "likes matte finish") as meaningful events — those are product preferences, not life events. Only call Create_Meaningful_Event ONCE per distinct life event mentioned. If you already captured an event in this turn, do not call it again. When calling Create_Meaningful_Event, you MUST pass the contactId input as "${ctx.contactId || ctx.email}" so the event is linked to this customer's record. Also include temporal information in eventDescription (e.g., "trip to Dubai in 3 weeks") and set urgency in metadataJson.`);
+    // Explicit dedup: list already-recorded events so the agent doesn't re-capture them
+    if (ctx.meaningfulEvents?.length) {
+      lines.push(`[INSTRUCTION — NO DUPLICATE EVENTS] The following events are ALREADY saved in Salesforce for this customer. Do NOT call Create_Meaningful_Event for any event that matches or repeats these — it will create duplicates. When the customer mentions one of these topics, acknowledge it warmly but do not capture it again:`);
+      ctx.meaningfulEvents.forEach(e => lines.push(`  - ${e}`));
+    }
   }
 
   // ── Data usage rules ─────────────────────────────────────────
@@ -385,6 +390,10 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const prevCustomerIdRef = useRef<string | null>(null);
   const prevPersonaIdRef = useRef<string | null>(null);
   const sessionCacheRef = useRef<Map<string, SessionSnapshot>>(new Map());
+  // Tracks which persona's welcome is currently in-flight to prevent duplicate sends
+  // if the effect re-fires (e.g., due to isResolving/customer batching) before the
+  // async welcome completes.
+  const welcomeInFlightForRef = useRef<string | null>(null);
 
   // Keep refs in sync
   useEffect(() => {
@@ -516,6 +525,14 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
 
     // ── No cache — fresh session ──
+    // Guard: if a welcome is already in-flight for this persona (effect re-fired due
+    // to batched state updates during load), don't send a second one.
+    const welcomePersonaKey = selectedPersonaId || 'unknown';
+    if (welcomeInFlightForRef.current === welcomePersonaKey) {
+      console.log('[session] Welcome already in-flight for', welcomePersonaKey, '— skipping duplicate');
+      return;
+    }
+
     const sessionCtx = buildSessionContext(customer, campaign ?? undefined);
 
     if (useMockData) {
@@ -529,6 +546,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setMessages([]);
     setSuggestedActions([]);
     setIsLoadingWelcome(true);
+    welcomeInFlightForRef.current = welcomePersonaKey;
 
     const welcomeMsg = buildWelcomeMessage(sessionCtx);
 
@@ -637,6 +655,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         console.error('Welcome failed:', error);
       } finally {
         setIsLoadingWelcome(false);
+        welcomeInFlightForRef.current = null;
       }
     }, 300);
 

@@ -59,22 +59,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   const hasConversation = messages.length > 0 || isAgentTyping;
 
-  // Derive a contextual label for the typing indicator based on the last user message
-  const lastUserMessage = [...messages].reverse().find(m => m.role === 'user')?.content?.toLowerCase() ?? '';
-  let typingLabel: string | undefined;
-  if (isAgentTyping) {
-    if (/show me|what .*(do you have|carry)|browse|looking for/.test(lastUserMessage)) {
-      typingLabel = 'Searching products...';
-    } else if (/recommend|suggest|routine|what should|what would/.test(lastUserMessage)) {
-      typingLabel = 'Curating recommendations...';
-    } else if (/travel|going to|flying|trip|vacation/.test(lastUserMessage)) {
-      typingLabel = 'Setting the scene...';
-    } else if (/checkout|buy|purchase|add to cart/.test(lastUserMessage)) {
-      typingLabel = 'Preparing checkout...';
-    } else {
-      typingLabel = 'Thinking...';
-    }
-  }
 
   // Initial state: vertically centered welcome + input
   if (position === 'center' && !hasConversation) {
@@ -133,7 +117,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           <div className="flex-1" />
           <ChatMessages messages={messages} sceneLayout={sceneLayout} />
 
-          {isAgentTyping && <TypingIndicator label={typingLabel} />}
+          {isAgentTyping && <TypingIndicator />}
 
           {!isAgentTyping && suggestedActions.length > 0 && (
             <SuggestedActions actions={suggestedActions} onSelect={onSendMessage} />
