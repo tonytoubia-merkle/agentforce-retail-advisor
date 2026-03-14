@@ -37,7 +37,8 @@ export class DataCloudCustomerService {
 
     if (!this.config.clientId || !this.config.clientSecret) {
       if (this.accessToken) return this.accessToken;
-      throw new Error('No Data Cloud access token or OAuth credentials configured');
+      // No explicit credentials — try the server-side proxy token (same as Agentforce client).
+      // The proxy holds CLIENT_ID/SECRET server-side and returns a cached token.
     }
 
     const response = await fetch('/api/sf/token', { method: 'POST' });
