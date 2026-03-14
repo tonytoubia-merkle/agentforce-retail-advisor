@@ -970,6 +970,7 @@ export default async function handler(req, res) {
       delete headers['transfer-encoding'];
     }
 
+    const proxyT0 = Date.now();
     const result = await httpsRequest({
       hostname: targetUrl.hostname,
       port: 443,
@@ -977,6 +978,12 @@ export default async function handler(req, res) {
       method: req.method,
       headers,
     }, body);
+    const proxyElapsed = Date.now() - proxyT0;
+
+    // Log timing for Agentforce calls so we can see Vercel→SF roundtrip time
+    if (url.startsWith('/api/agentforce')) {
+      console.log(`[proxy timing] ${req.method} ${remotePath.split('/').slice(-2).join('/')} → ${result.statusCode} in ${proxyElapsed}ms`);
+    }
 
     const resHeaders = { ...CORS_HEADERS };
     if (result.headers['content-type']) resHeaders['Content-Type'] = result.headers['content-type'];

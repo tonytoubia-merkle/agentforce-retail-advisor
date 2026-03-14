@@ -116,6 +116,7 @@ export class AgentforceClient {
     }
 
     // OAuth via server-side proxy — credentials stay server-side, never in the browser bundle
+    const t0token = Date.now();
     const response = await fetch('/api/sf/token', { method: 'POST' });
 
     if (!response.ok) {
@@ -124,6 +125,7 @@ export class AgentforceClient {
     }
 
     const data = await response.json();
+    console.log(`[timing] token fetch: ${Date.now() - t0token}ms`);
     this.accessToken = data.access_token;
     // Expire 5 minutes early to avoid edge cases
     this.tokenExpiresAt = Date.now() + (data.expires_in ? data.expires_in * 1000 : 7200_000) - 300_000;
@@ -193,7 +195,9 @@ export class AgentforceClient {
     }
 
     try {
+    const t0 = Date.now();
     const token = await this.getAccessToken();
+    const t1 = Date.now();
     this.sequenceId++;
 
     const response = await fetch(
@@ -213,6 +217,7 @@ export class AgentforceClient {
         }),
       }
     );
+    const t2 = Date.now();
 
     if (!response.ok) {
       const errText = await response.text();
@@ -220,6 +225,11 @@ export class AgentforceClient {
     }
 
     const data = await response.json();
+    const t3 = Date.now();
+    console.log(
+      `[timing] seq=${this.sequenceId} | token: ${t1 - t0}ms (${t1 - t0 < 5 ? 'cached' : 'fetched'})` +
+      ` | agent roundtrip: ${t2 - t1}ms | json parse: ${t3 - t2}ms | total: ${t3 - t0}ms`
+    );
     console.log('[agentforce] response keys:', Object.keys(data), 'messages count:', (data.messages || data.responseMessages || []).length);
 
     // The API may return messages in different shapes depending on version
