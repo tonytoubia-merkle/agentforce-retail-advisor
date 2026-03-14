@@ -1,6 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useConversation } from '@/contexts/ConversationContext';
 
 const LOADING_MESSAGES = [
   'Studying your beauty profile\u2026',
@@ -12,10 +11,6 @@ const LOADING_MESSAGES = [
 
 export const WelcomeLoader: React.FC = () => {
   const [index, setIndex] = useState(0);
-  const [draft, setDraft] = useState('');
-  const [queued, setQueued] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const { sendMessage } = useConversation();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -23,16 +18,6 @@ export const WelcomeLoader: React.FC = () => {
     }, 2200);
     return () => clearInterval(interval);
   }, []);
-
-  const submit = () => {
-    const text = draft.trim();
-    if (!text || queued) return;
-    setQueued(true);
-    setDraft('');
-    // sendMessage acquires the send lock, so it will wait for the in-flight
-    // welcome message to finish before seq=2 is sent — no extra sequencing needed.
-    sendMessage(text);
-  };
 
   return (
     <motion.div
@@ -67,42 +52,6 @@ export const WelcomeLoader: React.FC = () => {
           </motion.p>
         </AnimatePresence>
       </div>
-
-      {/* Queue-ahead input */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.5, duration: 0.5 }}
-        className="mt-10 w-full max-w-sm px-4"
-      >
-        {queued ? (
-          <p className="text-center text-white/40 text-xs tracking-wide">
-            Got it — sending when ready&hellip;
-          </p>
-        ) : (
-          <div className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-2 backdrop-blur-sm">
-            <input
-              ref={inputRef}
-              type="text"
-              value={draft}
-              onChange={e => setDraft(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && submit()}
-              placeholder="Start typing while your experience loads…"
-              className="flex-1 bg-transparent text-white/80 text-sm placeholder-white/30 outline-none min-w-0"
-            />
-            {draft && (
-              <button
-                onClick={submit}
-                className="text-white/50 hover:text-white/90 transition-colors flex-shrink-0"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
-              </button>
-            )}
-          </div>
-        )}
-      </motion.div>
     </motion.div>
   );
 };
