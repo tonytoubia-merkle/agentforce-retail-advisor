@@ -15,7 +15,6 @@ import { MediaWallPage } from '@/components/MediaWall';
 import { resolveUTMToCampaign } from '@/mocks/adCreatives';
 import type { Product } from '@/types/product';
 import type { CampaignAttribution } from '@/types/campaign';
-import { getCommerceClient } from '@/services/commerce';
 import { MOCK_PRODUCTS } from '@/mocks/products';
 
 const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
@@ -94,23 +93,9 @@ function AppShell({ initialCampaign }: { initialCampaign: CampaignAttribution | 
       return;
     }
 
-    // Load products from Commerce Cloud headless API
-    const commerceClient = getCommerceClient();
-    commerceClient.searchProducts({ limit: 200 })
-      .then((results) => {
-        if (results.length > 0) {
-          setProducts(results);
-        } else {
-          // Commerce Cloud returned no products — fall back to local catalog
-          console.warn('[commerce] No products returned from Commerce Cloud, using local catalog');
-          setProducts(MOCK_PRODUCTS);
-        }
-      })
-      .catch((err) => {
-        console.warn('[commerce] Commerce Cloud unavailable, using local catalog:', err.message);
-        setProducts(MOCK_PRODUCTS);
-      })
-      .finally(() => setLoading(false));
+    // Use local catalog on initial load; Commerce Cloud is queried via agent responses
+    setProducts(MOCK_PRODUCTS);
+    setLoading(false);
   }, []);
 
   if (loading) {
