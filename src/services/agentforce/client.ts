@@ -94,6 +94,9 @@ export class AgentforceClient {
   private accessToken: string | null = null;
   private tokenExpiresAt = 0;
   private sequenceId = 0;
+  // Set to true after the first 406 from the messages endpoint — SSE not supported by this org.
+  // All subsequent calls in this session skip the SSE attempt and go straight to JSON.
+  private _sseUnsupported = false;
   // Serialization lock — Agentforce sessions don't support concurrent messages.
   // The background welcome (seq=1) and the user's first message (seq=2) must be
   // sent sequentially, or the API may process seq=2 before seq=1's context is
@@ -519,22 +522,54 @@ export class AgentforceClient {
       const t1 = Date.now();
       this.sequenceId++;
 
-      const response = await fetch(
-        `${this.config.baseUrl}/sessions/${this.sessionId}/messages`,
-        {
+      const url = `${this.config.baseUrl}/sessions/${this.sessionId}/messages`;
+      const bodyPayload = JSON.stringify({
+        message: { sequenceId: this.sequenceId, type: 'Text', text: message },
+      });
+
+      // ── Helper: buffered JSON request (no SSE) ─────────────────
+      // Used both for the SSE-unsupported fast path and as a fallback
+      // after a 406. Does NOT re-acquire the lock — lock is already held.
+      const sendBuffered = async (): Promise<AgentResponse> => {
+        const r = await fetch(url, {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'text/event-stream',
-          },
-          body: JSON.stringify({
-            message: { sequenceId: this.sequenceId, type: 'Text', text: message },
-          }),
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: bodyPayload,
+        });
+        if (!r.ok) {
+          const errText = await r.text();
+          throw new Error(`Send message failed (${r.status}): ${errText}`);
         }
-      );
+        const data = await r.json();
+        const t2 = Date.now();
+        console.log(`[timing] seq=${this.sequenceId} | token: ${t1 - t0}ms | agent roundtrip: ${t2 - t1}ms | total: ${t2 - t0}ms`);
+        return this._processResponse(data as Record<string, unknown>);
+      };
+
+      // Skip SSE attempt if previously found to be unsupported
+      if (this._sseUnsupported) {
+        return await sendBuffered();
+      }
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'text/event-stream',
+        },
+        body: bodyPayload,
+      });
 
       if (!response.ok) {
+        // 406 = SSE not accepted by this API version. Mark and fall back to JSON.
+        if (response.status === 406 || response.status === 415 || response.status === 500) {
+          this._sseUnsupported = true;
+          console.log(`[agentforce] SSE not supported (${response.status}) — falling back to JSON for this session`);
+          // Need a fresh token check but can reuse the one we already have.
+          // Retry as buffered (lock is already held, so safe to call directly).
+          return await sendBuffered();
+        }
         const errText = await response.text();
         throw new Error(`Send message failed (${response.status}): ${errText}`);
       }
