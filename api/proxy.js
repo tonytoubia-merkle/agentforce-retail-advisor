@@ -970,6 +970,42 @@ export default async function handler(req, res) {
       delete headers['transfer-encoding'];
     }
 
+    // SSE streaming: pipe agentforce message responses directly without buffering.
+    // Prevents Vercel from buffering the full response before forwarding, enabling
+    // incremental text chunks to reach the browser as they're generated.
+    const acceptHeader = (req.headers['accept'] || '').toLowerCase();
+    if (acceptHeader.includes('text/event-stream') && url.startsWith('/api/agentforce')) {
+      headers['accept'] = 'text/event-stream';
+      const proxyT0 = Date.now();
+      await new Promise((resolve, reject) => {
+        const sfReq = https.request({
+          hostname: targetUrl.hostname,
+          port: 443,
+          path: remotePath,
+          method: req.method,
+          headers,
+        }, (sfRes) => {
+          const sseHeaders = {
+            ...CORS_HEADERS,
+            'Content-Type': sfRes.headers['content-type'] || 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+            'X-Accel-Buffering': 'no',
+          };
+          res.writeHead(sfRes.statusCode, sseHeaders);
+          sfRes.on('data', (chunk) => res.write(chunk));
+          sfRes.on('end', () => { res.end(); resolve(); });
+          sfRes.on('error', reject);
+        });
+        sfReq.on('error', reject);
+        sfReq.setTimeout(115000, () => sfReq.destroy(new Error('SSE timeout')));
+        if (body) sfReq.end(body);
+        else sfReq.end();
+      });
+      console.log(`[proxy SSE] ${req.method} ${remotePath.split('/').slice(-2).join('/')} piped in ${Date.now() - proxyT0}ms`);
+      return;
+    }
+
     const proxyT0 = Date.now();
     const result = await httpsRequest({
       hostname: targetUrl.hostname,

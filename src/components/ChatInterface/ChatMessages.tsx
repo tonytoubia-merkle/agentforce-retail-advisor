@@ -52,6 +52,13 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, sceneLayou
               style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}
             >
               {msg.content}
+              {msg.isStreaming && (
+                <motion.span
+                  animate={{ opacity: [1, 0, 1] }}
+                  transition={{ repeat: Infinity, duration: 0.8 }}
+                  className="inline-block w-[2px] h-[1em] bg-white/70 ml-0.5 align-middle"
+                />
+              )}
             </motion.div>
             )}
             {hasProducts && isLatestDirective && (

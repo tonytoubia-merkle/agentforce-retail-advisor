@@ -303,6 +303,26 @@ async function getAgentResponse(content: string): Promise<AgentResponse> {
   return client.sendMessage(content);
 }
 
+/**
+ * Like getAgentResponse but streams text chunks via onChunk as they arrive.
+ * The returned promise resolves with the full AgentResponse when the stream ends.
+ * Falls back to buffered sendMessage if SSE is not supported by the server.
+ */
+async function getAgentResponseStreaming(
+  content: string,
+  onChunk: (text: string) => void,
+): Promise<AgentResponse> {
+  if (useMockData) {
+    return generateMockResponse(content);
+  }
+  const client = getAgentforceClient();
+  if (!sessionInitialized) {
+    await client.initSession();
+    sessionInitialized = true;
+  }
+  return client.sendMessageStreaming(content, onChunk);
+}
+
 /** Write a chat summary to Data Cloud when a conversation ends. */
 function writeConversationSummary(customerId: string, msgs: AgentMessage[]): void {
   if (msgs.length < 2) return; // Need at least one exchange
@@ -634,8 +654,47 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setSuggestedActions([]);
     setIsAgentTyping(true);
 
+    // Stable ID for the agent reply — used to update the streaming placeholder in-place
+    const agentMsgId = uuidv4();
+
     try {
-      const response = await getAgentResponse(content);
+      // ── Streaming path (real Agentforce only) ──────────────────
+      // Text chunks arrive before the full response. We display them
+      // progressively, stopping once JSON directive content begins.
+      // When the stream completes, we replace the placeholder with the
+      // fully-parsed response (clean text + uiDirective).
+      let streamingContent = '';
+      let jsonStarted = false;
+
+      const response = await getAgentResponseStreaming(content, (chunk: string) => {
+        if (jsonStarted) return;
+        streamingContent += chunk;
+        // Safety: stop streaming to UI if JSON slips through
+        const braceIdx = streamingContent.indexOf('{');
+        if (braceIdx !== -1) {
+          jsonStarted = true;
+          streamingContent = streamingContent.slice(0, braceIdx).trim();
+        }
+        if (!streamingContent.trim()) return;
+        // First chunk: switch from typing indicator to streaming message
+        setIsAgentTyping(false);
+        setMessages(prev => {
+          const idx = prev.findIndex(m => m.id === agentMsgId);
+          if (idx === -1) {
+            // First chunk — insert the streaming placeholder
+            return [...prev, {
+              id: agentMsgId,
+              role: 'agent' as const,
+              content: streamingContent,
+              timestamp: new Date(),
+              isStreaming: true,
+            }];
+          }
+          const updated = [...prev];
+          updated[idx] = { ...updated[idx], content: streamingContent };
+          return updated;
+        });
+      });
 
       // If the agent returns a WELCOME_SCENE during a normal conversation
       // (user typed a message), downgrade it to CHANGE_SCENE so products
@@ -647,17 +706,23 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         };
       }
 
+      // Replace streaming placeholder with the final parsed response
       const agentMessage: AgentMessage = {
-        id: uuidv4(),
+        id: agentMsgId,
         role: 'agent',
         content: response.message,
         timestamp: new Date(),
         uiDirective: response.uiDirective,
+        isStreaming: false,
       };
-      setMessages((prev) => [...prev, agentMessage]);
+      setMessages((prev) => {
+        const idx = prev.findIndex(m => m.id === agentMsgId);
+        if (idx === -1) return [...prev, agentMessage]; // no streaming occurred
+        const updated = [...prev];
+        updated[idx] = agentMessage;
+        return updated;
+      });
       setSuggestedActions(response.suggestedActions || []);
-      // Stop typing indicator before processing directive so background
-      // transitions don't show a second typing bubble.
       setIsAgentTyping(false);
 
       if (response.uiDirective) {
@@ -735,13 +800,22 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
     } catch (error) {
       console.error('Failed to get agent response:', error);
-      const errorMessage: AgentMessage = {
-        id: uuidv4(),
-        role: 'agent',
-        content: "I'm sorry, I encountered an issue. Could you try again?",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+      const errorContent = "I'm sorry, I encountered an issue. Could you try again?";
+      setMessages((prev) => {
+        const idx = prev.findIndex(m => m.id === agentMsgId);
+        if (idx !== -1) {
+          // Replace the streaming placeholder with the error
+          const updated = [...prev];
+          updated[idx] = { ...updated[idx], content: errorContent, isStreaming: false };
+          return updated;
+        }
+        return [...prev, {
+          id: uuidv4(),
+          role: 'agent' as const,
+          content: errorContent,
+          timestamp: new Date(),
+        }];
+      });
       setIsAgentTyping(false);
     }
   }, [processUIDirective, identifyByEmail, showCapture, customer]);

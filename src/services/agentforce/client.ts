@@ -176,64 +176,12 @@ export class AgentforceClient {
     return this.sessionId!;
   }
 
-  async sendMessage(message: string): Promise<AgentResponse> {
-    if (!this.sessionId) {
-      throw new Error('Session not initialized. Call initSession() first.');
-    }
-
-    // Acquire the send lock — wait for any in-flight message (e.g. background welcome)
-    // to complete before sending the next one. This prevents seq=2 from racing seq=1.
-    let releaseLock!: () => void;
-    const nextLock = new Promise<void>(resolve => { releaseLock = resolve; });
-    const prevLock = this._sendLock;
-    this._sendLock = nextLock;
-
-    try {
-      await prevLock;
-    } catch {
-      // Previous send failed — lock chain is broken, proceed anyway
-    }
-
-    try {
-    const t0 = Date.now();
-    const token = await this.getAccessToken();
-    const t1 = Date.now();
-    this.sequenceId++;
-
-    const response = await fetch(
-      `${this.config.baseUrl}/sessions/${this.sessionId}/messages`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: {
-            sequenceId: this.sequenceId,
-            type: 'Text',
-            text: message,
-          },
-        }),
-      }
-    );
-    const t2 = Date.now();
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`Send message failed (${response.status}): ${errText}`);
-    }
-
-    const data = await response.json();
-    const t3 = Date.now();
-    console.log(
-      `[timing] seq=${this.sequenceId} | token: ${t1 - t0}ms (${t1 - t0 < 5 ? 'cached' : 'fetched'})` +
-      ` | agent roundtrip: ${t2 - t1}ms | json parse: ${t3 - t2}ms | total: ${t3 - t0}ms`
-    );
-    console.log('[agentforce] response keys:', Object.keys(data), 'messages count:', (data.messages || data.responseMessages || []).length);
-
-    // The API may return messages in different shapes depending on version
-    const rawMessages: unknown[] = data.messages || data.responseMessages || [];
+  /**
+   * Parse a raw API response object into an AgentResponse.
+   * Shared between sendMessage (buffered) and sendMessageStreaming (SSE).
+   */
+  private _processResponse(data: Record<string, unknown>): AgentResponse {
+    const rawMessages: unknown[] = (data.messages || data.responseMessages || []) as unknown[];
     const agentMessages = rawMessages.map((m: unknown) => {
       const msg = m as Record<string, unknown>;
       return {
@@ -251,38 +199,26 @@ export class AgentforceClient {
     }
 
     // ─── Adaptive Response Formats: structured message parsing ────────────
-    // When the agent returns Card Carousel or Choices messages (Rich Choice
-    // With Images / Rich Choice Response), parse them directly into a
-    // SHOW_PRODUCTS directive — no JSON-in-text extraction needed.
-    //
-    // Message type names used by the Enhanced Chat REST API:
-    //   "Card Carousel"  → Rich Choice With Images (products with images)
-    //   "Choices"        → Rich Choice Response (text-only choices)
-    //   "Buttons"        → same as Choices but rendered as buttons
     const structuredDirective = parseStructuredMessages(rawMessages);
     if (structuredDirective) {
       console.log('[agentforce] Parsed structured message directive:', structuredDirective.action, `(${structuredDirective.payload?.products?.length ?? 0} products)`);
-      // Extract any preceding Text message as display text
       const precedingText = agentMessages
         .filter(m => m.type === 'Text' || m.type === '' || m.type === 'text')
         .map(m => m.message)
         .join('\n')
         .trim();
       return {
-        sessionId: this.sessionId,
+        sessionId: this.sessionId!,
         message: precedingText || '',
         uiDirective: structuredDirective,
-        suggestedActions: data.suggestedActions || [],
-        confidence: data.confidence || 1,
+        suggestedActions: (data.suggestedActions as string[]) || [],
+        confidence: (data.confidence as number) || 1,
       };
     }
 
-    // Concatenate all message chunks (agent may split long responses across multiple messages)
     const fullText = agentMessages.map((m) => m.message).join('');
-
     console.log('[agentforce] raw text:', fullText.substring(0, 500));
 
-    // Try to parse the combined text as a directive
     let uiDirective: ReturnType<typeof parseUIDirective> = undefined;
     const directive = parseUIDirective({ message: fullText, rawText: fullText });
     if (directive) {
@@ -290,12 +226,10 @@ export class AgentforceClient {
       uiDirective = directive;
     }
 
-    // If no directive found, collect individual messages as display text
     const textParts: string[] = [];
     if (!uiDirective) {
       for (const msg of agentMessages) {
         const text = msg.message || '';
-        // Try each message individually as a directive (in case only one chunk is JSON)
         const d = parseUIDirective({ message: text, rawText: text });
         if (d) {
           uiDirective = d;
@@ -304,8 +238,6 @@ export class AgentforceClient {
         }
       }
     } else {
-      // Directive was found in the combined text. Extract any prose text
-      // that appeared before/after the JSON block as the display message.
       const jsonStart = fullText.indexOf('{');
       const jsonEnd = fullText.lastIndexOf('}');
       if (jsonStart > 0) {
@@ -314,41 +246,29 @@ export class AgentforceClient {
       }
       if (jsonEnd >= 0 && jsonEnd < fullText.length - 1) {
         const after = fullText.slice(jsonEnd + 1).trim();
-        // Only treat as prose if it doesn't look like JSON debris (e.g. from
-        // a truncated response where lastIndexOf('}') lands mid-JSON).
         if (after && !after.includes('"') && !after.includes('{') && !after.includes('}')) {
           textParts.push(after);
         }
       }
     }
 
-    // Strip any text parts that look like raw JSON (failed parse but still JSON-like)
     const cleanTextParts = textParts
       .filter((t) => {
         const trimmed = t.trim();
         return !(trimmed.startsWith('{') && trimmed.endsWith('}'));
       })
-      // Strip embedded JSON blocks from within prose text (e.g., agent leaking
-      // capture JSON like {"captured": true, "eventType": "Travel", ...})
       .map((t) => t
         .replace(/\{[^{}]*"(?:captured|eventType|captureNotification|uiDirective)"[^}]*\}/g, '')
         .trim()
       )
       .filter(Boolean);
 
-    // If we found a directive but no separate text, generate a friendly message from the directive
     let displayMessage = cleanTextParts.join('\n');
-    // Check for a message embedded in the directive payload itself
     if (!displayMessage && uiDirective) {
       const payloadMsg = (uiDirective.payload as Record<string, unknown>)?.message as string | undefined;
-      if (payloadMsg) {
-        displayMessage = payloadMsg;
-      }
+      if (payloadMsg) displayMessage = payloadMsg;
     }
     if (!displayMessage && uiDirective) {
-      // Only synthesize text for directives that have no natural display content.
-      // For SHOW_PRODUCTS and CHANGE_SCENE the UI handles rendering — leave the
-      // message empty so we don't manufacture copy the agent didn't write.
       if (uiDirective.action === 'WELCOME_SCENE') {
         const parts = [uiDirective.payload?.welcomeMessage || 'Welcome!'];
         if (uiDirective.payload?.welcomeSubtext) parts.push(uiDirective.payload.welcomeSubtext);
@@ -359,16 +279,12 @@ export class AgentforceClient {
     }
 
     // ─── Detect capture JSON in the raw response text ──────────
-    // The prompt template may output {"captured": true, "eventType": ...}
-    // which isn't a uiDirective but indicates a server-side capture happened.
     const captureJsonMatch = fullText.match(/\{\s*"captured"\s*:\s*true[^}]*"eventType"\s*:\s*"([^"]+)"[^}]*\}/);
     if (captureJsonMatch) {
       const captureType = captureJsonMatch[1];
       console.log('[agentforce] Detected capture JSON in response for event type:', captureType);
-      // Try to extract the notification label from the JSON
       const labelMatch = captureJsonMatch[0].match(/"label"\s*:\s*"([^"]+)"/);
       const label = labelMatch ? labelMatch[1] : `Event Captured: ${captureType}`;
-      // Ensure we have a directive to carry this capture
       if (!uiDirective) {
         uiDirective = {
           action: 'CAPTURE_ONLY' as UIAction,
@@ -381,10 +297,8 @@ export class AgentforceClient {
     }
 
     // ─── Client-side event capture detection ─────────────────────
-    // Detect captures from multiple sources and surface as toast notifications.
     const detectedCaptures: Array<{ type: 'meaningful_event' | 'profile_enrichment'; label: string }> = [];
 
-    // 1a. Parenthetical notation: (Event Captured: ...) or (Profile Updated: ...)
     const captureRegex = /\((?:Event [Cc]aptured|event captured|Captured|captured):\s*(.+?)\)/g;
     let captureMatch;
     while ((captureMatch = captureRegex.exec(displayMessage)) !== null) {
@@ -395,30 +309,23 @@ export class AgentforceClient {
       detectedCaptures.push({ type: 'profile_enrichment', label: `Profile Updated: ${captureMatch[1]}` });
     }
 
-    // 1b. Bare text notation: "Event Captured: Anniversary trip" (no parentheses)
-    //     Match "Event Captured: <summary>" that appears as a standalone fragment in the text
     const bareEventRegex = /(?:^|\s)Event\s+Captured:\s*([^\n.!?]+)/gi;
     while ((captureMatch = bareEventRegex.exec(displayMessage)) !== null) {
       const label = `Event Captured: ${captureMatch[1].trim()}`;
-      // Avoid duplicate if already detected from parenthetical notation
       if (!detectedCaptures.some(c => c.label === label)) {
         detectedCaptures.push({ type: 'meaningful_event', label });
       }
     }
 
-    // 2. Scan raw API messages for action invocations (Inform messages from
-    //    CaptureKeyEventsService, MeaningfulEventService, ProfileEnrichmentService, etc.)
     for (const m of rawMessages) {
       const msg = m as Record<string, unknown>;
       const msgType = ((msg.type as string) || '').toLowerCase();
-      // Skip regular text messages — look for Inform, Action, ActionResult, etc.
       if (msgType === 'text' || msgType === '') continue;
       const content = ((msg.message || msg.text || msg.content || '') as string).toLowerCase();
       const actionName = ((msg.actionName || msg.name || msg.identifier || '') as string).toLowerCase();
       const combined = `${content} ${actionName}`;
 
       if (combined.includes('meaningful') || combined.includes('capturekey') || combined.includes('capture_key')) {
-        // Avoid duplicate if already detected from text
         if (!detectedCaptures.some(c => c.type === 'meaningful_event')) {
           detectedCaptures.push({ type: 'meaningful_event', label: 'Event Captured' });
         }
@@ -431,10 +338,8 @@ export class AgentforceClient {
       }
     }
 
-    // 3. Natural language detection — agent confirms a capture in its response text
     if (detectedCaptures.length === 0) {
       const lower = displayMessage.toLowerCase();
-      // Meaningful event patterns
       const eventPhrases = [
         /i'(?:ve|ll)\s+(?:noted|captured|recorded|saved)\s+(?:your\s+)?(?:upcoming\s+)?(?:trip|travel|wedding|birthday|anniversary|move|graduation|pregnancy|baby)/i,
         /i'(?:ve|ll)\s+(?:noted|recorded|saved)\s+that\s+you(?:'re| are)\s+(?:planning|going|traveling|moving|expecting|getting married)/i,
@@ -447,7 +352,6 @@ export class AgentforceClient {
           break;
         }
       }
-      // Profile enrichment patterns
       if (lower.includes("i've noted your skin") || lower.includes("i've saved your") ||
           lower.includes("i've updated your profile") || lower.includes("got it, i've noted")) {
         detectedCaptures.push({ type: 'profile_enrichment', label: 'Profile Updated' });
@@ -456,11 +360,9 @@ export class AgentforceClient {
 
     if (detectedCaptures.length > 0) {
       console.log('[agentforce] Detected captures:', detectedCaptures);
-      // Merge into directive, but avoid duplicates from the JSON capture detection phase above
       const existingCaptures = ((uiDirective?.payload as Record<string, unknown>)?.captures as Array<{ type: string; label: string }>) || [];
       const hasExistingEvent = existingCaptures.some(c => c.type === 'meaningful_event');
       const deduped = detectedCaptures.filter(c => {
-        // If we already have a meaningful_event from JSON capture detection, skip text-detected ones
         if (c.type === 'meaningful_event' && hasExistingEvent) return false;
         return true;
       });
@@ -477,19 +379,13 @@ export class AgentforceClient {
     }
 
     // ─── Quality filter: remove false-positive meaningful_event captures ───
-    // The agent sometimes tags conversational preferences (e.g., "open to lipstick
-    // options") as meaningful events. Real meaningful events describe life events,
-    // travel plans, milestones, etc. — filter out labels that don't match.
     const allCaptures = ((uiDirective?.payload as Record<string, unknown>)?.captures as Array<{ type: string; label: string }>) || [];
     if (allCaptures.length > 0) {
       const lifeEventKeywords = /\b(trip|travel|anniversary|birthday|wedding|baby|pregnan|moving|graduat|retire|vacation|holiday|honeymoon|prom|reunion|concert|festival|event|appointment|surgery|celebration)\b/i;
       const filtered = allCaptures.filter(c => {
-        if (c.type !== 'meaningful_event') return true; // keep non-event captures
-        // Extract the descriptive part after "Event Captured: " prefix
+        if (c.type !== 'meaningful_event') return true;
         const desc = c.label.replace(/^Event\s+Captured:\s*/i, '').trim();
-        // Accept if it contains a recognized life-event keyword
         if (lifeEventKeywords.test(desc)) return true;
-        // Accept if label was from structured JSON capture detection (has proper prefix)
         if (c.label.startsWith('Event Captured:') && desc.length > 15) return true;
         console.log('[agentforce] Filtered out low-quality capture:', c.label);
         return false;
@@ -500,44 +396,230 @@ export class AgentforceClient {
     }
 
     // ─── Strip meta-text noise from displayed message ───────────
-    // Agent sometimes adds parenthetical meta-notes not meant for the customer
     displayMessage = displayMessage
       .replace(/\((?:Event [Cc]aptured|event captured|Captured|captured):\s*.+?\)/g, '')
       .replace(/\((?:Profile [Uu]pdated|profile updated|Updated|Saved):\s*.+?\)/g, '')
       .replace(/\(uiDirective\s+forthcoming[^)]*\)/gi, '')
       .replace(/\(Note:?\s*[^)]*\)/gi, '')
-      // Strip bare "Event Captured: <summary>" text (without parentheses)
       .replace(/Event\s+Captured:\s*[^\n.!?]+/gi, '')
-      // Strip any remaining JSON blocks that leaked through (capture metadata, directive fragments)
       .replace(/\{[^{}]*"(?:captured|eventType|captureNotification|uiDirective|eventDescription|agentNote|metadataJson)"[^}]*\}/g, '')
-      // Strip bare "uiDirective" mentions the agent may output as text
       .replace(/\buiDirective\b[^.!?\n]*/gi, '')
       .replace(/\s{2,}/g, ' ')
       .trim();
 
-    // Warn when agent mentions products but no directive was parsed
     if (!uiDirective && displayMessage) {
       const lower = displayMessage.toLowerCase();
       if (lower.includes('recommend') || lower.includes('here are') || lower.includes('product')) {
-        console.warn('[agentforce] Agent mentioned products but no uiDirective was parsed. The agent may not be returning the JSON directive block. Full text:', fullText.substring(0, 500));
+        console.warn('[agentforce] Agent mentioned products but no uiDirective was parsed. Full text:', fullText.substring(0, 500));
       }
     }
 
-    // Final safety net: never return a completely blank response
     if (!displayMessage && !uiDirective) {
       console.warn('[agentforce] Empty response. Full data:', JSON.stringify(data).substring(0, 1000));
       displayMessage = "I'm processing your request. Could you try asking again?";
     }
 
     return {
-      sessionId: this.sessionId,
+      sessionId: this.sessionId!,
       message: displayMessage,
       uiDirective,
-      suggestedActions: data.suggestedActions?.length
-        ? data.suggestedActions
+      suggestedActions: (data.suggestedActions as string[])?.length
+        ? data.suggestedActions as string[]
         : (uiDirective?.payload as Record<string, unknown>)?.suggestedActions as string[] || [],
-      confidence: data.confidence || 1,
+      confidence: (data.confidence as number) || 1,
     };
+  }
+
+  async sendMessage(message: string): Promise<AgentResponse> {
+    if (!this.sessionId) {
+      throw new Error('Session not initialized. Call initSession() first.');
+    }
+
+    // Acquire the send lock — wait for any in-flight message (e.g. background welcome)
+    // to complete before sending the next one.
+    let releaseLock!: () => void;
+    const nextLock = new Promise<void>(resolve => { releaseLock = resolve; });
+    const prevLock = this._sendLock;
+    this._sendLock = nextLock;
+
+    try {
+      await prevLock;
+    } catch {
+      // Previous send failed — lock chain is broken, proceed anyway
+    }
+
+    try {
+      const t0 = Date.now();
+      const token = await this.getAccessToken();
+      const t1 = Date.now();
+      this.sequenceId++;
+
+      const response = await fetch(
+        `${this.config.baseUrl}/sessions/${this.sessionId}/messages`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: { sequenceId: this.sequenceId, type: 'Text', text: message },
+          }),
+        }
+      );
+      const t2 = Date.now();
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Send message failed (${response.status}): ${errText}`);
+      }
+
+      const data = await response.json();
+      const t3 = Date.now();
+      console.log(
+        `[timing] seq=${this.sequenceId} | token: ${t1 - t0}ms (${t1 - t0 < 5 ? 'cached' : 'fetched'})` +
+        ` | agent roundtrip: ${t2 - t1}ms | json parse: ${t3 - t2}ms | total: ${t3 - t0}ms`
+      );
+      console.log('[agentforce] response keys:', Object.keys(data), 'messages count:', (data.messages || data.responseMessages || []).length);
+
+      return this._processResponse(data as Record<string, unknown>);
+    } finally {
+      releaseLock();
+    }
+  }
+
+  /**
+   * Send a message using SSE streaming so text chunks arrive incrementally.
+   * onChunk is called with each text fragment as it arrives. JSON directive
+   * content is never passed to onChunk — only clean prose text is streamed.
+   * Falls back to buffered JSON parsing if the server doesn't support SSE.
+   */
+  async sendMessageStreaming(
+    message: string,
+    onChunk: (text: string) => void,
+  ): Promise<AgentResponse> {
+    if (!this.sessionId) {
+      throw new Error('Session not initialized. Call initSession() first.');
+    }
+
+    let releaseLock!: () => void;
+    const nextLock = new Promise<void>(resolve => { releaseLock = resolve; });
+    const prevLock = this._sendLock;
+    this._sendLock = nextLock;
+
+    try {
+      await prevLock;
+    } catch {
+      // Previous send failed — proceed anyway
+    }
+
+    try {
+      const t0 = Date.now();
+      const token = await this.getAccessToken();
+      const t1 = Date.now();
+      this.sequenceId++;
+
+      const response = await fetch(
+        `${this.config.baseUrl}/sessions/${this.sessionId}/messages`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'Accept': 'text/event-stream',
+          },
+          body: JSON.stringify({
+            message: { sequenceId: this.sequenceId, type: 'Text', text: message },
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Send message failed (${response.status}): ${errText}`);
+      }
+
+      // Fallback: server returned JSON instead of SSE — parse normally
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('text/event-stream')) {
+        const data = await response.json();
+        const t2 = Date.now();
+        console.log(`[timing] seq=${this.sequenceId} (SSE→JSON fallback) | total: ${t2 - t0}ms`);
+        return this._processResponse(data as Record<string, unknown>);
+      }
+
+      // ── SSE streaming path ──────────────────────────────────────
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let firstChunkAt: number | null = null;
+      let finalData: Record<string, unknown> | null = null;
+      // Accumulate streamed text so we can detect when JSON starts.
+      // Once '{' appears we stop calling onChunk (no JSON leaks to UI).
+      let accumulatedStreamText = '';
+      let jsonStarted = false;
+
+      const processLine = (line: string) => {
+        if (!line.startsWith('data: ')) return;
+        const rawData = line.slice(6).trim();
+        if (!rawData || rawData === '[DONE]') return;
+        try {
+          const parsed = JSON.parse(rawData) as Record<string, unknown>;
+
+          // Final event containing the full messages array
+          if (parsed.messages || parsed.responseMessages) {
+            finalData = parsed;
+            return;
+          }
+
+          // Incremental text chunk
+          const chunkText = ((parsed.message || parsed.text || parsed.chunk || '') as string);
+          if (chunkText && typeof chunkText === 'string' && !jsonStarted) {
+            if (!firstChunkAt) {
+              firstChunkAt = Date.now();
+              console.log(`[timing] seq=${this.sequenceId} | first SSE chunk: ${firstChunkAt - t1}ms`);
+            }
+            accumulatedStreamText += chunkText;
+            // Stop streaming to UI once JSON directive begins
+            const braceIdx = accumulatedStreamText.indexOf('{');
+            if (braceIdx !== -1) {
+              jsonStarted = true;
+              // Call with any clean text that preceded the brace
+              const cleanBefore = accumulatedStreamText.slice(0, braceIdx).trim();
+              if (cleanBefore) onChunk(cleanBefore);
+            } else {
+              onChunk(chunkText);
+            }
+          }
+        } catch {
+          // Ignore malformed SSE lines
+        }
+      };
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+        for (const line of lines) processLine(line);
+      }
+      if (buffer) processLine(buffer);
+
+      const t2 = Date.now();
+      console.log(`[timing] seq=${this.sequenceId} | SSE stream complete: ${t2 - t0}ms | first chunk: ${firstChunkAt ? firstChunkAt - t1 : 'none'}ms`);
+
+      // Use the final event data if the server sent one; otherwise synthesize from chunks
+      if (finalData) {
+        return this._processResponse(finalData);
+      }
+      // Synthetic fallback: treat accumulated stream text as the agent message
+      const syntheticData: Record<string, unknown> = {
+        messages: [{ type: 'Text', message: accumulatedStreamText }],
+        suggestedActions: [],
+        confidence: 1,
+      };
+      return this._processResponse(syntheticData);
     } finally {
       releaseLock();
     }

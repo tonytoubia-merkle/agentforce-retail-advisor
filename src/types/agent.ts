@@ -7,6 +7,8 @@ export interface AgentMessage {
   content: string;
   timestamp: Date;
   uiDirective?: UIDirective;
+  /** True while SSE text chunks are still arriving; cleared when stream completes. */
+  isStreaming?: boolean;
 }
 
 export interface UIDirective {
