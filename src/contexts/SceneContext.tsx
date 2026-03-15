@@ -349,7 +349,7 @@ export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // If a scene context was provided, apply it
         if (payload.sceneContext) {
           const { setting, generateBackground, backgroundPrompt } = payload.sceneContext;
-          if (setting) dispatch({ type: 'CHANGE_SETTING', setting });
+          if (setting) dispatch({ type: 'SET_SETTING', setting });
           if (generateBackground) {
             dispatch({
               type: 'SET_BACKGROUND',
@@ -357,7 +357,7 @@ export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 type: 'generative',
                 value: '',
                 isLoading: true,
-                prompt: backgroundPrompt,
+                generationPrompt: backgroundPrompt,
               },
             });
           }
