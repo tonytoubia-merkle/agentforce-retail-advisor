@@ -11,7 +11,7 @@ interface ProductCardProps {
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { openCheckout, openRetailerHandoff } = useScene();
   const location = useLocation();
-  const isSkinConcierge = location.pathname.includes('skin-concierge');
+  const isSkinConcierge = location.pathname.includes('skin-advisor');
 
   return (
     <motion.div

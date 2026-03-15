@@ -27,10 +27,12 @@ function parseRoutines(text: string): ParsedRoutine | null {
   let firstSectionLine = -1;
   let lastBulletLine = -1;
 
+  // Header: short line with morning/evening keyword AND a header-like marker (*, #, :) or ≤6 words
+  const isHeaderLike = (l: string) => /[*#:]/.test(l) || l.split(/\s+/).length <= 6;
   const isMorningHeader = (l: string) =>
-    /\b(morning|am|daytime|sunrise)\b/i.test(l) && /\b(routine|steps?|regimen|care)\b/i.test(l);
+    l.length < 80 && /\b(morning|a\.?m\.?)\b/i.test(l) && !/\b(evening|night|p\.?m\.?)\b/i.test(l) && isHeaderLike(l);
   const isEveningHeader = (l: string) =>
-    /\b(evening|pm|night(?:time)?|bedtime)\b/i.test(l) && /\b(routine|steps?|regimen|care)\b/i.test(l);
+    l.length < 80 && /\b(evening|p\.?m\.?|night(?:time)?|bedtime)\b/i.test(l) && !/\bmorning\b/i.test(l) && isHeaderLike(l);
   const isBullet = (l: string) => /^\s*[-*•]/.test(l) || /^\s*\d+[.)]\s/.test(l);
 
   for (let i = 0; i < lines.length; i++) {
