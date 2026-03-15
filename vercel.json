@@ -4,6 +4,9 @@
   "framework": "vite",
   "routes": [
     { "src": "/api/generate-journey-image", "dest": "/api/generate-journey-image" },
+    { "src": "/api/save-skin-analysis", "dest": "/api/save-skin-analysis" },
+    { "src": "/api/delete-skin-analysis", "dest": "/api/delete-skin-analysis" },
+    { "src": "/api/dc-query", "dest": "/api/dc-query" },
     { "src": "/api/(.*)", "dest": "/api/proxy" },
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/index.html" }
@@ -14,6 +17,15 @@
     },
     "api/generate-journey-image.js": {
       "maxDuration": 120
+    },
+    "api/save-skin-analysis.js": {
+      "maxDuration": 30
+    },
+    "api/delete-skin-analysis.js": {
+      "maxDuration": 30
+    },
+    "api/dc-query.js": {
+      "maxDuration": 30
     }
   }
 }
