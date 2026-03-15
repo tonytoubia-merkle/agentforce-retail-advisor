@@ -15,7 +15,7 @@ async function getToken() {
   const res = await fetch(`${SF_INSTANCE}/services/oauth2/token`, {
     method:  'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body:    new URLSearchParams({ grant_type: 'client_credentials', client_id: CLIENT_ID, client_secret: CLIENT_SECRET }).toString(),
+    body:    new URLSearchParams({ grant_type: 'client_credentials', client_id: CLIENT_ID, client_secret: CLIENT_SECRET, scope: 'cdp_query_api' }).toString(),
   });
   if (!res.ok) throw new Error(`Token failed (${res.status}): ${await res.text()}`);
   const { access_token, expires_in } = await res.json();
