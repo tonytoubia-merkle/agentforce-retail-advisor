@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useScene } from '@/contexts/SceneContext';
@@ -6,7 +6,7 @@ import { useConversation } from '@/contexts/ConversationContext';
 import { GenerativeBackground } from '@/components/GenerativeBackground';
 import { ChatInterface } from '@/components/ChatInterface';
 import { CheckoutOverlay } from '@/components/CheckoutOverlay';
-import { SkinAnalysisModal } from '@/components/SkinAnalysis';
+import { SkinAnalysisModal, SkinConciergeWelcome } from '@/components/SkinAnalysis';
 import { RetailerHandoff } from '@/components/RetailerHandoff';
 import { WelcomeScreen } from '@/components/WelcomeScreen/WelcomeScreen';
 import { WelcomeLoader } from '@/components/WelcomeScreen/WelcomeLoader';
@@ -22,6 +22,9 @@ export const AdvisorPage: React.FC<AdvisorPageProps> = ({ mode = 'beauty' }) => 
   const { scene, setAdvisorMode } = useScene();
   const { messages, sendMessage, isAgentTyping, isLoadingWelcome, suggestedActions } = useConversation();
   const navigate = useNavigate();
+
+  // Skin concierge has its own landing — show it until the user takes an action
+  const [skinWelcomeActive, setSkinWelcomeActive] = useState(mode === 'skin-concierge');
 
   // Sync mode into SceneContext so product cards read it without prop drilling
   useEffect(() => {
@@ -58,7 +61,9 @@ export const AdvisorPage: React.FC<AdvisorPageProps> = ({ mode = 'beauty' }) => 
       </div>
 
       <AnimatePresence mode="wait">
-        {isLoadingWelcome ? (
+        {mode === 'skin-concierge' && skinWelcomeActive ? (
+          <SkinConciergeWelcome key="skin-welcome" onDismiss={() => setSkinWelcomeActive(false)} />
+        ) : isLoadingWelcome ? (
           <WelcomeLoader key="loader" />
         ) : scene.welcomeActive ? (
           <WelcomeScreen key="welcome" />
