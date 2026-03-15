@@ -13,6 +13,7 @@
  * Docs: https://yce.perfectcorp.com/document/index.html
  */
 
+import { unzipSync } from 'fflate';
 import type { SkinAnalysisResult, SkinConcernScore } from '@/types/skinanalysis';
 import { getGeminiClient } from '@/services/gemini/client';
 
@@ -167,10 +168,26 @@ export class PerfectCorpClient {
       if (!res.ok) continue;
 
       const json = await res.json();
-      // Response: { status, task_status, results: { concern_results, result_image_url } }
       const taskStatus = json?.task_status ?? json?.data?.task_status ?? json?.result?.task_status;
       console.log('[perfectcorp] poll status:', taskStatus);
-      if (taskStatus === 'success') return json as Record<string, unknown>;
+      if (taskStatus === 'success') {
+        // Results come as a ZIP URL — fetch and extract client-side
+        const zipUrl = json?.data?.results?.url ?? json?.results?.url;
+        if (zipUrl) {
+          console.log('[perfectcorp] fetching results ZIP...');
+          const zipRes = await fetch(zipUrl);
+          const zipBuf = new Uint8Array(await zipRes.arrayBuffer());
+          const files = unzipSync(zipBuf);
+          const firstKey = Object.keys(files)[0];
+          console.log('[perfectcorp] ZIP entry:', firstKey);
+          const scores = JSON.parse(new TextDecoder().decode(files[firstKey]));
+          console.log('[perfectcorp] scores keys:', Object.keys(scores).join(', '));
+          // Merge scores into the results block
+          if (json?.data?.results) json.data.results = { ...json.data.results, ...scores };
+          else if (json?.results) json.results = { ...json.results, ...scores };
+        }
+        return json as Record<string, unknown>;
+      }
       if (taskStatus === 'error') {
         throw new Error(`Perfect Corp analysis failed: ${JSON.stringify(json)}`);
       }

@@ -1033,31 +1033,8 @@ export default async function handler(req, res) {
         headers: { 'Authorization': `Bearer ${PERFECT_CORP_API_KEY}` },
       });
 
-      // On success, the response contains a ZIP URL — fetch + unzip the actual scores
-      let responseBody = result.body;
-      if (result.statusCode === 200) {
-        try {
-          const pcJson = JSON.parse(result.body.toString());
-          const zipUrl = pcJson?.data?.results?.url;
-          if (zipUrl && pcJson?.data?.task_status === 'success') {
-            const parsed = new URL(zipUrl);
-            const zipResult = await httpsRequest({
-              hostname: parsed.hostname, port: 443,
-              path: parsed.pathname + parsed.search, method: 'GET',
-              headers: { host: parsed.hostname },
-            });
-            const scores = await extractZipJson(zipResult.body);
-            console.log('[perfectcorp] unzipped scores keys:', Object.keys(scores).join(', '));
-            pcJson.data.results = { ...pcJson.data.results, ...scores };
-            responseBody = Buffer.from(JSON.stringify(pcJson));
-          }
-        } catch (e) {
-          console.warn('[perfectcorp] ZIP extraction failed:', e.message);
-        }
-      }
-
       res.writeHead(result.statusCode, { 'Content-Type': 'application/json', ...CORS_HEADERS });
-      return res.end(responseBody);
+      return res.end(result.body);
     }
 
     // --- Generic route-based proxy ---
