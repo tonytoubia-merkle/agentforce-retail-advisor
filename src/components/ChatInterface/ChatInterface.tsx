@@ -86,7 +86,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     return (
       <motion.div
         layout
-        className="flex flex-col items-center justify-center w-full max-w-2xl mx-auto px-4 flex-1"
+        className="flex flex-col items-center justify-center w-full max-w-2xl mx-auto px-4 flex-1 pt-16"
       >
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -130,7 +130,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   return (
     <motion.div
       layout
-      className="flex flex-col w-full max-w-2xl mx-auto px-4 h-screen"
+      className="flex flex-col w-full max-w-2xl mx-auto px-4 h-screen pt-16"
     >
       {/* Scrollable chat pane — spacers center content when short, collapse when tall */}
       <div className="flex-1 overflow-y-auto min-h-0 pb-2 scrollbar-hide">
