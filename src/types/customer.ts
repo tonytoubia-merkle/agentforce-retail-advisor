@@ -142,6 +142,16 @@ export interface ProfilePreferences {
 }
 
 // ─── Loyalty Data (Salesforce Loyalty Management) ───────────────
+export interface SkinAnalysisSummary {
+  analyzedAt: string;
+  overallScore: number;
+  skinAge: number;
+  skinType: string;
+  primaryConcern: string;
+  /** Top concerns with score >= 20, sorted by score desc */
+  topConcerns: Array<{ label: string; score: number; severity: string }>;
+}
+
 export interface LoyaltyData {
   tier: 'bronze' | 'silver' | 'gold' | 'platinum';
   pointsBalance: number;
@@ -259,6 +269,9 @@ export interface CustomerProfile {
 
   // Agent-captured conversational profile
   agentCapturedProfile?: AgentCapturedProfile;
+
+  // Skin analyses from Data Cloud Skin_Analysis DMO (newest first)
+  skinAnalyses?: SkinAnalysisSummary[];
 
   // Identity
   merkuryIdentity?: MerkuryIdentity;

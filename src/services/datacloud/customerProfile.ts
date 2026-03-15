@@ -10,6 +10,7 @@ import type {
   CapturedProfileField,
   MerkuryIdentity,
   AppendedProfile,
+  SkinAnalysisSummary,
 } from '@/types/customer';
 import type { DataCloudConfig } from './types';
 
@@ -97,6 +98,7 @@ export class DataCloudCustomerService {
       browseSessions: BrowseSession[];
       loyalty: LoyaltyData | null;
       agentCapturedProfile: AgentCapturedProfile | undefined;
+      skinAnalyses: SkinAnalysisSummary[];
     },
     merkuryIdentity?: CustomerProfile['merkuryIdentity'],
   ): CustomerProfile {
@@ -112,6 +114,7 @@ export class DataCloudCustomerService {
         ageRange: '',
       },
       ...relatedData,
+      skinAnalyses: relatedData.skinAnalyses,
       merkuryIdentity,
       appendedProfile: undefined,
       purchaseHistory: [],
@@ -130,8 +133,63 @@ export class DataCloudCustomerService {
     };
   }
 
-  private async fetchRelatedData(contactId: string) {
-    const [orders, chatSummaries, meaningfulEvents, browseSessions, loyalty, agentCapturedProfile] =
+  // ─── Skin Analysis from Data Cloud DMO ─────────────────────────
+
+  async getSkinAnalysis(email: string): Promise<SkinAnalysisSummary[]> {
+    const safe = email.replace(/'/g, '');
+    const sql = `SELECT analysis_date, overall_score, skin_age, skin_type, primary_concern, acne_score, acne_severity, wrinkle_score, wrinkle_severity, dark_circle_score, dark_circle_severity, pore_score, pore_severity, spot_score, spot_severity, redness_score, redness_severity, hydration_score, hydration_severity, firmness_score, firmness_severity, radiance_score, radiance_severity FROM Skin_Analysis WHERE email = '${safe}' ORDER BY analysis_date DESC LIMIT 20`;
+
+    const res = await fetch('/api/dc-query', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ sql }),
+    });
+
+    if (!res.ok) return [];
+    const result = await res.json();
+
+    // DC SQL response: { data: { columns: [...], rows: [[...]] } }
+    const columns: string[] = result?.data?.columns ?? (result?.metadata ? Object.keys(result.metadata) : []);
+    const rows: unknown[][] = result?.data?.rows ?? [];
+    if (!rows.length || !columns.length) return [];
+
+    const CONCERN_KEYS = [
+      { key: 'acne',        label: 'Acne' },
+      { key: 'wrinkle',     label: 'Wrinkles' },
+      { key: 'dark_circle', label: 'Dark Circles' },
+      { key: 'pore',        label: 'Enlarged Pores' },
+      { key: 'spot',        label: 'Dark Spots' },
+      { key: 'redness',     label: 'Redness' },
+      { key: 'hydration',   label: 'Dehydration' },
+      { key: 'firmness',    label: 'Loss of Firmness' },
+      { key: 'radiance',    label: 'Dullness' },
+    ];
+
+    return rows.map((row) => {
+      const get = (col: string) => row[columns.indexOf(col)];
+      const topConcerns = CONCERN_KEYS
+        .map(({ key, label }) => ({
+          label,
+          score:    Number(get(`${key}_score`) ?? 0),
+          severity: String(get(`${key}_severity`) ?? 'none'),
+        }))
+        .filter((c) => c.score >= 20)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 5);
+
+      return {
+        analyzedAt:     String(get('analysis_date') ?? ''),
+        overallScore:   Number(get('overall_score') ?? 0),
+        skinAge:        Number(get('skin_age') ?? 0),
+        skinType:       String(get('skin_type') ?? ''),
+        primaryConcern: String(get('primary_concern') ?? ''),
+        topConcerns,
+      };
+    });
+  }
+
+  private async fetchRelatedData(contactId: string, email?: string) {
+    const [orders, chatSummaries, meaningfulEvents, browseSessions, loyalty, agentCapturedProfile, skinAnalysis] =
       await Promise.all([
         this.getCustomerOrders(contactId).catch(() => [] as OrderRecord[]),
         this.getCustomerChatSummaries(contactId).catch(() => [] as ChatSummary[]),
@@ -139,8 +197,9 @@ export class DataCloudCustomerService {
         this.getCustomerBrowseSessions(contactId).catch(() => [] as BrowseSession[]),
         this.getCustomerLoyalty(contactId).catch(() => null),
         this.getCustomerCapturedProfile(contactId).catch(() => undefined),
+        email ? this.getSkinAnalysis(email).catch(() => []) : Promise.resolve([]),
       ]);
-    return { orders, chatSummaries, meaningfulEvents, browseSessions, loyalty, agentCapturedProfile };
+    return { orders, chatSummaries, meaningfulEvents, browseSessions, loyalty, agentCapturedProfile, skinAnalyses: skinAnalysis };
   }
 
   private static readonly CONTACT_FIELDS = 'Id,FirstName,LastName,Email,Merkury_Id__c,Skin_Type__c,Skin_Concerns__c,Allergies__c,Preferred_Brands__c,MailingStreet,MailingCity,MailingState,MailingPostalCode,MailingCountry';
@@ -159,7 +218,7 @@ export class DataCloudCustomerService {
     }
     const raw = records[0];
     const contactId = raw.Id!;
-    const relatedData = await this.fetchRelatedData(contactId);
+    const relatedData = await this.fetchRelatedData(contactId, raw.Email ?? undefined);
     return this.buildProfileFromContact(raw, contactId, relatedData);
   }
 
@@ -177,7 +236,7 @@ export class DataCloudCustomerService {
     }
     const raw = records[0];
     const contactId = raw.Id!;
-    const relatedData = await this.fetchRelatedData(contactId);
+    const relatedData = await this.fetchRelatedData(contactId, raw.Email ?? undefined);
     return this.buildProfileFromContact(raw, contactId, relatedData);
   }
 
@@ -194,7 +253,7 @@ export class DataCloudCustomerService {
       throw new Error(`No Contact found with Id = ${contactId}`);
     }
     const raw = records[0];
-    const relatedData = await this.fetchRelatedData(contactId);
+    const relatedData = await this.fetchRelatedData(contactId, raw.Email ?? undefined);
     return this.buildProfileFromContact(raw, contactId, relatedData, raw.Merkury_Id__c ? {
       merkuryId: raw.Merkury_Id__c,
       identityTier: 'known' as const,

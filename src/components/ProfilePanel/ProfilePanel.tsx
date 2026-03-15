@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCustomer } from '@/contexts/CustomerContext';
-import type { CustomerProfile } from '@/types/customer';
+import type { CustomerProfile, SkinAnalysisSummary } from '@/types/customer';
 
 const RefreshIcon: React.FC<{ spinning?: boolean }> = ({ spinning }) => (
   <svg
@@ -43,9 +43,73 @@ const Field: React.FC<{ label: string; value: string | undefined | null }> = ({ 
   );
 };
 
+const SkinAnalysisSection: React.FC<{ analyses: SkinAnalysisSummary[] }> = ({ analyses }) => {
+  const [hidden, setHidden] = useState<Set<string>>(new Set());
+  const visible = analyses.filter((a) => !hidden.has(a.analyzedAt));
+  if (!visible.length) return null;
+
+  return (
+    <Section title={`Skin Analyses (${visible.length})`} source="DC · Skin_Analysis">
+      {visible.map((sa, i) => {
+        const isLatest = i === 0;
+        return (
+          <div key={sa.analyzedAt} className={`py-1.5 border-b border-white/5 last:border-b-0 ${isLatest ? 'opacity-100' : 'opacity-70'}`}>
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-1.5">
+                <span className={`text-[10px] ${isLatest ? 'text-white/80 font-semibold' : 'text-white/50'}`}>
+                  {sa.analyzedAt ? new Date(sa.analyzedAt).toLocaleString() : '—'}
+                </span>
+                {isLatest && (
+                  <span className="text-[8px] px-1 py-0.5 rounded bg-violet-500/30 text-violet-300 font-semibold uppercase tracking-wide">
+                    Latest
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={() => setHidden((prev) => new Set([...prev, sa.analyzedAt]))}
+                className="text-white/20 hover:text-red-400/70 transition-colors text-[11px] leading-none px-1"
+                title="Hide from view"
+              >
+                ×
+              </button>
+            </div>
+            <div className={`flex gap-3 ${isLatest ? '' : 'opacity-80'}`}>
+              <Field label="Score" value={`${sa.overallScore} / 100`} />
+              <Field label="Skin Age" value={String(sa.skinAge)} />
+            </div>
+            <Field label="Type" value={sa.skinType} />
+            <Field label="Primary" value={sa.primaryConcern} />
+            {sa.topConcerns.length > 0 && (
+              <div className="mt-1 flex flex-wrap gap-1">
+                {sa.topConcerns.map((c) => (
+                  <span
+                    key={c.label}
+                    className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${
+                      c.severity === 'severe'   ? 'bg-red-500/20 text-red-300' :
+                      c.severity === 'moderate' ? 'bg-orange-500/20 text-orange-300' :
+                                                  'bg-amber-500/15 text-amber-300'
+                    }`}
+                  >
+                    {c.label} · {c.score}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </Section>
+  );
+};
+
 function formatProfile(customer: CustomerProfile) {
   const bp = customer.beautyProfile;
   const sections: React.ReactNode[] = [];
+
+  // Skin Analysis (from Data Cloud Skin_Analysis DMO)
+  if (customer.skinAnalyses && customer.skinAnalyses.length > 0) {
+    sections.push(<SkinAnalysisSection key="skin" analyses={customer.skinAnalyses} />);
+  }
 
   // Beauty Profile
   sections.push(
