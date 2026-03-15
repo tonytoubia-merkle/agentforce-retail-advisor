@@ -149,6 +149,11 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, sceneLayou
 
         // In skin-concierge mode, try to parse routine sections from agent messages
         const isSkinAgent = advisorMode === 'skin-concierge' && msg.role === 'agent' && !msg.isStreaming;
+        if (isSkinAgent) {
+          console.log('[routine-debug] advisorMode:', advisorMode, '| isStreaming:', msg.isStreaming);
+          console.log('[routine-debug] content:', JSON.stringify(msg.content.substring(0, 400)));
+          console.log('[routine-debug] parseResult:', parseRoutines(msg.content));
+        }
         const routine = isSkinAgent ? parseRoutines(msg.content) : null;
 
         return (
