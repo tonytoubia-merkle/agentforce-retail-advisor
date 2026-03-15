@@ -1,65 +1,77 @@
-[
-  {
-    "name": "Skin_Analysis",
-    "label": "Skin Analysis",
-    "fields": [
-      { "name": "email",            "label": "Email",             "type": "text",     "isNullable": false, "isPrimaryKey": true  },
-      { "name": "crm_contact_id",   "label": "CRM Contact ID",    "type": "text",     "isNullable": true                        },
-      { "name": "analysis_date",    "label": "Analysis Date",     "type": "dateTime", "isNullable": false                       },
-      { "name": "overall_score",    "label": "Overall Score",     "type": "number",   "isNullable": false                       },
-      { "name": "skin_age",         "label": "Skin Age",          "type": "number",   "isNullable": false                       },
-      { "name": "skin_type",        "label": "Skin Type",         "type": "text",     "isNullable": false                       },
-      { "name": "primary_concern",  "label": "Primary Concern",   "type": "text",     "isNullable": true                        },
-      { "name": "source",           "label": "Source",            "type": "text",     "isNullable": true                        },
-
-      { "name": "acne_score",           "label": "Acne Score",              "type": "number", "isNullable": true },
-      { "name": "acne_severity",        "label": "Acne Severity",           "type": "text",   "isNullable": true },
-      { "name": "wrinkle_score",        "label": "Wrinkle Score",           "type": "number", "isNullable": true },
-      { "name": "wrinkle_severity",     "label": "Wrinkle Severity",        "type": "text",   "isNullable": true },
-      { "name": "dark_circle_score",    "label": "Dark Circle Score",       "type": "number", "isNullable": true },
-      { "name": "dark_circle_severity", "label": "Dark Circle Severity",    "type": "text",   "isNullable": true },
-      { "name": "eye_bag_score",        "label": "Eye Bag Score",           "type": "number", "isNullable": true },
-      { "name": "eye_bag_severity",     "label": "Eye Bag Severity",        "type": "text",   "isNullable": true },
-      { "name": "pore_score",           "label": "Enlarged Pores Score",    "type": "number", "isNullable": true },
-      { "name": "pore_severity",        "label": "Enlarged Pores Severity", "type": "text",   "isNullable": true },
-      { "name": "spot_score",           "label": "Dark Spots Score",        "type": "number", "isNullable": true },
-      { "name": "spot_severity",        "label": "Dark Spots Severity",     "type": "text",   "isNullable": true },
-      { "name": "redness_score",        "label": "Redness Score",           "type": "number", "isNullable": true },
-      { "name": "redness_severity",     "label": "Redness Severity",        "type": "text",   "isNullable": true },
-      { "name": "texture_score",        "label": "Uneven Texture Score",    "type": "number", "isNullable": true },
-      { "name": "texture_severity",     "label": "Uneven Texture Severity", "type": "text",   "isNullable": true },
-      { "name": "oiliness_score",       "label": "Oiliness Score",          "type": "number", "isNullable": true },
-      { "name": "oiliness_severity",    "label": "Oiliness Severity",       "type": "text",   "isNullable": true },
-      { "name": "hydration_score",      "label": "Dehydration Score",       "type": "number", "isNullable": true },
-      { "name": "hydration_severity",   "label": "Dehydration Severity",    "type": "text",   "isNullable": true },
-      { "name": "firmness_score",       "label": "Firmness Loss Score",     "type": "number", "isNullable": true },
-      { "name": "firmness_severity",    "label": "Firmness Loss Severity",  "type": "text",   "isNullable": true },
-      { "name": "radiance_score",       "label": "Dullness Score",          "type": "number", "isNullable": true },
-      { "name": "radiance_severity",    "label": "Dullness Severity",       "type": "text",   "isNullable": true },
-      { "name": "sensitivity_score",    "label": "Sensitivity Score",       "type": "number", "isNullable": true },
-      { "name": "sensitivity_severity", "label": "Sensitivity Severity",    "type": "text",   "isNullable": true },
-      { "name": "uv_damage_score",      "label": "UV Damage Score",         "type": "number", "isNullable": true },
-      { "name": "uv_damage_severity",   "label": "UV Damage Severity",      "type": "text",   "isNullable": true },
-      { "name": "uneven_tone_score",    "label": "Uneven Tone Score",       "type": "number", "isNullable": true },
-      { "name": "uneven_tone_severity", "label": "Uneven Tone Severity",    "type": "text",   "isNullable": true }
-    ]
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Skin Advisor",
+    "description": "Skin analysis results and retailer click events from the Beauty Concierge skin advisor.",
+    "version": "1.0.0"
   },
-  {
-    "name": "Retailer_Click",
-    "label": "Retailer Click",
-    "fields": [
-      { "name": "email",          "label": "Email",           "type": "text",     "isNullable": false, "isPrimaryKey": true },
-      { "name": "clicked_at",     "label": "Clicked At",      "type": "dateTime", "isNullable": false                      },
-      { "name": "retailer_name",  "label": "Retailer Name",   "type": "text",     "isNullable": false                      },
-      { "name": "retailer_url",   "label": "Retailer URL",    "type": "text",     "isNullable": true                       },
-      { "name": "is_online",      "label": "Is Online",       "type": "boolean",  "isNullable": true                       },
-      { "name": "is_in_store",    "label": "Is In Store",     "type": "boolean",  "isNullable": true                       },
-      { "name": "product_id",     "label": "Product ID",      "type": "text",     "isNullable": false                      },
-      { "name": "product_name",   "label": "Product Name",    "type": "text",     "isNullable": false                      },
-      { "name": "product_brand",  "label": "Product Brand",   "type": "text",     "isNullable": true                       },
-      { "name": "product_price",  "label": "Product Price",   "type": "number",   "isNullable": true                       },
-      { "name": "crm_contact_id", "label": "CRM Contact ID",  "type": "text",     "isNullable": true                       },
-      { "name": "source",         "label": "Source",          "type": "text",     "isNullable": true                       }
-    ]
+  "paths": {},
+  "components": {
+    "schemas": {
+      "Skin_Analysis": {
+        "type": "object",
+        "required": ["email", "analysis_date", "overall_score", "skin_age", "skin_type"],
+        "properties": {
+          "email":            { "type": "string",  "description": "User email — primary identity key" },
+          "crm_contact_id":   { "type": "string",  "description": "Salesforce Contact ID (optional, populated when user is known in CRM)" },
+          "analysis_date":    { "type": "string",  "format": "date-time", "description": "ISO 8601 timestamp of the analysis" },
+          "overall_score":    { "type": "integer", "description": "Overall skin health score 0–100" },
+          "skin_age":         { "type": "integer", "description": "Estimated skin age" },
+          "skin_type":        { "type": "string",  "description": "dry | oily | combination | normal | sensitive" },
+          "primary_concern":  { "type": "string",  "description": "Top skin concern label" },
+          "source":           { "type": "string",  "description": "Origin of the analysis, e.g. web_skin_advisor" },
+
+          "acne_score":           { "type": "integer" },
+          "acne_severity":        { "type": "string"  },
+          "wrinkle_score":        { "type": "integer" },
+          "wrinkle_severity":     { "type": "string"  },
+          "dark_circle_score":    { "type": "integer" },
+          "dark_circle_severity": { "type": "string"  },
+          "eye_bag_score":        { "type": "integer" },
+          "eye_bag_severity":     { "type": "string"  },
+          "pore_score":           { "type": "integer" },
+          "pore_severity":        { "type": "string"  },
+          "spot_score":           { "type": "integer" },
+          "spot_severity":        { "type": "string"  },
+          "redness_score":        { "type": "integer" },
+          "redness_severity":     { "type": "string"  },
+          "texture_score":        { "type": "integer" },
+          "texture_severity":     { "type": "string"  },
+          "oiliness_score":       { "type": "integer" },
+          "oiliness_severity":    { "type": "string"  },
+          "hydration_score":      { "type": "integer" },
+          "hydration_severity":   { "type": "string"  },
+          "firmness_score":       { "type": "integer" },
+          "firmness_severity":    { "type": "string"  },
+          "radiance_score":       { "type": "integer" },
+          "radiance_severity":    { "type": "string"  },
+          "sensitivity_score":    { "type": "integer" },
+          "sensitivity_severity": { "type": "string"  },
+          "uv_damage_score":      { "type": "integer" },
+          "uv_damage_severity":   { "type": "string"  },
+          "uneven_tone_score":    { "type": "integer" },
+          "uneven_tone_severity": { "type": "string"  }
+        }
+      },
+
+      "Retailer_Click": {
+        "type": "object",
+        "required": ["email", "clicked_at", "retailer_name", "product_id", "product_name"],
+        "properties": {
+          "email":          { "type": "string",  "description": "User email — primary identity key" },
+          "crm_contact_id": { "type": "string",  "description": "Salesforce Contact ID (optional)" },
+          "clicked_at":     { "type": "string",  "format": "date-time", "description": "ISO 8601 timestamp of the click" },
+          "retailer_name":  { "type": "string",  "description": "e.g. Target, Amazon, Sephora" },
+          "retailer_url":   { "type": "string"  },
+          "is_online":      { "type": "boolean" },
+          "is_in_store":    { "type": "boolean" },
+          "product_id":     { "type": "string"  },
+          "product_name":   { "type": "string"  },
+          "product_brand":  { "type": "string"  },
+          "product_price":  { "type": "number"  },
+          "source":         { "type": "string"  }
+        }
+      }
+    }
   }
-]
+}
