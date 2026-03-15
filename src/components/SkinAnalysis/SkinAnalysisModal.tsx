@@ -2,12 +2,13 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useScene } from '@/contexts/SceneContext';
 import { useConversation } from '@/contexts/ConversationContext';
+import { useCustomer } from '@/contexts/CustomerContext';
 import { getPerfectCorpClient } from '@/services/perfectcorp/client';
 import { buildAnalysisSummary } from '@/types/skinanalysis';
 import type { SkinAnalysisResult, SkinConcernScore } from '@/types/skinanalysis';
 import { syncIdentity } from '@/services/personalization';
 
-type ModalStep = 'capture' | 'preview' | 'analyzing' | 'results';
+type ModalStep = 'capture' | 'preview' | 'analyzing' | 'email-gate' | 'results';
 
 const SEVERITY_COLORS: Record<SkinConcernScore['severity'], string> = {
   none:     'bg-emerald-500',
@@ -26,6 +27,7 @@ const SEVERITY_LABELS: Record<SkinConcernScore['severity'], string> = {
 export const SkinAnalysisModal: React.FC = () => {
   const { closeSkinAnalysis, setSkinEmail } = useScene();
   const { sendSilentMessage } = useConversation();
+  const { customer, isAuthenticated } = useCustomer();
 
   const [step, setStep] = useState<ModalStep>('capture');
   const [captureMode, setCaptureMode] = useState<'camera' | 'upload'>('camera');
@@ -35,7 +37,11 @@ export const SkinAnalysisModal: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
   const [profileSaved, setProfileSaved] = useState(false);
+
+  // For logged-in users their email is already known
+  const loggedInEmail = isAuthenticated && customer?.email ? customer.email : null;
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -101,6 +107,18 @@ export const SkinAnalysisModal: React.FC = () => {
 
   // ─── Analysis ─────────────────────────────────────────────────────────────
 
+  const saveToDC = useCallback((resolvedEmail: string, analysisResult: SkinAnalysisResult, crmContactId?: string) => {
+    setSkinEmail(resolvedEmail);
+    syncIdentity(resolvedEmail);
+    fetch('/api/save-skin-analysis', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ email: resolvedEmail, analysisResult, crmContactId }),
+    })
+      .then((r) => { if (r.ok) setProfileSaved(true); })
+      .catch((err) => console.warn('[skin-analysis] DC save failed:', err));
+  }, [setSkinEmail]);
+
   const runAnalysis = useCallback(async () => {
     if (!capturedFile) return;
     setStep('analyzing');
@@ -109,37 +127,36 @@ export const SkinAnalysisModal: React.FC = () => {
       const client = getPerfectCorpClient();
       const analysisResult = await client.analyzeSkin(capturedFile);
       setResult(analysisResult);
-      setStep('results');
+      if (loggedInEmail) {
+        // Logged-in: auto-save and go straight to results
+        saveToDC(loggedInEmail, analysisResult, customer?.id);
+        setStep('results');
+      } else {
+        // Anonymous / Merkury: gate on email first
+        setStep('email-gate');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Analysis failed. Please try again.');
       setStep('preview');
     }
-  }, [capturedFile]);
+  }, [capturedFile, loggedInEmail, customer?.id, saveToDC]);
+
+  const handleEmailGateContinue = useCallback(() => {
+    const trimmed = email.trim();
+    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setEmailError('Please enter a valid email address.');
+      return;
+    }
+    setEmailError('');
+    if (result) saveToDC(trimmed, result);
+    setStep('results');
+  }, [email, result, saveToDC]);
 
   const handleDiscussResults = useCallback(() => {
     if (!result) return;
-
-    // Persist email in scene context so RetailerHandoff can use it for click tracking,
-    // and sync identity with the Data Cloud / SF Personalization beacon session.
-    if (email.trim()) {
-      setSkinEmail(email.trim());
-      syncIdentity(email.trim());
-    }
-
-    // Fire-and-forget save to Data Cloud if email was provided
-    if (email.trim()) {
-      fetch('/api/save-skin-analysis', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ email: email.trim(), analysisResult: result }),
-      })
-        .then((r) => { if (r.ok) setProfileSaved(true); })
-        .catch((err) => console.warn('[skin-analysis] DC save failed:', err));
-    }
-
     closeSkinAnalysis();
     sendSilentMessage(buildAnalysisSummary(result));
-  }, [result, email, closeSkinAnalysis, sendSilentMessage, setSkinEmail]);
+  }, [result, closeSkinAnalysis, sendSilentMessage]);
 
   const handleRetake = useCallback(() => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -330,6 +347,48 @@ export const SkinAnalysisModal: React.FC = () => {
               </motion.div>
             )}
 
+            {/* ── Step: Email Gate (anonymous / Merkury-only users) ── */}
+            {step === 'email-gate' && (
+              <motion.div
+                key="email-gate"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="p-6 flex flex-col gap-5 items-center text-center"
+              >
+                <div className="w-16 h-16 rounded-full bg-violet-50 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-gray-900">Your results are ready!</h3>
+                  <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+                    Enter your email to view your personalized skin analysis and save it to your profile.
+                  </p>
+                </div>
+                <div className="w-full flex flex-col gap-2">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => { setEmail(e.target.value); setEmailError(''); }}
+                    onKeyDown={(e) => e.key === 'Enter' && handleEmailGateContinue()}
+                    placeholder="your@email.com"
+                    autoFocus
+                    className={`w-full px-4 py-3 rounded-xl border text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-400 ${emailError ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white'}`}
+                  />
+                  {emailError && <p className="text-xs text-red-500 text-left">{emailError}</p>}
+                </div>
+                <button
+                  onClick={handleEmailGateContinue}
+                  className="w-full py-3.5 bg-violet-600 hover:bg-violet-700 text-white font-semibold rounded-xl transition-colors"
+                >
+                  View My Results
+                </button>
+                <p className="text-[11px] text-gray-400">
+                  We'll use your email to save your results and personalize future recommendations.
+                </p>
+              </motion.div>
+            )}
+
             {/* ── Step: Results ── */}
             {step === 'results' && result && (
               <motion.div
@@ -396,21 +455,25 @@ export const SkinAnalysisModal: React.FC = () => {
                   This is a cosmetic assessment, not medical advice.
                 </p>
 
-                {/* Email capture — optional, saves results to Data Cloud profile */}
-                <div className="rounded-2xl border border-violet-100 bg-violet-50/60 p-4 flex flex-col gap-2.5">
-                  <p className="text-xs font-medium text-violet-800">Save your results to your profile</p>
-                  <p className="text-[11px] text-violet-500 leading-relaxed">
-                    Enter your email to store this analysis and receive personalized skincare updates.
-                  </p>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="your@email.com"
-                    className="w-full px-3 py-2 rounded-xl border border-violet-200 bg-white text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-400"
-                  />
-                  <p className="text-[10px] text-violet-400">Optional — skip to proceed without saving.</p>
-                </div>
+                {/* Save confirmation */}
+                {profileSaved ? (
+                  <div className="flex items-center gap-2 px-4 py-3 bg-emerald-50 rounded-2xl border border-emerald-100">
+                    <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <p className="text-xs text-emerald-700 font-medium">
+                      {loggedInEmail ? 'Results saved to your profile.' : `Results saved to ${email.trim() || 'your profile'}.`}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 px-4 py-3 bg-violet-50 rounded-2xl border border-violet-100">
+                    <svg className="w-3.5 h-3.5 text-violet-400 animate-spin flex-shrink-0" fill="none" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" className="opacity-25" />
+                      <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    <p className="text-xs text-violet-500">Saving results to your profile…</p>
+                  </div>
+                )}
 
                 <button
                   onClick={handleDiscussResults}

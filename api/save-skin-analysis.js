@@ -33,7 +33,7 @@ async function getDcToken() {
 }
 
 /** Flatten SkinAnalysisResult into a DC-friendly flat record. */
-function buildRecord(email, analysisResult) {
+function buildRecord(email, analysisResult, crmContactId) {
   const record = {
     email,
     ...(crmContactId && { crm_contact_id: crmContactId }),
@@ -75,7 +75,7 @@ export default async function handler(req, res) {
   try {
     const { access_token, instance_url } = await getDcToken();
 
-    const record  = buildRecord(email, analysisResult);
+    const record  = buildRecord(email, analysisResult, crmContactId);
     const ingestUrl = `${instance_url}/api/v1/ingest/sources/${SOURCE_API}/${OBJECT_NAME}`;
 
     const ingestRes = await fetch(ingestUrl, {
