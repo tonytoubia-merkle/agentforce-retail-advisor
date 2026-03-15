@@ -35,6 +35,9 @@ export interface WelcomeData {
   subtext?: string;
 }
 
+/** Controls which top-level advisor experience is active. */
+export type AdvisorMode = 'beauty' | 'skin-concierge';
+
 export interface SceneState {
   layout: SceneLayout;
   setting: SceneSetting;
@@ -45,6 +48,12 @@ export interface SceneState {
   welcomeActive: boolean;
   welcomeData?: WelcomeData;
   transitionKey: string;
+  /** Which advisor experience is active — drives product CTA behaviour. */
+  advisorMode: AdvisorMode;
+  /** Whether the skin analysis camera/upload modal is open. */
+  skinAnalysisActive: boolean;
+  /** Whether the "Where to Buy" retailer handoff overlay is open. */
+  retailerHandoffActive: boolean;
 }
 
 export interface SceneTransition {

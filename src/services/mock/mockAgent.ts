@@ -326,6 +326,167 @@ function generateWelcomeResponse(): AgentResponse | null {
   };
 }
 
+// ─── Skin Concierge patterns ───────────────────────────────────────
+// These match messages in the /skin-advisor flow.
+
+const SKIN_CONCIERGE_PATTERNS: {
+  pattern: RegExp;
+  response: () => Partial<AgentResponse>;
+}[] = [
+  {
+    // Skin analysis results sent back from the SkinAnalysisModal
+    pattern: /skin analysis complete|skin type:|overall skin health score/i,
+    response: () => {
+      const products = [
+        findProduct('moisturizer-sensitive')!,
+        findProduct('cleanser-gentle')!,
+        findProduct('sunscreen-lightweight')!,
+      ].filter(Boolean);
+      return {
+        message: "Thanks — I've reviewed your results. Based on your combination skin and the dehydration and sensitivity signals, here's a simple three-step routine I'd recommend: a gentle cleanser to avoid stripping, a barrier-focused moisturizer, and daily SPF. These are all available at major retailers near you.",
+        uiDirective: {
+          action: 'SHOW_PRODUCTS' as UIAction,
+          payload: {
+            products,
+            sceneContext: {
+              setting: 'bathroom',
+              generateBackground: true,
+              backgroundPrompt: 'Soft morning light in a clean, minimal bathroom. White marble counter with three skincare products laid out neatly. Calm, clinical-fresh atmosphere.',
+            },
+          },
+        },
+        suggestedActions: ['Where can I buy these?', 'Tell me more about the moisturizer', 'What about evening routine?'],
+        confidence: 0.97,
+      };
+    },
+  },
+  {
+    pattern: /where.*(buy|find|get|shop|purchase)|where to buy|retailer|store/i,
+    response: () => ({
+      message: "I can show you where to find these products. The full routine is available at Sephora, Target, and Amazon. Target usually has the best deals on skincare bundles — worth checking.",
+      uiDirective: {
+        action: 'RETAILER_HANDOFF' as UIAction,
+        payload: {},
+      },
+      suggestedActions: ['Which retailer has the best price?', 'Are there any current promotions?', 'Show me more products'],
+      confidence: 0.95,
+    }),
+  },
+  {
+    pattern: /analyze.*skin|skin.*analysis|skin.*analyzer|take.*photo|selfie|scan.*skin/i,
+    response: () => ({
+      message: "Let's take a look at your skin. I'll use AI to assess up to 15 skin concerns — the whole process takes about 10 seconds. When you're ready, launch the analysis below.",
+      uiDirective: {
+        action: 'LAUNCH_SKIN_ANALYSIS' as UIAction,
+        payload: {
+          sceneContext: {
+            setting: 'bathroom',
+            generateBackground: false,
+          },
+        },
+      },
+      suggestedActions: [],
+      confidence: 0.98,
+    }),
+  },
+  {
+    pattern: /dry.*skin|my skin.*dry|feels? tight|flak|dehydrat/i,
+    response: () => {
+      const products = [findProduct('moisturizer-sensitive')!, findProduct('cleanser-gentle')!].filter(Boolean);
+      return {
+        message: "Dry and tight-feeling skin usually points to a compromised moisture barrier. The goal is to cleanse gently (no sulfates) and then lock in hydration with ceramides and hyaluronic acid. These two products address both steps — and they're fragrance-free, which is important for reactive skin.",
+        uiDirective: {
+          action: 'SHOW_PRODUCTS' as UIAction,
+          payload: {
+            products,
+            sceneContext: {
+              setting: 'bathroom',
+              generateBackground: false,
+            },
+          },
+        },
+        suggestedActions: ['Where to buy these?', 'What about SPF?', 'Do a skin analysis first'],
+        confidence: 0.93,
+      };
+    },
+  },
+  {
+    pattern: /oily.*skin|oily t.zone|shiny.*face|excess.*oil|pore/i,
+    response: () => {
+      const products = [findProduct('cleanser-acne')!, findProduct('serum-niacinamide')!, findProduct('sunscreen-lightweight')!].filter(Boolean);
+      return {
+        message: "Oily skin and enlarged pores usually come from overactive sebum production — and sometimes from over-cleansing, which triggers even more oil. Niacinamide is the gold standard here: it regulates sebum and refines pore appearance without drying you out.",
+        uiDirective: {
+          action: 'SHOW_PRODUCTS' as UIAction,
+          payload: {
+            products,
+            sceneContext: {
+              setting: 'bathroom',
+              generateBackground: false,
+            },
+          },
+        },
+        suggestedActions: ['Where to buy these?', 'What SPF is best for oily skin?', 'Do a skin analysis'],
+        confidence: 0.93,
+      };
+    },
+  },
+  {
+    pattern: /redness|sensitive.*skin|reactive|rosacea|flush/i,
+    response: () => {
+      const products = [findProduct('moisturizer-sensitive')!, findProduct('sunscreen-mineral')!].filter(Boolean);
+      return {
+        message: "Redness and sensitivity often come from a weakened skin barrier — exposure to irritants, fragrances, or UV damage. The priority is to repair and protect. Mineral SPF is especially important here since chemical filters can be a trigger.",
+        uiDirective: {
+          action: 'SHOW_PRODUCTS' as UIAction,
+          payload: {
+            products,
+            sceneContext: {
+              setting: 'bathroom',
+              generateBackground: false,
+            },
+          },
+        },
+        suggestedActions: ['Where to buy these?', 'What ingredients to avoid?', 'Can I do a skin analysis?'],
+        confidence: 0.94,
+      };
+    },
+  },
+  {
+    pattern: /dark spot|hyperpigment|uneven.*tone|sun.*damage|brightening/i,
+    response: () => {
+      const products = [findProduct('serum-vitamin-c')!, findProduct('sunscreen-lightweight')!].filter(Boolean);
+      return {
+        message: "Dark spots and uneven tone are primarily driven by UV exposure and inflammation. Vitamin C in the morning neutralizes free radicals and fades existing spots, while SPF stops new ones forming. This duo is one of the most evidence-backed routines for hyperpigmentation.",
+        uiDirective: {
+          action: 'SHOW_PRODUCTS' as UIAction,
+          payload: {
+            products,
+            sceneContext: {
+              setting: 'outdoor',
+              generateBackground: false,
+            },
+          },
+        },
+        suggestedActions: ['Where to buy these?', 'How long until I see results?', 'Do a skin analysis'],
+        confidence: 0.93,
+      };
+    },
+  },
+  {
+    pattern: /what.*concern|what.*problem|what.*wrong.*skin|skin.*issue|skin.*question|skin.*help/i,
+    response: () => ({
+      message: "I can help with a range of skin concerns — dryness, oiliness, sensitivity, redness, dark spots, acne, and more. The best starting point is a quick skin analysis so I can give you targeted recommendations. Want to try it?",
+      uiDirective: {
+        action: 'LAUNCH_SKIN_ANALYSIS' as UIAction,
+        payload: {},
+      },
+      suggestedActions: ['Yes, analyze my skin', 'My skin is dry', 'My skin is oily', 'I have redness'],
+      confidence: 0.9,
+    }),
+  },
+];
+
 // ─── Standard response patterns ───────────────────────────────────
 
 const RESPONSE_PATTERNS: {
@@ -771,6 +932,20 @@ export const generateMockResponse = async (message: string): Promise<AgentRespon
   if (message === '[WELCOME]') {
     const welcome = generateWelcomeResponse();
     if (welcome) return welcome;
+  }
+
+  // Check skin concierge patterns first (they are more specific)
+  for (const { pattern, response } of SKIN_CONCIERGE_PATTERNS) {
+    if (message.match(pattern)) {
+      const result = response();
+      return {
+        sessionId: 'mock-session',
+        message: result.message!,
+        uiDirective: result.uiDirective,
+        suggestedActions: result.suggestedActions || [],
+        confidence: result.confidence || 0.95,
+      };
+    }
   }
 
   for (const { pattern, response } of RESPONSE_PATTERNS) {

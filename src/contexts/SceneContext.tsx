@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, useCallback, useRef } from 'react';
-import type { SceneState, SceneLayout, SceneSetting, SceneBackground, WelcomeData } from '@/types/scene';
+import type { SceneState, SceneLayout, SceneSetting, SceneBackground, WelcomeData, AdvisorMode } from '@/types/scene';
 import type { Product } from '@/types/product';
 import type { UIDirective } from '@/types/agent';
 import { useGenerativeBackground, type BackgroundOptions } from '@/hooks/useGenerativeBackground';
@@ -81,6 +81,11 @@ interface SceneContextValue {
   processUIDirective: (directive: UIDirective) => Promise<void>;
   openCheckout: () => void;
   closeCheckout: () => void;
+  openSkinAnalysis: () => void;
+  closeSkinAnalysis: () => void;
+  openRetailerHandoff: () => void;
+  closeRetailerHandoff: () => void;
+  setAdvisorMode: (mode: AdvisorMode) => void;
   dismissWelcome: () => void;
   resetScene: () => void;
   getSceneSnapshot: () => SceneSnapshot;
@@ -99,6 +104,9 @@ const initialScene: SceneState = {
   checkoutActive: false,
   welcomeActive: false,
   transitionKey: 'initial',
+  advisorMode: 'beauty',
+  skinAnalysisActive: false,
+  retailerHandoffActive: false,
 };
 
 type SceneAction =
@@ -108,6 +116,11 @@ type SceneAction =
   | { type: 'SET_PRODUCTS'; products: Product[] }
   | { type: 'OPEN_CHECKOUT' }
   | { type: 'CLOSE_CHECKOUT' }
+  | { type: 'OPEN_SKIN_ANALYSIS' }
+  | { type: 'CLOSE_SKIN_ANALYSIS' }
+  | { type: 'OPEN_RETAILER_HANDOFF' }
+  | { type: 'CLOSE_RETAILER_HANDOFF' }
+  | { type: 'SET_ADVISOR_MODE'; mode: AdvisorMode }
   | { type: 'SHOW_WELCOME'; welcomeData: WelcomeData }
   | { type: 'DISMISS_WELCOME' }
   | { type: 'RESET' }
@@ -140,6 +153,16 @@ function sceneReducer(state: SceneState, action: SceneAction): SceneState {
       return { ...state, checkoutActive: true, chatPosition: 'minimized' };
     case 'CLOSE_CHECKOUT':
       return { ...state, checkoutActive: false, chatPosition: 'bottom' };
+    case 'OPEN_SKIN_ANALYSIS':
+      return { ...state, skinAnalysisActive: true };
+    case 'CLOSE_SKIN_ANALYSIS':
+      return { ...state, skinAnalysisActive: false };
+    case 'OPEN_RETAILER_HANDOFF':
+      return { ...state, retailerHandoffActive: true, chatPosition: 'minimized' };
+    case 'CLOSE_RETAILER_HANDOFF':
+      return { ...state, retailerHandoffActive: false, chatPosition: 'bottom' };
+    case 'SET_ADVISOR_MODE':
+      return { ...state, advisorMode: action.mode };
     case 'SHOW_WELCOME':
       return { ...state, welcomeActive: true, welcomeData: action.welcomeData, layout: 'conversation-centered', chatPosition: 'center' };
     case 'DISMISS_WELCOME':
@@ -312,6 +335,40 @@ export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         dispatch({ type: 'OPEN_CHECKOUT' });
         break;
 
+      case 'LAUNCH_SKIN_ANALYSIS':
+        dispatch({ type: 'OPEN_SKIN_ANALYSIS' });
+        break;
+
+      case 'SHOW_SKIN_REPORT': {
+        // Display products from the skin report (same layout as SHOW_PRODUCTS)
+        // and open the skin analysis modal if products are included.
+        if (payload.products && payload.products.length > 0) {
+          const layout = payload.products.length === 1 ? 'product-hero' : 'product-grid';
+          dispatch({ type: 'TRANSITION_LAYOUT', layout, products: payload.products });
+        }
+        // If a scene context was provided, apply it
+        if (payload.sceneContext) {
+          const { setting, generateBackground, backgroundPrompt } = payload.sceneContext;
+          if (setting) dispatch({ type: 'CHANGE_SETTING', setting });
+          if (generateBackground) {
+            dispatch({
+              type: 'SET_BACKGROUND',
+              background: {
+                type: 'generative',
+                value: '',
+                isLoading: true,
+                prompt: backgroundPrompt,
+              },
+            });
+          }
+        }
+        break;
+      }
+
+      case 'RETAILER_HANDOFF':
+        dispatch({ type: 'OPEN_RETAILER_HANDOFF' });
+        break;
+
       case 'CONFIRM_ORDER':
         dispatch({ type: 'CLOSE_CHECKOUT' });
         break;
@@ -370,6 +427,26 @@ export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     dispatch({ type: 'CLOSE_CHECKOUT' });
   }, []);
 
+  const openSkinAnalysis = useCallback(() => {
+    dispatch({ type: 'OPEN_SKIN_ANALYSIS' });
+  }, []);
+
+  const closeSkinAnalysis = useCallback(() => {
+    dispatch({ type: 'CLOSE_SKIN_ANALYSIS' });
+  }, []);
+
+  const openRetailerHandoff = useCallback(() => {
+    dispatch({ type: 'OPEN_RETAILER_HANDOFF' });
+  }, []);
+
+  const closeRetailerHandoff = useCallback(() => {
+    dispatch({ type: 'CLOSE_RETAILER_HANDOFF' });
+  }, []);
+
+  const setAdvisorMode = useCallback((mode: AdvisorMode) => {
+    dispatch({ type: 'SET_ADVISOR_MODE', mode });
+  }, []);
+
   const dismissWelcome = useCallback(() => {
     dispatch({ type: 'DISMISS_WELCOME' });
   }, []);
@@ -396,6 +473,11 @@ export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         processUIDirective,
         openCheckout,
         closeCheckout,
+        openSkinAnalysis,
+        closeSkinAnalysis,
+        openRetailerHandoff,
+        closeRetailerHandoff,
+        setAdvisorMode,
         dismissWelcome,
         resetScene,
         getSceneSnapshot,

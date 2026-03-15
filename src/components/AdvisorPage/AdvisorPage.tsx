@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useScene } from '@/contexts/SceneContext';
@@ -5,16 +6,27 @@ import { useConversation } from '@/contexts/ConversationContext';
 import { GenerativeBackground } from '@/components/GenerativeBackground';
 import { ChatInterface } from '@/components/ChatInterface';
 import { CheckoutOverlay } from '@/components/CheckoutOverlay';
+import { SkinAnalysisModal } from '@/components/SkinAnalysis';
+import { RetailerHandoff } from '@/components/RetailerHandoff';
 import { WelcomeScreen } from '@/components/WelcomeScreen/WelcomeScreen';
 import { WelcomeLoader } from '@/components/WelcomeScreen/WelcomeLoader';
 import { DemoPanel } from '@/components/Storefront/DemoPanel';
 import { ProfileDropdown } from '@/components/Storefront/ProfileDropdown';
-import { sceneAnimationVariants } from '@/utils/animations';
+import type { AdvisorMode } from '@/types/scene';
 
-export const AdvisorPage: React.FC = () => {
-  const { scene } = useScene();
+interface AdvisorPageProps {
+  mode?: AdvisorMode;
+}
+
+export const AdvisorPage: React.FC<AdvisorPageProps> = ({ mode = 'beauty' }) => {
+  const { scene, setAdvisorMode } = useScene();
   const { messages, sendMessage, isAgentTyping, isLoadingWelcome, suggestedActions } = useConversation();
   const navigate = useNavigate();
+
+  // Sync mode into SceneContext so product cards read it without prop drilling
+  useEffect(() => {
+    setAdvisorMode(mode);
+  }, [mode, setAdvisorMode]);
 
   return (
     <div className="relative min-h-screen">
@@ -23,9 +35,8 @@ export const AdvisorPage: React.FC = () => {
         setting={scene.setting}
       />
 
-      {/* Advisor header overlay */}
+      {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-4 pt-4">
-        {/* Back to store */}
         <button
           onClick={() => navigate('/')}
           className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white/80 hover:text-white bg-black/20 hover:bg-black/30 backdrop-blur-sm rounded-full transition-all"
@@ -36,8 +47,12 @@ export const AdvisorPage: React.FC = () => {
           Store
         </button>
 
-        {/* Right side: Profile */}
         <div className="flex items-center gap-2">
+          {mode === 'skin-concierge' && (
+            <span className="px-3 py-1 text-xs font-medium text-white/70 bg-black/20 backdrop-blur-sm rounded-full border border-white/10">
+              Skin Concierge
+            </span>
+          )}
           <ProfileDropdown />
         </div>
       </div>
@@ -60,7 +75,7 @@ export const AdvisorPage: React.FC = () => {
               messages={messages}
               onSendMessage={sendMessage}
               isAgentTyping={isAgentTyping}
-              isMinimized={scene.layout === 'checkout'}
+              isMinimized={scene.layout === 'checkout' || scene.retailerHandoffActive}
               suggestedActions={suggestedActions}
               sceneLayout={scene.layout}
             />
@@ -68,11 +83,24 @@ export const AdvisorPage: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {scene.checkoutActive && (
-          <CheckoutOverlay />
-        )}
-      </AnimatePresence>
+      {/* Beauty mode: standard checkout overlay */}
+      {mode === 'beauty' && (
+        <AnimatePresence>
+          {scene.checkoutActive && <CheckoutOverlay />}
+        </AnimatePresence>
+      )}
+
+      {/* Skin Concierge mode: skin analysis modal + retailer handoff */}
+      {mode === 'skin-concierge' && (
+        <>
+          <AnimatePresence>
+            {scene.skinAnalysisActive && <SkinAnalysisModal />}
+          </AnimatePresence>
+          <AnimatePresence>
+            {scene.retailerHandoffActive && <RetailerHandoff />}
+          </AnimatePresence>
+        </>
+      )}
 
       <DemoPanel />
     </div>
