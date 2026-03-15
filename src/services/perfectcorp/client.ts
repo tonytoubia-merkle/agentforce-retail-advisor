@@ -159,7 +159,11 @@ export class PerfectCorpClient {
     while (Date.now() < deadline) {
       await new Promise((r) => setTimeout(r, interval));
 
-      const res = await fetch(`/api/perfectcorp/task?task_id=${encodeURIComponent(taskId)}`);
+      const res = await fetch('/api/perfectcorp/poll', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ task_id: taskId }),
+      });
       if (!res.ok) continue;
 
       const json = await res.json();

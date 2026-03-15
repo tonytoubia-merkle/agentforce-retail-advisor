@@ -995,6 +995,23 @@ export default async function handler(req, res) {
       return res.end(result.body);
     }
 
+    // Perfect Corp V2.0 — POST /api/perfectcorp/poll → poll task status (GET with query string 405s on Vercel)
+    if (url === '/api/perfectcorp/poll' && req.method === 'POST') {
+      if (!PERFECT_CORP_API_KEY) {
+        res.writeHead(503, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'VITE_PERFECT_CORP_API_KEY not configured' }));
+      }
+      const body = await readBody(req);
+      const { task_id } = JSON.parse(body.toString());
+      const result = await httpsRequest({
+        hostname: PERFECT_CORP_BASE, port: 443,
+        path: `/s2s/v2.0/task/skin-analysis?task_id=${encodeURIComponent(task_id)}`, method: 'GET',
+        headers: { 'Authorization': `Bearer ${PERFECT_CORP_API_KEY}` },
+      });
+      res.writeHead(result.statusCode, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+      return res.end(result.body);
+    }
+
     // --- Generic route-based proxy ---
     const route = findRoute(url);
     if (!route) {
