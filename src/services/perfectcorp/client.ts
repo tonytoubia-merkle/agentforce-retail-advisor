@@ -24,8 +24,9 @@ const HD_ACTIONS = [
   'hd_firmness', 'hd_moisture', 'hd_redness', 'hd_skin_type',
 ];
 
-/** Maps Perfect Corp HD action result keys → our internal concern keys + labels. */
-const HD_CONCERN_MAP: Record<string, { key: string; label: string }> = {
+/** Maps Perfect Corp HD action result keys → our internal concern keys + labels.
+ *  inverted=true means high ui_score = healthy (so concern = 100 - ui_score). */
+const HD_CONCERN_MAP: Record<string, { key: string; label: string; inverted?: boolean }> = {
   hd_acne:        { key: 'acne',        label: 'Acne' },
   hd_wrinkle:     { key: 'wrinkle',     label: 'Wrinkles' },
   hd_dark_circle: { key: 'dark_circle', label: 'Dark Circles' },
@@ -35,9 +36,9 @@ const HD_CONCERN_MAP: Record<string, { key: string; label: string }> = {
   hd_redness:     { key: 'redness',     label: 'Redness' },
   hd_texture:     { key: 'texture',     label: 'Uneven Texture' },
   hd_oiliness:    { key: 'oiliness',    label: 'Oiliness' },
-  hd_moisture:    { key: 'hydration',   label: 'Dehydration' },
-  hd_firmness:    { key: 'firmness',    label: 'Loss of Firmness' },
-  hd_radiance:    { key: 'radiance',    label: 'Dullness' },
+  hd_moisture:    { key: 'hydration',   label: 'Dehydration',      inverted: true },
+  hd_firmness:    { key: 'firmness',    label: 'Loss of Firmness', inverted: true },
+  hd_radiance:    { key: 'radiance',    label: 'Dullness',         inverted: true },
   hd_skin_type:   { key: 'skin_type',   label: 'Skin Type' },
 };
 
@@ -210,10 +211,11 @@ export class PerfectCorpClient {
     const concerns: SkinConcernScore[] = HD_ACTIONS.map((action) => {
       const mapping = HD_CONCERN_MAP[action];
       const resultEntry = resultsBlock[action] as Record<string, unknown> | undefined;
-      // ui_score is 0-100 directly; raw_score is a float that needs scaling
-      const score = typeof resultEntry === 'number'
+      const uiScore = typeof resultEntry === 'number'
         ? Math.round(resultEntry * 100)
         : Math.round((resultEntry?.ui_score as number) ?? (resultEntry?.score as number) ?? 0);
+      // Invert "positive" metrics: high radiance/moisture/firmness = low concern
+      const score = mapping?.inverted ? Math.max(0, 100 - uiScore) : uiScore;
       return {
         concern: mapping?.key ?? action,
         label: mapping?.label ?? action,
@@ -226,8 +228,12 @@ export class PerfectCorpClient {
       .filter((c) => c.severity !== 'none')
       .sort((a, b) => b.score - a.score)[0];
 
+    // Use Perfect Corp's aggregate score if available, otherwise derive from concerns
+    const pcOverall = (resultsBlock.all as Record<string, unknown>)?.score as number | undefined;
     const avgConcernScore = concerns.reduce((s, c) => s + c.score, 0) / concerns.length;
-    const overallScore = Math.max(0, Math.round(100 - avgConcernScore));
+    const overallScore = pcOverall !== undefined
+      ? Math.round(pcOverall)
+      : Math.max(0, Math.round(100 - avgConcernScore));
 
     // hd_skin_type: check for a string field, or fall back from the 'all' summary block
     const skinTypeEntry = resultsBlock.hd_skin_type as Record<string, unknown> | string | undefined;
@@ -236,9 +242,9 @@ export class PerfectCorpClient {
     console.log('[perfectcorp] all block:', JSON.stringify(allBlock));
     const skinTypeRaw = typeof skinTypeEntry === 'string'
       ? skinTypeEntry
-      : (skinTypeEntry?.skin_type as string)
+      : ((skinTypeEntry?.whole as Record<string, unknown>)?.skin_type as string)
+        ?? (skinTypeEntry?.skin_type as string)
         ?? (skinTypeEntry?.type as string)
-        ?? (allBlock?.skin_type as string)
         ?? 'normal';
 
     return {

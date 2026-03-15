@@ -30,7 +30,8 @@ for (const p of MOCK_PRODUCTS) {
  */
 export function normalizeProducts(products: unknown[]): Product[] {
   return products.map((p, i) => {
-    const raw = p as Record<string, unknown>;
+    // Agent sometimes returns bare strings instead of product objects
+    const raw = (typeof p === 'string' ? { id: p, name: p } : p) as Record<string, unknown>;
     if (!raw.id) {
       raw.id = raw.productId || raw.sku || raw.productCode || `product-${i}`;
     }
