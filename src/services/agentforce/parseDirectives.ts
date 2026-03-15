@@ -29,12 +29,14 @@ for (const p of MOCK_PRODUCTS) {
  * enriched with the same catalog data as text-parsed directives.
  */
 export function normalizeProducts(products: unknown[]): Product[] {
-  return products.map((p, i) => {
+  return products.flatMap((p, i) => {
     // Agent sometimes returns bare strings instead of product objects
     const raw = (typeof p === 'string' ? { id: p, name: p } : p) as Record<string, unknown>;
     if (!raw.id) {
       raw.id = raw.productId || raw.sku || raw.productCode || `product-${i}`;
     }
+    // Filter out template placeholders the agent returns when Search_Product_Catalog isn't wired up
+    if (typeof raw.id === 'string' && raw.id.startsWith('<')) return [];
 
     // Try to resolve to a local catalog product for correct imageUrl
     const catalogProduct =
@@ -54,7 +56,7 @@ export function normalizeProducts(products: unknown[]): Product[] {
       if (!raw.salesforceId) raw.salesforceId = catalogProduct.salesforceId;
     }
 
-    return raw as unknown as Product;
+    return [raw as unknown as Product];
   });
 }
 
