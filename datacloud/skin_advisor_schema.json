@@ -12,9 +12,9 @@
         "type": "object",
         "required": ["email", "analysis_date", "overall_score", "skin_age", "skin_type"],
         "properties": {
-          "email":            { "type": "string",  "description": "User email — primary identity key" },
+          "email":            { "type": "string",  "x-sfdc-primaryKey": true, "description": "User email — composite primary key (1 of 2)" },
           "crm_contact_id":   { "type": "string",  "description": "Salesforce Contact ID (optional, populated when user is known in CRM)" },
-          "analysis_date":    { "type": "string",  "format": "date-time", "description": "ISO 8601 timestamp of the analysis" },
+          "analysis_date":    { "type": "string",  "format": "date-time", "x-sfdc-primaryKey": true, "description": "ISO 8601 timestamp — composite primary key (2 of 2)" },
           "overall_score":    { "type": "integer", "description": "Overall skin health score 0–100" },
           "skin_age":         { "type": "integer", "description": "Estimated skin age" },
           "skin_type":        { "type": "string",  "description": "dry | oily | combination | normal | sensitive" },

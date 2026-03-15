@@ -43,15 +43,33 @@ const Field: React.FC<{ label: string; value: string | undefined | null }> = ({ 
   );
 };
 
-const SkinAnalysisSection: React.FC<{ analyses: SkinAnalysisSummary[] }> = ({ analyses }) => {
+const SkinAnalysisSection: React.FC<{ analyses: SkinAnalysisSummary[]; email?: string }> = ({ analyses, email }) => {
   const [hidden, setHidden] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState<Set<string>>(new Set());
   const visible = analyses.filter((a) => !hidden.has(a.analyzedAt));
   if (!visible.length) return null;
+
+  const handleDelete = async (analyzedAt: string) => {
+    setDeleting((prev) => new Set([...prev, analyzedAt]));
+    try {
+      if (email) {
+        await fetch('/api/delete-skin-analysis', {
+          method:  'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ email, analysis_date: analyzedAt }),
+        });
+      }
+    } finally {
+      setDeleting((prev) => { const next = new Set(prev); next.delete(analyzedAt); return next; });
+      setHidden((prev) => new Set([...prev, analyzedAt]));
+    }
+  };
 
   return (
     <Section title={`Skin Analyses (${visible.length})`} source="DC · Skin_Analysis">
       {visible.map((sa, i) => {
         const isLatest = i === 0;
+        const isBeingDeleted = deleting.has(sa.analyzedAt);
         return (
           <div key={sa.analyzedAt} className={`py-1.5 border-b border-white/5 last:border-b-0 ${isLatest ? 'opacity-100' : 'opacity-70'}`}>
             <div className="flex items-center justify-between mb-1">
@@ -66,11 +84,12 @@ const SkinAnalysisSection: React.FC<{ analyses: SkinAnalysisSummary[] }> = ({ an
                 )}
               </div>
               <button
-                onClick={() => setHidden((prev) => new Set([...prev, sa.analyzedAt]))}
-                className="text-white/20 hover:text-red-400/70 transition-colors text-[11px] leading-none px-1"
-                title="Hide from view"
+                onClick={() => handleDelete(sa.analyzedAt)}
+                disabled={isBeingDeleted}
+                className="text-white/20 hover:text-red-400/70 transition-colors text-[11px] leading-none px-1 disabled:opacity-40"
+                title="Delete from Data Cloud"
               >
-                ×
+                {isBeingDeleted ? '…' : '×'}
               </button>
             </div>
             <div className={`flex gap-3 ${isLatest ? '' : 'opacity-80'}`}>
@@ -108,7 +127,7 @@ function formatProfile(customer: CustomerProfile) {
 
   // Skin Analysis (from Data Cloud Skin_Analysis DMO)
   if (customer.skinAnalyses && customer.skinAnalyses.length > 0) {
-    sections.push(<SkinAnalysisSection key="skin" analyses={customer.skinAnalyses} />);
+    sections.push(<SkinAnalysisSection key="skin" analyses={customer.skinAnalyses} email={customer.email} />);
   }
 
   // Beauty Profile
