@@ -96,12 +96,10 @@ export class PerfectCorpClient {
   }
 
   private async uploadFile(imageFile: File): Promise<string> {
-    const formData = new FormData();
-    formData.append('file', imageFile);
-
     const res = await fetch('/api/perfectcorp/file', {
       method: 'POST',
-      body: formData,
+      headers: { 'Content-Type': imageFile.type || 'image/jpeg' },
+      body: imageFile,
     });
 
     if (!res.ok) {
