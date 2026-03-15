@@ -2,6 +2,30 @@
 // Mirrors the logic from server/index.js but as a serverless handler.
 
 import https from 'node:https';
+import zlib from 'node:zlib';
+
+/** Extract the first entry from a ZIP buffer and parse it as JSON (DEFLATE or STORED). */
+function extractZipJson(buf) {
+  return new Promise((resolve, reject) => {
+    if (buf.readUInt32LE(0) !== 0x04034b50) return reject(new Error('Not a valid ZIP'));
+    const compression = buf.readUInt16LE(8);
+    const compressedSize = buf.readUInt32LE(18);
+    const fileNameLen = buf.readUInt16LE(26);
+    const extraFieldLen = buf.readUInt16LE(28);
+    const dataOffset = 30 + fileNameLen + extraFieldLen;
+    const compressed = buf.slice(dataOffset, dataOffset + compressedSize);
+    if (compression === 0) {
+      try { resolve(JSON.parse(compressed.toString('utf8'))); } catch (e) { reject(e); }
+    } else if (compression === 8) {
+      zlib.inflateRaw(compressed, (err, out) => {
+        if (err) return reject(err);
+        try { resolve(JSON.parse(out.toString('utf8'))); } catch (e) { reject(e); }
+      });
+    } else {
+      reject(new Error(`Unsupported ZIP compression method: ${compression}`));
+    }
+  });
+}
 
 const SF_INSTANCE = process.env.VITE_AGENTFORCE_INSTANCE_URL || 'https://me1769724439764.my.salesforce.com';
 const CLIENT_ID = process.env.VITE_AGENTFORCE_CLIENT_ID;
@@ -995,7 +1019,7 @@ export default async function handler(req, res) {
       return res.end(result.body);
     }
 
-    // Perfect Corp V2.0 — POST /api/perfectcorp/poll → poll task status (GET with query string 405s on Vercel)
+    // Perfect Corp V2.0 — POST /api/perfectcorp/poll → poll task status
     if (url === '/api/perfectcorp/poll' && req.method === 'POST') {
       if (!PERFECT_CORP_API_KEY) {
         res.writeHead(503, { 'Content-Type': 'application/json', ...CORS_HEADERS });
@@ -1008,8 +1032,32 @@ export default async function handler(req, res) {
         path: `/s2s/v2.0/task/skin-analysis/${encodeURIComponent(task_id)}`, method: 'GET',
         headers: { 'Authorization': `Bearer ${PERFECT_CORP_API_KEY}` },
       });
+
+      // On success, the response contains a ZIP URL — fetch + unzip the actual scores
+      let responseBody = result.body;
+      if (result.statusCode === 200) {
+        try {
+          const pcJson = JSON.parse(result.body.toString());
+          const zipUrl = pcJson?.data?.results?.url;
+          if (zipUrl && pcJson?.data?.task_status === 'success') {
+            const parsed = new URL(zipUrl);
+            const zipResult = await httpsRequest({
+              hostname: parsed.hostname, port: 443,
+              path: parsed.pathname + parsed.search, method: 'GET',
+              headers: { host: parsed.hostname },
+            });
+            const scores = await extractZipJson(zipResult.body);
+            console.log('[perfectcorp] unzipped scores keys:', Object.keys(scores).join(', '));
+            pcJson.data.results = { ...pcJson.data.results, ...scores };
+            responseBody = Buffer.from(JSON.stringify(pcJson));
+          }
+        } catch (e) {
+          console.warn('[perfectcorp] ZIP extraction failed:', e.message);
+        }
+      }
+
       res.writeHead(result.statusCode, { 'Content-Type': 'application/json', ...CORS_HEADERS });
-      return res.end(result.body);
+      return res.end(responseBody);
     }
 
     // --- Generic route-based proxy ---
