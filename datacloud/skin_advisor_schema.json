@@ -1,0 +1,65 @@
+[
+  {
+    "name": "Skin_Analysis",
+    "label": "Skin Analysis",
+    "fields": [
+      { "name": "email",            "label": "Email",             "type": "text",     "isNullable": false, "isPrimaryKey": true  },
+      { "name": "crm_contact_id",   "label": "CRM Contact ID",    "type": "text",     "isNullable": true                        },
+      { "name": "analysis_date",    "label": "Analysis Date",     "type": "dateTime", "isNullable": false                       },
+      { "name": "overall_score",    "label": "Overall Score",     "type": "number",   "isNullable": false                       },
+      { "name": "skin_age",         "label": "Skin Age",          "type": "number",   "isNullable": false                       },
+      { "name": "skin_type",        "label": "Skin Type",         "type": "text",     "isNullable": false                       },
+      { "name": "primary_concern",  "label": "Primary Concern",   "type": "text",     "isNullable": true                        },
+      { "name": "source",           "label": "Source",            "type": "text",     "isNullable": true                        },
+
+      { "name": "acne_score",           "label": "Acne Score",              "type": "number", "isNullable": true },
+      { "name": "acne_severity",        "label": "Acne Severity",           "type": "text",   "isNullable": true },
+      { "name": "wrinkle_score",        "label": "Wrinkle Score",           "type": "number", "isNullable": true },
+      { "name": "wrinkle_severity",     "label": "Wrinkle Severity",        "type": "text",   "isNullable": true },
+      { "name": "dark_circle_score",    "label": "Dark Circle Score",       "type": "number", "isNullable": true },
+      { "name": "dark_circle_severity", "label": "Dark Circle Severity",    "type": "text",   "isNullable": true },
+      { "name": "eye_bag_score",        "label": "Eye Bag Score",           "type": "number", "isNullable": true },
+      { "name": "eye_bag_severity",     "label": "Eye Bag Severity",        "type": "text",   "isNullable": true },
+      { "name": "pore_score",           "label": "Enlarged Pores Score",    "type": "number", "isNullable": true },
+      { "name": "pore_severity",        "label": "Enlarged Pores Severity", "type": "text",   "isNullable": true },
+      { "name": "spot_score",           "label": "Dark Spots Score",        "type": "number", "isNullable": true },
+      { "name": "spot_severity",        "label": "Dark Spots Severity",     "type": "text",   "isNullable": true },
+      { "name": "redness_score",        "label": "Redness Score",           "type": "number", "isNullable": true },
+      { "name": "redness_severity",     "label": "Redness Severity",        "type": "text",   "isNullable": true },
+      { "name": "texture_score",        "label": "Uneven Texture Score",    "type": "number", "isNullable": true },
+      { "name": "texture_severity",     "label": "Uneven Texture Severity", "type": "text",   "isNullable": true },
+      { "name": "oiliness_score",       "label": "Oiliness Score",          "type": "number", "isNullable": true },
+      { "name": "oiliness_severity",    "label": "Oiliness Severity",       "type": "text",   "isNullable": true },
+      { "name": "hydration_score",      "label": "Dehydration Score",       "type": "number", "isNullable": true },
+      { "name": "hydration_severity",   "label": "Dehydration Severity",    "type": "text",   "isNullable": true },
+      { "name": "firmness_score",       "label": "Firmness Loss Score",     "type": "number", "isNullable": true },
+      { "name": "firmness_severity",    "label": "Firmness Loss Severity",  "type": "text",   "isNullable": true },
+      { "name": "radiance_score",       "label": "Dullness Score",          "type": "number", "isNullable": true },
+      { "name": "radiance_severity",    "label": "Dullness Severity",       "type": "text",   "isNullable": true },
+      { "name": "sensitivity_score",    "label": "Sensitivity Score",       "type": "number", "isNullable": true },
+      { "name": "sensitivity_severity", "label": "Sensitivity Severity",    "type": "text",   "isNullable": true },
+      { "name": "uv_damage_score",      "label": "UV Damage Score",         "type": "number", "isNullable": true },
+      { "name": "uv_damage_severity",   "label": "UV Damage Severity",      "type": "text",   "isNullable": true },
+      { "name": "uneven_tone_score",    "label": "Uneven Tone Score",       "type": "number", "isNullable": true },
+      { "name": "uneven_tone_severity", "label": "Uneven Tone Severity",    "type": "text",   "isNullable": true }
+    ]
+  },
+  {
+    "name": "Retailer_Click",
+    "label": "Retailer Click",
+    "fields": [
+      { "name": "email",          "label": "Email",           "type": "text",     "isNullable": false, "isPrimaryKey": true },
+      { "name": "clicked_at",     "label": "Clicked At",      "type": "dateTime", "isNullable": false                      },
+      { "name": "retailer_name",  "label": "Retailer Name",   "type": "text",     "isNullable": false                      },
+      { "name": "retailer_url",   "label": "Retailer URL",    "type": "text",     "isNullable": true                       },
+      { "name": "is_online",      "label": "Is Online",       "type": "boolean",  "isNullable": true                       },
+      { "name": "is_in_store",    "label": "Is In Store",     "type": "boolean",  "isNullable": true                       },
+      { "name": "product_id",     "label": "Product ID",      "type": "text",     "isNullable": false                      },
+      { "name": "product_name",   "label": "Product Name",    "type": "text",     "isNullable": false                      },
+      { "name": "product_brand",  "label": "Product Brand",   "type": "text",     "isNullable": true                       },
+      { "name": "product_price",  "label": "Product Price",   "type": "number",   "isNullable": true                       },
+      { "name": "crm_contact_id", "label": "CRM Contact ID",  "type": "text",     "isNullable": true                       },
+      { "name": "source",         "label": "Source",          "type": "text",     "isNullable": true                       }
+    ]
+  }
+]

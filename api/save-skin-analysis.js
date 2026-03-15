@@ -36,6 +36,7 @@ async function getDcToken() {
 function buildRecord(email, analysisResult) {
   const record = {
     email,
+    ...(crmContactId && { crm_contact_id: crmContactId }),
     analysis_date:   analysisResult.analyzedAt,
     overall_score:   analysisResult.overallScore,
     skin_age:        analysisResult.skinAge,
@@ -61,7 +62,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { email, analysisResult } = req.body ?? {};
+  const { email, analysisResult, crmContactId } = req.body ?? {};
 
   if (!email || !analysisResult) {
     return res.status(400).json({ error: 'email and analysisResult are required' });
