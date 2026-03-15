@@ -84,7 +84,7 @@ export class PerfectCorpClient {
 
   private async liveAnalysis(imageFile: File): Promise<SkinAnalysisResult> {
     // Step 1: Create file slot → get file_id + pre-signed upload_url
-    const { fileId, uploadUrl, uploadHeaders } = await this.createFileSlot(imageFile.name);
+    const { fileId, uploadUrl, uploadHeaders } = await this.createFileSlot(imageFile);
 
     // Step 2: PUT image directly to pre-signed URL (no proxy needed)
     await this.uploadToPresignedUrl(imageFile, uploadUrl, uploadHeaders);
@@ -98,11 +98,11 @@ export class PerfectCorpClient {
     return this.normalizeResult(raw);
   }
 
-  private async createFileSlot(fileName: string): Promise<{ fileId: string; uploadUrl: string; uploadHeaders: Record<string, string> }> {
+  private async createFileSlot(imageFile: File): Promise<{ fileId: string; uploadUrl: string; uploadHeaders: Record<string, string> }> {
     const res = await fetch('/api/perfectcorp/file', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ files: [{ file_name: fileName }] }),
+      body: JSON.stringify({ files: [{ file_name: imageFile.name, content_type: imageFile.type || 'image/jpeg', file_size: imageFile.size }] }),
     });
     if (!res.ok) {
       const err = await res.text();
