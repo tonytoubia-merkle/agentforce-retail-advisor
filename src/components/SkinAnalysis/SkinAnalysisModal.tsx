@@ -52,7 +52,7 @@ export const SkinAnalysisModal: React.FC = () => {
     setCaptureMode('camera');
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 960 } },
       });
       setCameraStream(stream);
     } catch {
