@@ -33,6 +33,8 @@ export const SkinAnalysisModal: React.FC = () => {
   const [result, setResult] = useState<SkinAnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [email, setEmail] = useState('');
+  const [profileSaved, setProfileSaved] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -115,9 +117,21 @@ export const SkinAnalysisModal: React.FC = () => {
 
   const handleDiscussResults = useCallback(() => {
     if (!result) return;
+
+    // Fire-and-forget save to Data Cloud if email was provided
+    if (email.trim()) {
+      fetch('/api/save-skin-analysis', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email: email.trim(), analysisResult: result }),
+      })
+        .then((r) => { if (r.ok) setProfileSaved(true); })
+        .catch((err) => console.warn('[skin-analysis] DC save failed:', err));
+    }
+
     closeSkinAnalysis();
     sendSilentMessage(buildAnalysisSummary(result));
-  }, [result, closeSkinAnalysis, sendSilentMessage]);
+  }, [result, email, closeSkinAnalysis, sendSilentMessage]);
 
   const handleRetake = useCallback(() => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -373,6 +387,22 @@ export const SkinAnalysisModal: React.FC = () => {
                 <p className="text-[11px] text-gray-400 text-center">
                   This is a cosmetic assessment, not medical advice.
                 </p>
+
+                {/* Email capture — optional, saves results to Data Cloud profile */}
+                <div className="rounded-2xl border border-violet-100 bg-violet-50/60 p-4 flex flex-col gap-2.5">
+                  <p className="text-xs font-medium text-violet-800">Save your results to your profile</p>
+                  <p className="text-[11px] text-violet-500 leading-relaxed">
+                    Enter your email to store this analysis and receive personalized skincare updates.
+                  </p>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    className="w-full px-3 py-2 rounded-xl border border-violet-200 bg-white text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-400"
+                  />
+                  <p className="text-[10px] text-violet-400">Optional — skip to proceed without saving.</p>
+                </div>
 
                 <button
                   onClick={handleDiscussResults}
