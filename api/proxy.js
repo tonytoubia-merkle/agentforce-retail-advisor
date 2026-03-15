@@ -1005,7 +1005,7 @@ export default async function handler(req, res) {
       const { task_id } = JSON.parse(body.toString());
       const result = await httpsRequest({
         hostname: PERFECT_CORP_BASE, port: 443,
-        path: `/s2s/v2.0/task/skin-analysis?task_id=${encodeURIComponent(task_id)}`, method: 'GET',
+        path: `/s2s/v2.0/task/skin-analysis/${encodeURIComponent(task_id)}`, method: 'GET',
         headers: { 'Authorization': `Bearer ${PERFECT_CORP_API_KEY}` },
       });
       res.writeHead(result.statusCode, { 'Content-Type': 'application/json', ...CORS_HEADERS });
