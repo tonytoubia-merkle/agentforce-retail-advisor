@@ -21,23 +21,29 @@ interface ParsedRoutine {
 }
 
 function parseRoutines(text: string): ParsedRoutine | null {
-  const lines = text.split('\n');
+  // Strip any embedded uiDirective JSON (agent appends it at the end of message text)
+  const jsonIdx = text.indexOf('{"uiDirective"');
+  const cleanText = jsonIdx > 0 ? text.slice(0, jsonIdx).trim() : text;
+
+  const lines = cleanText.split('\n');
   const sections: RoutineSection[] = [];
   let current: RoutineSection | null = null;
   let firstSectionLine = -1;
-  let lastBulletLine = -1;
+  let lastStepLine = -1;
 
-  // Header: short line with morning/evening keyword AND a header-like marker (*, #, :) or ≤6 words
   const isHeaderLike = (l: string) => /[*#:]/.test(l) || l.split(/\s+/).length <= 6;
   const isMorningHeader = (l: string) =>
     l.length < 80 && /\b(morning|a\.?m\.?)\b/i.test(l) && !/\b(evening|night|p\.?m\.?)\b/i.test(l) && isHeaderLike(l);
   const isEveningHeader = (l: string) =>
     l.length < 80 && /\b(evening|p\.?m\.?|night(?:time)?|bedtime)\b/i.test(l) && !/\bmorning\b/i.test(l) && isHeaderLike(l);
-  const isBullet = (l: string) => /^\s*[-*•]/.test(l) || /^\s*\d+[.)]\s/.test(l);
+  // Match dash/bullet markers OR "Step N — " style lines
+  const isStep = (l: string) =>
+    /^\s*[-*•]/.test(l) ||
+    /^\s*\d+[.)]\s/.test(l) ||
+    /^\s*step\s*\d+/i.test(l);
 
   for (let i = 0; i < lines.length; i++) {
-    const raw = lines[i];
-    const trimmed = raw.trim();
+    const trimmed = lines[i].trim();
     if (!trimmed) continue;
 
     if (isMorningHeader(trimmed)) {
@@ -48,19 +54,20 @@ function parseRoutines(text: string): ParsedRoutine | null {
       if (firstSectionLine === -1) firstSectionLine = i;
       current = { title: 'Evening Routine', steps: [], isMorning: false };
       sections.push(current);
-    } else if (current && isBullet(trimmed)) {
-      // Strip bullet marker and any trailing bold markers
+    } else if (current && isStep(trimmed)) {
+      // Strip "Step N — ", dash bullet, numbered marker, and bold markers
       const step = trimmed
+        .replace(/^\s*step\s*\d+\s*[—–\-]+\s*/i, '')
         .replace(/^\s*[-*•]\s*/, '')
         .replace(/^\s*\d+[.)]\s*/, '')
         .replace(/\*\*/g, '')
         .trim();
       if (step) {
         current.steps.push(step);
-        lastBulletLine = i;
+        lastStepLine = i;
       }
     } else if (current) {
-      // Non-bullet line after section started — stop collecting for this section
+      // Non-step line after section started — stop collecting
       current = null;
     }
   }
@@ -71,9 +78,12 @@ function parseRoutines(text: string): ParsedRoutine | null {
   const preText = firstSectionLine > 0
     ? lines.slice(0, firstSectionLine).join('\n').trim()
     : '';
-  const postText = lastBulletLine >= 0 && lastBulletLine < lines.length - 1
-    ? lines.slice(lastBulletLine + 1).join('\n').trim()
+  const rawPost = lastStepLine >= 0 && lastStepLine < lines.length - 1
+    ? lines.slice(lastStepLine + 1).join('\n').trim()
     : '';
+  // Strip any JSON that leaked into post-text
+  const postJsonIdx = rawPost.indexOf('{');
+  const postText = postJsonIdx > 0 ? rawPost.slice(0, postJsonIdx).trim() : rawPost;
 
   return { preText, sections: validSections, postText };
 }
@@ -149,11 +159,6 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, sceneLayou
 
         // In skin-concierge mode, try to parse routine sections from agent messages
         const isSkinAgent = advisorMode === 'skin-concierge' && msg.role === 'agent' && !msg.isStreaming;
-        if (isSkinAgent) {
-          console.log('[routine-debug] advisorMode:', advisorMode, '| isStreaming:', msg.isStreaming);
-          console.log('[routine-debug] content:', JSON.stringify(msg.content.substring(0, 400)));
-          console.log('[routine-debug] parseResult:', parseRoutines(msg.content));
-        }
         const routine = isSkinAgent ? parseRoutines(msg.content) : null;
 
         return (
