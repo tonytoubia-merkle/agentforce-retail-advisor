@@ -24,7 +24,7 @@ const SEVERITY_LABELS: Record<SkinConcernScore['severity'], string> = {
 
 export const SkinAnalysisModal: React.FC = () => {
   const { closeSkinAnalysis } = useScene();
-  const { sendMessage } = useConversation();
+  const { sendSilentMessage } = useConversation();
 
   const [step, setStep] = useState<ModalStep>('capture');
   const [captureMode, setCaptureMode] = useState<'camera' | 'upload'>('camera');
@@ -116,8 +116,8 @@ export const SkinAnalysisModal: React.FC = () => {
   const handleDiscussResults = useCallback(() => {
     if (!result) return;
     closeSkinAnalysis();
-    sendMessage(buildAnalysisSummary(result));
-  }, [result, closeSkinAnalysis, sendMessage]);
+    sendSilentMessage(buildAnalysisSummary(result));
+  }, [result, closeSkinAnalysis, sendSilentMessage]);
 
   const handleRetake = useCallback(() => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);

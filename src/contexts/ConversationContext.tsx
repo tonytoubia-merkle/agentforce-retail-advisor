@@ -370,6 +370,7 @@ interface ConversationContextValue {
   isLoadingWelcome: boolean;
   suggestedActions: string[];
   sendMessage: (content: string) => Promise<void>;
+  sendSilentMessage: (content: string) => Promise<void>;
   clearConversation: () => void;
 }
 
@@ -847,6 +848,52 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode; agentId
     }
   }, [processUIDirective, identifyByEmail, showCapture, customer]);
 
+  // Like sendMessage but doesn't add the user message to the visible chat —
+  // used for background signals like the skin analysis summary handoff.
+  const sendSilentMessage = useCallback(async (content: string) => {
+    setSuggestedActions([]);
+    setIsAgentTyping(true);
+    const agentMsgId = uuidv4();
+    try {
+      let streamingContent = '';
+      let jsonStarted = false;
+      const response = await getAgentResponseStreaming(content, (chunk: string) => {
+        if (jsonStarted) return;
+        streamingContent += chunk;
+        const braceIdx = streamingContent.indexOf('{');
+        if (braceIdx !== -1) { jsonStarted = true; streamingContent = streamingContent.slice(0, braceIdx); }
+        setMessages((prev) => {
+          const idx = prev.findIndex(m => m.id === agentMsgId);
+          if (idx === -1) return [...prev, { id: agentMsgId, role: 'agent' as const, content: streamingContent, timestamp: new Date(), isStreaming: true }];
+          const updated = [...prev];
+          updated[idx] = { ...updated[idx], content: streamingContent };
+          return updated;
+        });
+      }, agentClientRef.current, sessionInitializedRef);
+      if (response.uiDirective?.action === 'WELCOME_SCENE') {
+        response.uiDirective = { ...response.uiDirective, action: (response.uiDirective.payload?.products?.length ? 'SHOW_PRODUCTS' : 'CHANGE_SCENE') as UIAction };
+      }
+      const agentMessage: AgentMessage = { id: agentMsgId, role: 'agent', content: response.message, timestamp: new Date(), uiDirective: response.uiDirective, isStreaming: false };
+      setMessages((prev) => {
+        const idx = prev.findIndex(m => m.id === agentMsgId);
+        if (idx === -1) return [...prev, agentMessage];
+        const updated = [...prev]; updated[idx] = agentMessage; return updated;
+      });
+      setSuggestedActions(response.suggestedActions || []);
+      setIsAgentTyping(false);
+      if (response.uiDirective) await processUIDirective(response.uiDirective);
+    } catch (error) {
+      console.error('Failed to get agent response:', error);
+      setMessages((prev) => {
+        const idx = prev.findIndex(m => m.id === agentMsgId);
+        const errMsg = { id: uuidv4(), role: 'agent' as const, content: "I'm sorry, I encountered an issue. Could you try again?", timestamp: new Date() };
+        if (idx !== -1) { const u = [...prev]; u[idx] = { ...u[idx], content: errMsg.content, isStreaming: false }; return u; }
+        return [...prev, errMsg];
+      });
+      setIsAgentTyping(false);
+    }
+  }, [processUIDirective]);
+
   const clearConversation = useCallback(() => {
     setMessages([]);
     setSuggestedActions([
@@ -858,7 +905,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode; agentId
 
   return (
     <ConversationContext.Provider
-      value={{ messages, isAgentTyping, isLoadingWelcome, suggestedActions, sendMessage, clearConversation }}
+      value={{ messages, isAgentTyping, isLoadingWelcome, suggestedActions, sendMessage, sendSilentMessage, clearConversation }}
     >
       {children}
     </ConversationContext.Provider>

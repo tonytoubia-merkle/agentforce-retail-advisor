@@ -16,6 +16,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       whileHover={{ y: -4, scale: 1.03 }}
       transition={{ duration: 0.2 }}
       className="w-36 flex-shrink-0 rounded-xl overflow-hidden bg-white/5 backdrop-blur-sm border border-white/10 cursor-pointer"
+      onClick={isSkinConcierge ? () => openRetailerHandoff() : undefined}
     >
       <div className="relative w-full h-28">
         <img
@@ -43,18 +44,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             ${(product.price ?? 0).toFixed(2)}
           </span>
           {isSkinConcierge ? (
-            <button
-              onClick={() => openRetailerHandoff()}
-              className="px-2 py-0.5 bg-white/20 hover:bg-white/30 rounded-full text-[10px] transition-colors flex items-center gap-0.5"
-            >
+            <span className="text-[9px] text-white/40 flex items-center gap-0.5">
               <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               </svg>
-              Buy
-            </button>
+              Where to buy
+            </span>
           ) : (
             <button
-              onClick={() => openCheckout()}
+              onClick={(e) => { e.stopPropagation(); openCheckout(); }}
               className="px-2 py-0.5 bg-white/20 hover:bg-white/30 rounded-full text-[10px] transition-colors"
             >
               Add
