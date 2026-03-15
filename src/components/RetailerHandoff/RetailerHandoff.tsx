@@ -26,7 +26,7 @@ function RetailerBadge({ name }: { name: string }) {
 }
 
 export const RetailerHandoff: React.FC = () => {
-  const { scene, closeRetailerHandoff } = useScene();
+  const { scene, closeRetailerHandoff, getSkinEmail } = useScene();
   const [shopMode, setShopMode] = useState<ShopMode>('all');
 
   const products = scene.products;
@@ -40,6 +40,16 @@ export const RetailerHandoff: React.FC = () => {
 
   const handleRetailerClick = (retailer: ProductRetailer) => {
     window.open(retailer.url, '_blank', 'noopener,noreferrer');
+
+    // Fire-and-forget DC event — only if we have an email from skin analysis
+    const email = getSkinEmail();
+    if (email && products.length > 0) {
+      fetch('/api/track-retailer-click', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email, retailer, products }),
+      }).catch((err) => console.warn('[retailer-click] DC track failed:', err));
+    }
   };
 
   return (

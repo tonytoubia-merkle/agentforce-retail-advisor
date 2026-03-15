@@ -23,7 +23,7 @@ const SEVERITY_LABELS: Record<SkinConcernScore['severity'], string> = {
 };
 
 export const SkinAnalysisModal: React.FC = () => {
-  const { closeSkinAnalysis } = useScene();
+  const { closeSkinAnalysis, setSkinEmail } = useScene();
   const { sendSilentMessage } = useConversation();
 
   const [step, setStep] = useState<ModalStep>('capture');
@@ -118,6 +118,9 @@ export const SkinAnalysisModal: React.FC = () => {
   const handleDiscussResults = useCallback(() => {
     if (!result) return;
 
+    // Persist email in scene context so RetailerHandoff can use it for click tracking
+    if (email.trim()) setSkinEmail(email.trim());
+
     // Fire-and-forget save to Data Cloud if email was provided
     if (email.trim()) {
       fetch('/api/save-skin-analysis', {
@@ -131,7 +134,7 @@ export const SkinAnalysisModal: React.FC = () => {
 
     closeSkinAnalysis();
     sendSilentMessage(buildAnalysisSummary(result));
-  }, [result, email, closeSkinAnalysis, sendSilentMessage]);
+  }, [result, email, closeSkinAnalysis, sendSilentMessage, setSkinEmail]);
 
   const handleRetake = useCallback(() => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);

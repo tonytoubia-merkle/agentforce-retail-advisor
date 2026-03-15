@@ -90,6 +90,9 @@ interface SceneContextValue {
   resetScene: () => void;
   getSceneSnapshot: () => SceneSnapshot;
   restoreSceneSnapshot: (snapshot: SceneSnapshot) => void;
+  /** Email captured during skin analysis — used for DC event tracking. Does not trigger re-renders. */
+  setSkinEmail: (email: string) => void;
+  getSkinEmail: () => string;
 }
 
 const initialScene: SceneState = {
@@ -182,7 +185,11 @@ export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [scene, dispatch] = useReducer(sceneReducer, initialScene);
   const sceneRef = useRef(scene);
   sceneRef.current = scene;
+  const skinEmailRef = useRef('');
   const { generateBackground } = useGenerativeBackground();
+
+  const setSkinEmail = useCallback((email: string) => { skinEmailRef.current = email; }, []);
+  const getSkinEmail = useCallback(() => skinEmailRef.current, []);
 
   const transitionTo = useCallback((layout: SceneLayout, products?: Product[]) => {
     dispatch({ type: 'TRANSITION_LAYOUT', layout, products });
@@ -496,6 +503,8 @@ export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         resetScene,
         getSceneSnapshot,
         restoreSceneSnapshot,
+        setSkinEmail,
+        getSkinEmail,
       }}
     >
       {children}
