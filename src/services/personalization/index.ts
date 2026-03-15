@@ -949,6 +949,43 @@ export async function getExitIntentDecision(): Promise<ExitIntentDecision | null
 }
 
 /**
+ * Track a "Where to Buy" retailer click from the skin advisor.
+ * Sends one event per product so Data Cloud can build product-level segments
+ * (e.g. "clicked Where to Buy: Target for Vitamin C Serum in last 30 days").
+ *
+ * Works for both the Data Cloud Web SDK (c360a / DataCloudInteractions) and
+ * the Salesforce Personalization SDK (SalesforceInteractions).
+ */
+export function trackRetailerClick(
+  retailerName: string,
+  products: Array<{ id: string; name: string; brand?: string; price?: number }>,
+): void {
+  if (!isPersonalizationConfigured() || !initialized) return;
+
+  const sfp = getSdk();
+  if (!sfp) return;
+
+  try {
+    for (const product of products) {
+      sendSdkEvent(sfp, {
+        interaction: {
+          name: 'Retailer Click',
+          retailerName,
+          lineItem: {
+            catalogObjectType: 'Product',
+            catalogObjectId: product.id,
+            price: product.price ?? 0,
+            quantity: 1,
+          },
+        },
+      });
+    }
+  } catch (err) {
+    console.error('[sfp] Retailer click tracking error:', err);
+  }
+}
+
+/**
  * Track engagement with a personalization decision.
  * Call after rendering personalized content to close the attribution loop.
  */

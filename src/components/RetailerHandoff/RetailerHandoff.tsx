@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useScene } from '@/contexts/SceneContext';
 import { getRetailersForProducts } from '@/data/retailerCatalog';
 import type { ProductRetailer } from '@/types/product';
+import { trackRetailerClick } from '@/services/personalization';
 
 type ShopMode = 'all' | 'in-store' | 'online';
 
@@ -26,7 +27,7 @@ function RetailerBadge({ name }: { name: string }) {
 }
 
 export const RetailerHandoff: React.FC = () => {
-  const { scene, closeRetailerHandoff, getSkinEmail } = useScene();
+  const { scene, closeRetailerHandoff } = useScene();
   const [shopMode, setShopMode] = useState<ShopMode>('all');
 
   const products = scene.products;
@@ -40,15 +41,11 @@ export const RetailerHandoff: React.FC = () => {
 
   const handleRetailerClick = (retailer: ProductRetailer) => {
     window.open(retailer.url, '_blank', 'noopener,noreferrer');
-
-    // Fire-and-forget DC event — only if we have an email from skin analysis
-    const email = getSkinEmail();
-    if (email && products.length > 0) {
-      fetch('/api/track-retailer-click', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ email, retailer, products }),
-      }).catch((err) => console.warn('[retailer-click] DC track failed:', err));
+    // Track via the Data Cloud / SF Personalization beacon (same pattern as Add To Cart).
+    // The beacon session is already tied to the user's email via syncIdentity() called
+    // when they entered their email in the skin analysis modal.
+    if (products.length > 0) {
+      trackRetailerClick(retailer.name, products);
     }
   };
 

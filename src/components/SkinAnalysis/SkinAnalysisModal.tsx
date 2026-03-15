@@ -5,6 +5,7 @@ import { useConversation } from '@/contexts/ConversationContext';
 import { getPerfectCorpClient } from '@/services/perfectcorp/client';
 import { buildAnalysisSummary } from '@/types/skinanalysis';
 import type { SkinAnalysisResult, SkinConcernScore } from '@/types/skinanalysis';
+import { syncIdentity } from '@/services/personalization';
 
 type ModalStep = 'capture' | 'preview' | 'analyzing' | 'results';
 
@@ -118,8 +119,12 @@ export const SkinAnalysisModal: React.FC = () => {
   const handleDiscussResults = useCallback(() => {
     if (!result) return;
 
-    // Persist email in scene context so RetailerHandoff can use it for click tracking
-    if (email.trim()) setSkinEmail(email.trim());
+    // Persist email in scene context so RetailerHandoff can use it for click tracking,
+    // and sync identity with the Data Cloud / SF Personalization beacon session.
+    if (email.trim()) {
+      setSkinEmail(email.trim());
+      syncIdentity(email.trim());
+    }
 
     // Fire-and-forget save to Data Cloud if email was provided
     if (email.trim()) {
