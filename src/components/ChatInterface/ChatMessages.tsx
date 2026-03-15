@@ -165,8 +165,9 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, sceneLayou
         const isSkinAgent = isSkinAdvisor && msg.role === 'agent' && !msg.isStreaming;
         const routine = isSkinAgent ? parseRoutines(msg.content) : null;
         // Debug: always log agent messages on skin-advisor path
-        if (msg.role === 'agent') {
-          console.log('[routine] path:', location.pathname, '| isSkinAdvisor:', isSkinAdvisor, '| streaming:', msg.isStreaming, '| isSkinAgent:', isSkinAgent, '| routine:', routine ? 'PARSED ✓' : 'null', '| content[0:80]:', msg.content.substring(0, 80));
+        if (isSkinAgent) {
+          const lines = msg.content.split('\n');
+          console.log('[routine] result:', routine ? 'PARSED ✓' : 'null', '| lines:', lines.length, '| line[0]:', JSON.stringify(lines[0]?.substring(0, 60)), '| line[1]:', JSON.stringify(lines[1]));
         }
 
         return (
