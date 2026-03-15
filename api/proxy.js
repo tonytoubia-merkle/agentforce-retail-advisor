@@ -972,7 +972,7 @@ export default async function handler(req, res) {
       const body = await readBody(req);
       const result = await httpsRequest({
         hostname: PERFECT_CORP_BASE, port: 443,
-        path: '/s2s/v2.1/task/skin-analysis', method: 'POST',
+        path: '/s2s/v2.0/task/skin-analysis', method: 'POST',
         headers: { 'Authorization': `Bearer ${PERFECT_CORP_API_KEY}`, 'Content-Type': 'application/json', 'Content-Length': body.length },
       }, body);
       res.writeHead(result.statusCode, { 'Content-Type': 'application/json', ...CORS_HEADERS });
@@ -988,7 +988,7 @@ export default async function handler(req, res) {
       const qs = url.includes('?') ? url.slice(url.indexOf('?')) : '';
       const result = await httpsRequest({
         hostname: PERFECT_CORP_BASE, port: 443,
-        path: `/s2s/v2.1/task/skin-analysis${qs}`, method: 'GET',
+        path: `/s2s/v2.0/task/skin-analysis${qs}`, method: 'GET',
         headers: { 'Authorization': `Bearer ${PERFECT_CORP_API_KEY}` },
       });
       res.writeHead(result.statusCode, { 'Content-Type': 'application/json', ...CORS_HEADERS });

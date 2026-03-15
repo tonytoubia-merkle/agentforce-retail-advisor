@@ -109,17 +109,16 @@ export class PerfectCorpClient {
       throw new Error(`Perfect Corp file slot failed (${res.status}): ${err}`);
     }
     const json = await res.json();
-    console.log('[perfectcorp] file slot response:', JSON.stringify(json).substring(0, 400));
-    // Response may wrap in result or result.files[0]
-    const result = (json?.result ?? json) as Record<string, unknown>;
-    const fileEntry = (Array.isArray(result.files) ? result.files[0] : result) as Record<string, unknown>;
-    if (!fileEntry.file_id || !fileEntry.upload_url) {
+    // Response: { status, data: { files: [{ file_id, requests: [{ method, url }] }] } }
+    const fileEntry = json?.data?.files?.[0] as Record<string, unknown> | undefined;
+    const uploadUrl = (fileEntry?.requests as Array<{ url: string }>)?.[0]?.url;
+    if (!fileEntry?.file_id || !uploadUrl) {
       throw new Error(`Perfect Corp: missing file_id/upload_url: ${JSON.stringify(json).substring(0, 300)}`);
     }
     return {
       fileId: fileEntry.file_id as string,
-      uploadUrl: fileEntry.upload_url as string,
-      uploadHeaders: (fileEntry.upload_headers ?? {}) as Record<string, string>,
+      uploadUrl,
+      uploadHeaders: {},
     };
   }
 
@@ -143,7 +142,8 @@ export class PerfectCorpClient {
       throw new Error(`Perfect Corp task submission failed (${res.status}): ${err}`);
     }
     const json = await res.json();
-    const taskId = json?.result?.task_id ?? json?.data?.task_id;
+    // Response: { status, task_id, polling_interval }
+    const taskId = json?.task_id ?? json?.data?.task_id ?? json?.result?.task_id;
     if (!taskId) throw new Error(`Perfect Corp: no task_id: ${JSON.stringify(json).substring(0, 300)}`);
     return taskId as string;
   }
@@ -159,11 +159,12 @@ export class PerfectCorpClient {
       if (!res.ok) continue;
 
       const json = await res.json();
-      const taskStatus = json?.result?.task_status ?? json?.data?.task_status;
+      // Response: { status, task_status, results: { concern_results, result_image_url } }
+      const taskStatus = json?.task_status ?? json?.data?.task_status ?? json?.result?.task_status;
       console.log('[perfectcorp] poll status:', taskStatus);
       if (taskStatus === 'success') return json as Record<string, unknown>;
       if (taskStatus === 'error') {
-        throw new Error(`Perfect Corp analysis failed: ${JSON.stringify(json?.result ?? json)}`);
+        throw new Error(`Perfect Corp analysis failed: ${JSON.stringify(json)}`);
       }
     }
 
@@ -173,15 +174,24 @@ export class PerfectCorpClient {
   // ─── Result normalisation ─────────────────────────────────────────────────
 
   private normalizeResult(raw: Record<string, unknown>): SkinAnalysisResult {
-    // V2.1: { status, result: { task_id, task_status, results: { concern_name: { score, result_url } } } }
-    const result = (raw.result ?? raw.data ?? raw) as Record<string, unknown>;
-    const resultsMap = (result.results ?? {}) as Record<string, { score: number }>;
-    const concernsRaw = resultsMap as unknown as Record<string, number>;
+    // V2.0: { status, task_status, results: { concern_results: [...], result_image_url } }
+    const resultsBlock = (raw.results ?? (raw.data as Record<string, unknown>)?.results ?? {}) as Record<string, unknown>;
+    // concern_results may be an array [{concern, score}] or a map {concern_name: {score}}
+    const concernResultsRaw = resultsBlock.concern_results ?? resultsBlock;
+    const concernMap: Record<string, number> = {};
+    if (Array.isArray(concernResultsRaw)) {
+      for (const entry of concernResultsRaw as Array<{ concern?: string; name?: string; score?: number }>) {
+        const key = entry.concern ?? entry.name ?? '';
+        if (key) concernMap[key] = entry.score ?? 0;
+      }
+    } else {
+      for (const [k, v] of Object.entries(concernResultsRaw as Record<string, unknown>)) {
+        concernMap[k] = typeof v === 'number' ? v : (v as Record<string, number>)?.score ?? 0;
+      }
+    }
 
-    // V2.1 results: { concern_name: { score: 0.0–1.0, result_url } }
     const concerns: SkinConcernScore[] = DEFAULT_CONCERNS.map((key) => {
-      const entry = resultsMap[key];
-      const score = Math.round((entry?.score ?? 0) * 100);
+      const score = Math.round((concernMap[key] ?? 0) * 100);
       return {
         concern: key,
         label: CONCERN_LABELS[key] ?? key,
@@ -199,8 +209,8 @@ export class PerfectCorpClient {
     const overallScore = Math.max(0, Math.round(100 - avgConcernScore));
 
     return {
-      skinType: (result.skin_type as SkinAnalysisResult['skinType']) ?? 'normal',
-      skinAge: (result.skin_age as number) ?? 0,
+      skinType: (resultsBlock.skin_type as SkinAnalysisResult['skinType']) ?? 'normal',
+      skinAge: (resultsBlock.skin_age as number) ?? 0,
       overallScore,
       concerns,
       primaryConcern: topConcern?.label ?? 'None detected',
