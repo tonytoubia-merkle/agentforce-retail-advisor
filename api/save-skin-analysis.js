@@ -14,7 +14,6 @@ async function getDcToken() {
     grant_type:    'client_credentials',
     client_id:     CLIENT_ID,
     client_secret: CLIENT_SECRET,
-    scope:         'cdp_ingest_api',
   });
 
   const res = await fetch(`${SF_INSTANCE}/services/oauth2/token`, {
