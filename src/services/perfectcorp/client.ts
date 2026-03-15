@@ -135,7 +135,7 @@ export class PerfectCorpClient {
     const res = await fetch('/api/perfectcorp/task', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ file_id: fileId, concerns: DEFAULT_CONCERNS }),
+      body: JSON.stringify({ src_file_id: fileId, dst_actions: [], concerns: DEFAULT_CONCERNS }),
     });
     if (!res.ok) {
       const err = await res.text();
