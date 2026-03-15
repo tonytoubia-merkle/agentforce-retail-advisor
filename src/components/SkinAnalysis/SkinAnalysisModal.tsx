@@ -52,7 +52,7 @@ export const SkinAnalysisModal: React.FC = () => {
     setCaptureMode('camera');
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 960 } },
+        video: { facingMode: 'user', width: { min: 640, ideal: 1920 }, height: { min: 480, ideal: 1080 } },
       });
       setCameraStream(stream);
     } catch {
@@ -71,8 +71,10 @@ export const SkinAnalysisModal: React.FC = () => {
     const video = videoRef.current;
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
+    console.log('[camera] captured dimensions:', video.videoWidth, 'x', video.videoHeight);
     canvas.getContext('2d')?.drawImage(video, 0, 0);
     canvas.toBlob((blob) => {
+      if (blob) console.log('[camera] blob size:', blob.size, 'bytes');
       if (!blob) return;
       const file = new File([blob], 'skin-capture.jpg', { type: 'image/jpeg' });
       const url = URL.createObjectURL(blob);
