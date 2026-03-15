@@ -69,7 +69,8 @@ export default async function handler(req, res) {
   }
 
   if (!SOURCE_API) {
-    return res.status(500).json({ error: 'VITE_DC_SOURCE_API_NAME is not configured' });
+    console.error('[save-skin-analysis] VITE_DC_SOURCE_API_NAME is not set');
+    return res.status(500).json({ error: 'VITE_DC_SOURCE_API_NAME env var is not configured on this server' });
   }
 
   try {
@@ -96,6 +97,6 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true });
   } catch (err) {
     console.error('[save-skin-analysis] unexpected error:', err);
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message, stack: err.stack?.split('\n').slice(0,3).join(' | ') });
   }
 }

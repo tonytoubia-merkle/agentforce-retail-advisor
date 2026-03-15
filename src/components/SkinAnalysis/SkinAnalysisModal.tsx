@@ -116,8 +116,11 @@ export const SkinAnalysisModal: React.FC = () => {
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ email: resolvedEmail, analysisResult, crmContactId }),
     })
-      .then((r) => { if (r.ok) setProfileSaved(true); else setSaveFailed(true); })
-      .catch(() => setSaveFailed(true));
+      .then(async (r) => {
+        if (r.ok) { setProfileSaved(true); }
+        else { const body = await r.json().catch(() => ({})); console.error('[skin-analysis] save failed:', r.status, body); setSaveFailed(true); }
+      })
+      .catch((err) => { console.error('[skin-analysis] save error:', err); setSaveFailed(true); });
   }, [setSkinEmail]);
 
   const runAnalysis = useCallback(async () => {

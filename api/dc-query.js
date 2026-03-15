@@ -15,9 +15,9 @@ async function getToken() {
   const res = await fetch(`${SF_INSTANCE}/services/oauth2/token`, {
     method:  'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body:    new URLSearchParams({ grant_type: 'client_credentials', client_id: CLIENT_ID, client_secret: CLIENT_SECRET, scope: 'cdp_query_api' }).toString(),
+    body:    new URLSearchParams({ grant_type: 'client_credentials', client_id: CLIENT_ID, client_secret: CLIENT_SECRET }).toString(),
   });
-  if (!res.ok) throw new Error(`Token failed (${res.status}): ${await res.text()}`);
+  if (!res.ok) { const t = await res.text(); console.error('[dc-query] token error:', res.status, t); throw new Error(`Token failed (${res.status}): ${t}`); }
   const { access_token, expires_in } = await res.json();
   cachedToken = access_token;
   tokenExpiresAt = Date.now() + (expires_in ? expires_in * 1000 : 7200_000) - 300_000;
@@ -60,6 +60,6 @@ export default async function handler(req, res) {
     return res.status(200).json(result);
   } catch (err) {
     console.error('[dc-query] unexpected error:', err);
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message, stack: err.stack?.split('\n').slice(0,3).join(' | ') });
   }
 }
