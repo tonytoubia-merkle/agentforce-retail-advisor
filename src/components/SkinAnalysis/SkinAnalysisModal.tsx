@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useScene } from '@/contexts/SceneContext';
 import { useConversation } from '@/contexts/ConversationContext';
@@ -35,6 +35,14 @@ export const SkinAnalysisModal: React.FC = () => {
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Assign stream to video element after React renders the <video> node
+  useEffect(() => {
+    if (cameraStream && videoRef.current) {
+      videoRef.current.srcObject = cameraStream;
+      videoRef.current.play().catch(() => {/* autoplay policy — user gesture already occurred */});
+    }
+  }, [cameraStream]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -47,9 +55,6 @@ export const SkinAnalysisModal: React.FC = () => {
         video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
       });
       setCameraStream(stream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
     } catch {
       setError('Camera access denied. Please use the upload option instead.');
     }
