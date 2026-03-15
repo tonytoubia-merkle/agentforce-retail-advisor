@@ -102,21 +102,24 @@ export class PerfectCorpClient {
     const res = await fetch('/api/perfectcorp/file', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ file_name: fileName }),
+      body: JSON.stringify({ files: [{ file_name: fileName }] }),
     });
     if (!res.ok) {
       const err = await res.text();
       throw new Error(`Perfect Corp file slot failed (${res.status}): ${err}`);
     }
     const json = await res.json();
+    console.log('[perfectcorp] file slot response:', JSON.stringify(json).substring(0, 400));
+    // Response may wrap in result or result.files[0]
     const result = (json?.result ?? json) as Record<string, unknown>;
-    if (!result.file_id || !result.upload_url) {
+    const fileEntry = (Array.isArray(result.files) ? result.files[0] : result) as Record<string, unknown>;
+    if (!fileEntry.file_id || !fileEntry.upload_url) {
       throw new Error(`Perfect Corp: missing file_id/upload_url: ${JSON.stringify(json).substring(0, 300)}`);
     }
     return {
-      fileId: result.file_id as string,
-      uploadUrl: result.upload_url as string,
-      uploadHeaders: (result.upload_headers ?? {}) as Record<string, string>,
+      fileId: fileEntry.file_id as string,
+      uploadUrl: fileEntry.upload_url as string,
+      uploadHeaders: (fileEntry.upload_headers ?? {}) as Record<string, string>,
     };
   }
 
