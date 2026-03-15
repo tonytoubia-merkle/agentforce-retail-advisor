@@ -27,6 +27,8 @@ const CLIENT_ID = env.VITE_AGENTFORCE_CLIENT_ID || process.env.VITE_AGENTFORCE_C
 const CLIENT_SECRET = env.VITE_AGENTFORCE_CLIENT_SECRET || process.env.VITE_AGENTFORCE_CLIENT_SECRET;
 const BASE_URL = env.VITE_AGENTFORCE_BASE_URL || process.env.VITE_AGENTFORCE_BASE_URL;
 const WEBSTORE_ID = env.VITE_COMMERCE_SITE_ID || process.env.VITE_COMMERCE_SITE_ID || '';
+const PERFECT_CORP_API_KEY = env.VITE_PERFECT_CORP_API_KEY || process.env.VITE_PERFECT_CORP_API_KEY || '';
+const PERFECT_CORP_BASE = 'yce-api-01.makeupar.com';
 const PORT = process.env.API_PORT || 3001;
 
 const routes = [
@@ -76,6 +78,138 @@ const server = http.createServer((req, res) => {
   if (req.url === '/api/health') {
     res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
     res.end(JSON.stringify({ status: 'ok' }));
+    return;
+  }
+
+  // ─── Perfect Corp YouCam AI Skin Analysis ──────────────────────────────────
+  // Three endpoints mirror the YouCam async task flow:
+  //   POST /api/perfectcorp/file          → upload image file, returns { file_id }
+  //   POST /api/perfectcorp/task          → submit analysis task, returns { task_id }
+  //   GET  /api/perfectcorp/task/:task_id → poll task status / result
+  //
+  // API key stays server-side. Client sends raw FormData or JSON; we forward
+  // with Authorization header injected.
+
+  if (req.url === '/api/perfectcorp/file' && req.method === 'POST') {
+    if (!PERFECT_CORP_API_KEY) {
+      res.writeHead(503, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ error: 'VITE_PERFECT_CORP_API_KEY not configured — using mock mode' }));
+      return;
+    }
+
+    const chunks = [];
+    req.on('data', (c) => chunks.push(c));
+    req.on('end', () => {
+      const body = Buffer.concat(chunks);
+      const contentType = req.headers['content-type'] || 'application/octet-stream';
+      const pcOpts = {
+        hostname: PERFECT_CORP_BASE,
+        port: 443,
+        path: '/s2s/v2.0/file/skin-analysis',
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${PERFECT_CORP_API_KEY}`,
+          'Content-Type': contentType,
+          'Content-Length': body.length,
+        },
+      };
+      const pcReq = https.request(pcOpts, (pcRes) => {
+        const out = [];
+        pcRes.on('data', (c) => out.push(c));
+        pcRes.on('end', () => {
+          const buf = Buffer.concat(out);
+          res.writeHead(pcRes.statusCode, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(buf);
+        });
+      });
+      pcReq.on('error', (err) => {
+        if (!res.headersSent) {
+          res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ error: err.message }));
+        }
+      });
+      pcReq.write(body);
+      pcReq.end();
+    });
+    return;
+  }
+
+  if (req.url === '/api/perfectcorp/task' && req.method === 'POST') {
+    if (!PERFECT_CORP_API_KEY) {
+      res.writeHead(503, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ error: 'VITE_PERFECT_CORP_API_KEY not configured' }));
+      return;
+    }
+
+    const chunks = [];
+    req.on('data', (c) => chunks.push(c));
+    req.on('end', () => {
+      const body = Buffer.concat(chunks);
+      const pcOpts = {
+        hostname: PERFECT_CORP_BASE,
+        port: 443,
+        path: '/s2s/v2.0/task/skin-analysis',
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${PERFECT_CORP_API_KEY}`,
+          'Content-Type': 'application/json',
+          'Content-Length': body.length,
+        },
+      };
+      const pcReq = https.request(pcOpts, (pcRes) => {
+        const out = [];
+        pcRes.on('data', (c) => out.push(c));
+        pcRes.on('end', () => {
+          const buf = Buffer.concat(out);
+          res.writeHead(pcRes.statusCode, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(buf);
+        });
+      });
+      pcReq.on('error', (err) => {
+        if (!res.headersSent) {
+          res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ error: err.message }));
+        }
+      });
+      pcReq.write(body);
+      pcReq.end();
+    });
+    return;
+  }
+
+  if (req.url?.startsWith('/api/perfectcorp/task/') && req.method === 'GET') {
+    if (!PERFECT_CORP_API_KEY) {
+      res.writeHead(503, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ error: 'VITE_PERFECT_CORP_API_KEY not configured' }));
+      return;
+    }
+
+    const taskId = decodeURIComponent(req.url.replace('/api/perfectcorp/task/', ''));
+    const pcOpts = {
+      hostname: PERFECT_CORP_BASE,
+      port: 443,
+      path: `/s2s/v2.0/task/skin-analysis/${encodeURIComponent(taskId)}`,
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${PERFECT_CORP_API_KEY}`,
+      },
+    };
+    const pcReq = https.request(pcOpts, (pcRes) => {
+      const out = [];
+      pcRes.on('data', (c) => out.push(c));
+      pcRes.on('end', () => {
+        const buf = Buffer.concat(out);
+        res.writeHead(pcRes.statusCode, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(buf);
+      });
+    });
+    pcReq.on('error', (err) => {
+      if (!res.headersSent) {
+        res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+    pcReq.end();
     return;
   }
 

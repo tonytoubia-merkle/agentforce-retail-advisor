@@ -11,8 +11,9 @@ interface ProductHeroProps {
 }
 
 export const ProductHero: React.FC<ProductHeroProps> = ({ product }) => {
-  const { openCheckout } = useScene();
+  const { scene, openCheckout, openRetailerHandoff } = useScene();
   const [showDetails, setShowDetails] = useState(false);
+  const isSkinConcierge = scene.advisorMode === 'skin-concierge';
 
   return (
     <div className="flex flex-col md:flex-row items-center gap-6 max-w-2xl">
@@ -76,13 +77,27 @@ export const ProductHero: React.FC<ProductHeroProps> = ({ product }) => {
           <span className="text-xl font-light">
             ${(product.price ?? 0).toFixed(2)}
           </span>
-          <Button
-            onClick={() => openCheckout()}
-            size="lg"
-            className="bg-white text-purple-900 hover:bg-white/90"
-          >
-            Add to Bag
-          </Button>
+          {isSkinConcierge ? (
+            <Button
+              onClick={() => openRetailerHandoff()}
+              size="lg"
+              className="bg-white text-violet-900 hover:bg-white/90 flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Where to Buy
+            </Button>
+          ) : (
+            <Button
+              onClick={() => openCheckout()}
+              size="lg"
+              className="bg-white text-purple-900 hover:bg-white/90"
+            >
+              Add to Bag
+            </Button>
+          )}
         </div>
       </motion.div>
 

@@ -20,29 +20,25 @@ import { MOCK_PRODUCTS } from '@/mocks/products';
 const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
 
 /**
- * AdvisorWrapper — wraps AdvisorPage with ConversationProvider + back button.
+ * AdvisorWrapper — wraps AdvisorPage (beauty mode) with ConversationProvider.
  */
 function AdvisorWrapper() {
-  const navigate = useNavigate();
   return (
-    <div className="relative">
-      <ConversationProvider>
-        <AdvisorPage />
-      </ConversationProvider>
+    <ConversationProvider>
+      <AdvisorPage mode="beauty" />
+    </ConversationProvider>
+  );
+}
 
-      <motion.button
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.3 }}
-        onClick={() => navigate('/')}
-        className="fixed top-4 left-4 z-50 flex items-center gap-2 px-4 py-2 bg-white/90 backdrop-blur-sm text-stone-700 text-sm font-medium rounded-full shadow-lg border border-stone-200 hover:bg-white hover:shadow-xl transition-all"
-      >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-        Back to Store
-      </motion.button>
-    </div>
+/**
+ * SkinAdvisorWrapper — wraps AdvisorPage in skin-concierge mode.
+ * Uses its own ConversationProvider so history is isolated from the beauty advisor.
+ */
+function SkinAdvisorWrapper() {
+  return (
+    <ConversationProvider>
+      <AdvisorPage mode="skin-concierge" />
+    </ConversationProvider>
   );
 }
 
@@ -55,6 +51,7 @@ function AnimatedRoutes({ products }: { products: Product[] }) {
 
   const animationKey = useMemo(() => {
     if (location.pathname === '/advisor') return 'advisor';
+    if (location.pathname === '/skin-advisor') return 'skin-advisor';
     if (location.pathname === '/media-wall') return 'media';
     return 'storefront';
   }, [location.pathname]);
@@ -71,6 +68,7 @@ function AnimatedRoutes({ products }: { products: Product[] }) {
       >
         <Routes location={location}>
           <Route path="/advisor" element={<AdvisorWrapper />} />
+          <Route path="/skin-advisor" element={<SkinAdvisorWrapper />} />
           <Route path="/media-wall" element={<MediaWallPage />} />
           <Route path="*" element={<StorefrontPage products={products} />} />
         </Routes>

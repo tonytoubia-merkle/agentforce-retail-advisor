@@ -25,7 +25,11 @@ export type UIAction =
   | 'CONFIRM_ORDER'
   | 'RESET_SCENE'
   | 'IDENTIFY_CUSTOMER'
-  | 'CAPTURE_ONLY';
+  | 'CAPTURE_ONLY'
+  // Skin Concierge actions
+  | 'LAUNCH_SKIN_ANALYSIS'
+  | 'SHOW_SKIN_REPORT'
+  | 'RETAILER_HANDOFF';
 
 export interface UIDirectivePayload {
   products?: Product[];
@@ -54,6 +58,22 @@ export interface UIDirectivePayload {
   customerEmail?: string;
   /** Background captures that occurred alongside this response. */
   captures?: CaptureNotification[];
+  /** Retailer handoff data — which retailers carry the recommended products. */
+  retailerHandoff?: {
+    retailers: RetailerLink[];
+    headline?: string;
+  };
+}
+
+export interface RetailerLink {
+  name: string;
+  url: string;
+  /** Whether the retailer has physical store locations. */
+  inStore: boolean;
+  /** Whether online purchase is available. */
+  online: boolean;
+  /** Optional promo copy (e.g. "20% off this week"). */
+  promo?: string;
 }
 
 /** A background data-capture event the agent performed silently. */

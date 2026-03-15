@@ -8,7 +8,8 @@ interface ProductCardProps {
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const { openCheckout } = useScene();
+  const { scene, openCheckout, openRetailerHandoff } = useScene();
+  const isSkinConcierge = scene.advisorMode === 'skin-concierge';
 
   return (
     <motion.div
@@ -41,12 +42,24 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <span className="text-xs font-medium">
             ${(product.price ?? 0).toFixed(2)}
           </span>
-          <button
-            onClick={() => openCheckout()}
-            className="px-2 py-0.5 bg-white/20 hover:bg-white/30 rounded-full text-[10px] transition-colors"
-          >
-            Add
-          </button>
+          {isSkinConcierge ? (
+            <button
+              onClick={() => openRetailerHandoff()}
+              className="px-2 py-0.5 bg-white/20 hover:bg-white/30 rounded-full text-[10px] transition-colors flex items-center gap-0.5"
+            >
+              <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              </svg>
+              Buy
+            </button>
+          ) : (
+            <button
+              onClick={() => openCheckout()}
+              className="px-2 py-0.5 bg-white/20 hover:bg-white/30 rounded-full text-[10px] transition-colors"
+            >
+              Add
+            </button>
+          )}
         </div>
       </div>
     </motion.div>

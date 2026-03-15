@@ -34,6 +34,14 @@ export interface ProductAttributes {
   keyIngredients?: string[];
 }
 
+export interface ProductRetailer {
+  name: string;
+  url: string;
+  inStore: boolean;
+  online: boolean;
+  promo?: string;
+}
+
 export interface Product {
   id: string;
   /** Salesforce Product2 record ID for Data Cloud integration */
@@ -52,4 +60,6 @@ export interface Product {
   reviewCount: number;
   inStock: boolean;
   personalizationScore?: number;
+  /** Retailers carrying this product — used by the Skin Concierge "Where to Buy" flow. */
+  retailers?: ProductRetailer[];
 }
