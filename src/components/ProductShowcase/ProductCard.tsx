@@ -46,10 +46,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             ${(product.price ?? 0).toFixed(2)}
           </span>
           {isSkinConcierge ? (
-            <span className="text-[9px] text-white/40 flex items-center gap-0.5">
-              <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              </svg>
+            <span className="text-[9px] text-white/70 flex items-center gap-1">
+              <span className="relative flex items-center justify-center w-3 h-3">
+                <span className="absolute inset-0 rounded-full bg-red-500/30 animate-ping" />
+                <svg className="relative w-3 h-3 text-red-500" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                </svg>
+              </span>
               Where to buy
             </span>
           ) : (
