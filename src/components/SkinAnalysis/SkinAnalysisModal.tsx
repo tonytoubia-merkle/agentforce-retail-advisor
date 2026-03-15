@@ -39,6 +39,7 @@ export const SkinAnalysisModal: React.FC = () => {
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
   const [profileSaved, setProfileSaved] = useState(false);
+  const [saveFailed, setSaveFailed] = useState(false);
 
   // For logged-in users their email is already known
   const loggedInEmail = isAuthenticated && customer?.email ? customer.email : null;
@@ -115,8 +116,8 @@ export const SkinAnalysisModal: React.FC = () => {
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ email: resolvedEmail, analysisResult, crmContactId }),
     })
-      .then((r) => { if (r.ok) setProfileSaved(true); })
-      .catch((err) => console.warn('[skin-analysis] DC save failed:', err));
+      .then((r) => { if (r.ok) setProfileSaved(true); else setSaveFailed(true); })
+      .catch(() => setSaveFailed(true));
   }, [setSkinEmail]);
 
   const runAnalysis = useCallback(async () => {
@@ -464,6 +465,13 @@ export const SkinAnalysisModal: React.FC = () => {
                     <p className="text-xs text-emerald-700 font-medium">
                       {loggedInEmail ? 'Results saved to your profile.' : `Results saved to ${email.trim() || 'your profile'}.`}
                     </p>
+                  </div>
+                ) : saveFailed ? (
+                  <div className="flex items-center gap-2 px-4 py-3 bg-amber-50 rounded-2xl border border-amber-100">
+                    <svg className="w-4 h-4 text-amber-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                    </svg>
+                    <p className="text-xs text-amber-700">Couldn't save right now — your results are still available below.</p>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 px-4 py-3 bg-violet-50 rounded-2xl border border-violet-100">
