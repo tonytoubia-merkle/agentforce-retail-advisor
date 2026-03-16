@@ -66,7 +66,7 @@ export default async function handler(req, res) {
     if (!ingestRes.ok) {
       const text = await ingestRes.text();
       console.error('[save-skin-analysis] DC ingest error:', ingestRes.status, text);
-      return res.status(502).json({ error: 'Data Cloud ingest failed', detail: text });
+      return res.status(502).json({ error: 'Data Cloud ingest failed', status: ingestRes.status, detail: text });
     }
 
     return res.status(200).json({ success: true });

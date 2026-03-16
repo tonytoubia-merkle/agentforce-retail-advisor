@@ -13,8 +13,9 @@ export default async function handler(req, res) {
   try {
     const { access_token: token, instance_url: dcInstance } = await getDcToken();
 
-    // Data Cloud SQL query API — synchronous for simple queries
-    const r = await fetch(`${dcInstance}/services/data/v60.0/ssot/queryRunResults`, {
+    // Data Cloud SQL query API — native DC path matches /api/v1/ingest pattern
+    console.log('[dc-query] querying:', `${dcInstance}/api/v1/query`);
+    const r = await fetch(`${dcInstance}/api/v1/query`, {
       method:  'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body:    JSON.stringify({ sql }),
@@ -23,7 +24,7 @@ export default async function handler(req, res) {
     if (!r.ok) {
       const text = await r.text();
       console.error('[dc-query] error:', r.status, text);
-      return res.status(502).json({ error: 'DC query failed', detail: text });
+      return res.status(502).json({ error: 'DC query failed', status: r.status, detail: text });
     }
 
     const result = await r.json();
