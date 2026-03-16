@@ -1,39 +1,10 @@
 // Vercel Serverless Function — save skin analysis results to Data Cloud Ingestion API
-// Auth: Salesforce client credentials with cdp_ingest_api scope
-// The token response instance_url is the Data Cloud tenant base URL.
+// Auth: two-step token exchange via dc-token.js — SF client_credentials → DC JWT + tenant URL
 
-const SF_INSTANCE    = process.env.VITE_AGENTFORCE_INSTANCE_URL || 'https://me1769724439764.my.salesforce.com';
-const CLIENT_ID      = process.env.VITE_AGENTFORCE_CLIENT_ID;
-const CLIENT_SECRET  = process.env.VITE_AGENTFORCE_CLIENT_SECRET;
-const SOURCE_API     = process.env.VITE_DC_SOURCE_API_NAME;   // set in Vercel env + .env.local
-const OBJECT_NAME    = process.env.VITE_DC_OBJECT_NAME || 'Skin_Analysis';
+import { getDcToken } from './dc-token.js';
 
-/** Fetch a Data Cloud access token using client credentials. */
-async function getDcToken() {
-  const params = new URLSearchParams({
-    grant_type:    'client_credentials',
-    client_id:     CLIENT_ID,
-    client_secret: CLIENT_SECRET,
-  });
-
-  const res = await fetch(`${SF_INSTANCE}/services/oauth2/token`, {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body:    params.toString(),
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`DC token request failed (${res.status}): ${text}`);
-  }
-
-  const data = await res.json();
-  const access_token = data.access_token;
-  const instance_url = data.instance_url || SF_INSTANCE;
-  console.log('[save-skin-analysis] token response keys:', Object.keys(data).join(', '));
-  console.log('[save-skin-analysis] instance_url:', instance_url);
-  return { access_token, instance_url };
-}
+const SOURCE_API  = process.env.VITE_DC_SOURCE_API_NAME;   // set in Vercel env + .env.local
+const OBJECT_NAME = process.env.VITE_DC_OBJECT_NAME || 'Skin_Analysis';
 
 /** Flatten SkinAnalysisResult into a DC-friendly flat record. */
 function buildRecord(email, analysisResult, crmContactId) {
@@ -77,10 +48,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { access_token, instance_url } = await getDcToken();
+    const { access_token, instance_url: dcInstance } = await getDcToken();
 
     const record  = buildRecord(email, analysisResult, crmContactId);
-    const ingestUrl = `${instance_url}/api/v1/ingest/sources/${SOURCE_API}/${OBJECT_NAME}`;
+    const ingestUrl = `${dcInstance}/api/v1/ingest/sources/${SOURCE_API}/${OBJECT_NAME}`;
     console.log('[save-skin-analysis] POST', ingestUrl);
 
     const ingestRes = await fetch(ingestUrl, {

@@ -1,33 +1,11 @@
 // Vercel Serverless Function — delete a single Skin_Analysis record from Data Cloud
 // Uses composite primary key: email + analysis_date
+// Auth: two-step token exchange via dc-token.js — SF client_credentials → DC JWT + tenant URL
 
-const SF_INSTANCE   = process.env.VITE_AGENTFORCE_INSTANCE_URL || 'https://me1769724439764.my.salesforce.com';
-const CLIENT_ID     = process.env.VITE_AGENTFORCE_CLIENT_ID;
-const CLIENT_SECRET = process.env.VITE_AGENTFORCE_CLIENT_SECRET;
-const SOURCE_API    = process.env.VITE_DC_SOURCE_API_NAME || 'SkinAdvisor';
-const OBJECT_NAME   = process.env.VITE_DC_OBJECT_NAME    || 'Skin_Analysis';
+import { getDcToken } from './dc-token.js';
 
-let cachedToken = null;
-let tokenExpiresAt = 0;
-
-async function getToken() {
-  if (cachedToken && Date.now() < tokenExpiresAt) return cachedToken;
-
-  const res = await fetch(`${SF_INSTANCE}/services/oauth2/token`, {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body:    new URLSearchParams({
-      grant_type:    'client_credentials',
-      client_id:     CLIENT_ID,
-      client_secret: CLIENT_SECRET,
-    }).toString(),
-  });
-  if (!res.ok) throw new Error(`Token failed (${res.status}): ${await res.text()}`);
-  const { access_token, expires_in } = await res.json();
-  cachedToken = access_token;
-  tokenExpiresAt = Date.now() + (expires_in ? expires_in * 1000 : 7200_000) - 300_000;
-  return cachedToken;
-}
+const SOURCE_API  = process.env.VITE_DC_SOURCE_API_NAME || 'SkinAdvisor';
+const OBJECT_NAME = process.env.VITE_DC_OBJECT_NAME    || 'Skin_Analysis';
 
 export default async function handler(req, res) {
   if (req.method !== 'DELETE') return res.status(405).end();
@@ -38,10 +16,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    const token = await getToken();
+    const { access_token: token, instance_url: dcInstance } = await getDcToken();
 
     const r = await fetch(
-      `${SF_INSTANCE}/api/v1/ingest/sources/${SOURCE_API}/${OBJECT_NAME}`,
+      `${dcInstance}/api/v1/ingest/sources/${SOURCE_API}/${OBJECT_NAME}`,
       {
         method:  'DELETE',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
