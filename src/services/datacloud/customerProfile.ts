@@ -139,7 +139,7 @@ export class DataCloudCustomerService {
     const safe = email.replace(/'/g, '');
     const sql = `SELECT analysis_date, overall_score, skin_age, skin_type, primary_concern, acne_score, acne_severity, wrinkle_score, wrinkle_severity, dark_circle_score, dark_circle_severity, pore_score, pore_severity, spot_score, spot_severity, redness_score, redness_severity, hydration_score, hydration_severity, firmness_score, firmness_severity, radiance_score, radiance_severity FROM Skin_Analysis WHERE email = '${safe}' ORDER BY analysis_date DESC LIMIT 20`;
 
-    const res = await fetch('/api/dc-query', {
+    const res = await fetch('/api/datacloud/ssot/queryRunResults', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ sql }),
@@ -147,7 +147,7 @@ export class DataCloudCustomerService {
 
     if (!res.ok) {
       const errBody = await res.json().catch(() => ({}));
-      console.error('[dc-query] failed:', res.status, errBody);
+      console.error('[dc-sql] failed:', res.status, errBody);
       return [];
     }
     const result = await res.json();

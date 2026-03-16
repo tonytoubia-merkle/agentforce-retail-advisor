@@ -111,10 +111,31 @@ export const SkinAnalysisModal: React.FC = () => {
   const saveToDC = useCallback((resolvedEmail: string, analysisResult: SkinAnalysisResult, crmContactId?: string) => {
     setSkinEmail(resolvedEmail);
     syncIdentity(resolvedEmail);
-    fetch('/api/save-skin-analysis', {
+
+    // Build flat record matching the Skin_Analysis DMO schema
+    const record: Record<string, unknown> = {
+      email:           resolvedEmail,
+      analysis_date:   analysisResult.analyzedAt,
+      overall_score:   analysisResult.overallScore,
+      skin_age:        analysisResult.skinAge,
+      skin_type:       analysisResult.skinType,
+      primary_concern: analysisResult.primaryConcern,
+      source:          'web_skin_advisor',
+      ...(crmContactId ? { crm_contact_id: crmContactId } : {}),
+    };
+    for (const c of analysisResult.concerns ?? []) {
+      const key = c.concern.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      record[`${key}_score`]    = c.score;
+      record[`${key}_severity`] = c.severity;
+    }
+
+    const sourceApi  = import.meta.env.VITE_DC_SOURCE_API_NAME || 'SkinAdvisor';
+    const objectName = import.meta.env.VITE_DC_OBJECT_NAME     || 'Skin_Analysis';
+
+    fetch(`/api/dc-ingest/sources/${sourceApi}/${objectName}`, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ email: resolvedEmail, analysisResult, crmContactId }),
+      body:    JSON.stringify({ data: [record] }),
     })
       .then(async (r) => {
         if (r.ok) { setProfileSaved(true); }

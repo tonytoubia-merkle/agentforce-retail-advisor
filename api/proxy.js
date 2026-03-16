@@ -52,6 +52,7 @@ const routes = [
   { prefix: '/api/firefly/generate',       target: 'https://firefly-api.adobe.io',              rewrite: '/v3/images/generate-async' },
   { prefix: '/api/firefly/status',         target: 'https://firefly-api.adobe.io',              rewrite: '/v3/status' },
   { prefix: '/api/datacloud',             target: SF_INSTANCE,                                 rewrite: '/services/data/v60.0' },
+  { prefix: '/api/dc-ingest',             target: SF_INSTANCE,                                 rewrite: '/api/v1/ingest' },
 ];
 
 function findRoute(url) {
