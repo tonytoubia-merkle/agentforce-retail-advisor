@@ -36,11 +36,16 @@ export async function getDcToken() {
     }).toString(),
   });
   if (!dcRes.ok) { const t = await dcRes.text(); throw new Error(`DC token exchange failed (${dcRes.status}): ${t}`); }
-  const { access_token: dcToken, instance_url: dcInstanceUrl, expires_in } = await dcRes.json();
+  const dcData = await dcRes.json();
+  console.log('[dc-token] DC exchange response keys:', Object.keys(dcData).join(', '));
+
+  const dcToken       = dcData.access_token;
+  // SF docs say the field is "instance_url"; some orgs return it as a bare hostname without scheme
+  const rawInstanceUrl = dcData.instance_url || process.env.VITE_DC_TENANT_URL || 'mzrdcnz-gvrwgzldg04dqy3cg1.c360a.salesforce.com';
+  const expires_in    = dcData.expires_in;
 
   cachedDcToken       = dcToken;
-  // instance_url from DC token exchange may or may not include https://
-  cachedDcInstanceUrl = dcInstanceUrl.startsWith('http') ? dcInstanceUrl : `https://${dcInstanceUrl}`;
+  cachedDcInstanceUrl = rawInstanceUrl.startsWith('http') ? rawInstanceUrl : `https://${rawInstanceUrl}`;
   dcTokenExpiresAt    = Date.now() + (expires_in ? expires_in * 1000 : 7200_000) - 300_000;
 
   console.log('[dc-token] DC token obtained, instance_url:', cachedDcInstanceUrl);
