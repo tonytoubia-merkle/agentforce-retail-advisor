@@ -30,7 +30,8 @@ async function getDcToken() {
   const data = await res.json();
   const access_token = data.access_token;
   const instance_url = data.instance_url || SF_INSTANCE;
-  console.log('[save-skin-analysis] token ok, instance_url:', instance_url);
+  console.log('[save-skin-analysis] token response keys:', Object.keys(data).join(', '));
+  console.log('[save-skin-analysis] instance_url:', instance_url);
   return { access_token, instance_url };
 }
 
@@ -80,6 +81,7 @@ export default async function handler(req, res) {
 
     const record  = buildRecord(email, analysisResult, crmContactId);
     const ingestUrl = `${instance_url}/api/v1/ingest/sources/${SOURCE_API}/${OBJECT_NAME}`;
+    console.log('[save-skin-analysis] POST', ingestUrl);
 
     const ingestRes = await fetch(ingestUrl, {
       method:  'POST',

@@ -34,7 +34,7 @@ export default async function handler(req, res) {
     const token = await getToken();
 
     // Data Cloud SQL query API — synchronous for simple queries
-    const r = await fetch(`${SF_INSTANCE}/services/data/v61.0/ssot/queryRunResults`, {
+    const r = await fetch(`${SF_INSTANCE}/services/data/v60.0/ssot/queryRunResults`, {
       method:  'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body:    JSON.stringify({ sql }),
