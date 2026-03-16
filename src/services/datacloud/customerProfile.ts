@@ -145,7 +145,11 @@ export class DataCloudCustomerService {
       body:    JSON.stringify({ sql }),
     });
 
-    if (!res.ok) return [];
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}));
+      console.error('[dc-query] failed:', res.status, errBody);
+      return [];
+    }
     const result = await res.json();
 
     // DC SQL response: { data: { columns: [...], rows: [[...]] } }

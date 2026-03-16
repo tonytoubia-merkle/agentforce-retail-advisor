@@ -27,7 +27,10 @@ async function getDcToken() {
     throw new Error(`DC token request failed (${res.status}): ${text}`);
   }
 
-  const { access_token, instance_url } = await res.json();
+  const data = await res.json();
+  const access_token = data.access_token;
+  const instance_url = data.instance_url || SF_INSTANCE;
+  console.log('[save-skin-analysis] token ok, instance_url:', instance_url);
   return { access_token, instance_url };
 }
 
