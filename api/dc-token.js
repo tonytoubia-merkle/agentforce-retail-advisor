@@ -33,11 +33,16 @@ export async function getDcToken() {
       grant_type:         'urn:salesforce:grant-type:external:cdp',
       subject_token:      sfToken,
       subject_token_type: 'urn:ietf:params:oauth:token-type:access_token',
+      client_id:          CLIENT_ID,
+      client_secret:      CLIENT_SECRET,
     }).toString(),
   });
   if (!dcRes.ok) { const t = await dcRes.text(); throw new Error(`DC token exchange failed (${dcRes.status}): ${t}`); }
   const dcData = await dcRes.json();
   console.log('[dc-token] DC exchange response keys:', Object.keys(dcData).join(', '));
+  if (dcData.error) {
+    throw new Error(`DC token exchange error: ${dcData.error} — ${dcData.error_description}`);
+  }
 
   const dcToken       = dcData.access_token;
   // SF docs say the field is "instance_url"; some orgs return it as a bare hostname without scheme
