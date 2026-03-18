@@ -6,28 +6,47 @@ import { getDcToken } from './dc-token.js';
 const SOURCE_API  = process.env.VITE_DC_SOURCE_API_NAME;   // set in Vercel env + .env.local
 const OBJECT_NAME = process.env.VITE_DC_OBJECT_NAME || 'Skin_Analysis';
 
+// Whitelist of concern field prefixes that exist in the DC schema
+const CONCERN_KEYS = [
+  'acne', 'wrinkle', 'dark_circle', 'eye_bag', 'pore', 'spot',
+  'redness', 'texture', 'oiliness', 'hydration', 'firmness',
+  'radiance', 'sensitivity', 'uv_damage', 'uneven_tone',
+];
+
+// Normalize a concern label to a schema key (e.g. "Dark Circles" → "dark_circle")
+function normalizeConcernKey(label) {
+  const raw = label.replace(/[^a-z0-9]/gi, '_').toLowerCase().replace(/_+$/, '');
+  // Try exact match first, then singular (strip trailing 's')
+  if (CONCERN_KEYS.includes(raw)) return raw;
+  const singular = raw.replace(/s$/, '');
+  if (CONCERN_KEYS.includes(singular)) return singular;
+  return null; // unknown concern — skip
+}
+
 /** Flatten SkinAnalysisResult into a DC-friendly flat record. */
 function buildRecord(email, analysisResult, crmContactId) {
   const record = {
     email,
     ...(crmContactId && { crm_contact_id: crmContactId }),
     analysis_date:   analysisResult.analyzedAt,
-    overall_score:   analysisResult.overallScore,
-    skin_age:        analysisResult.skinAge,
+    overall_score:   Math.round(Number(analysisResult.overallScore)),
+    skin_age:        Math.round(Number(analysisResult.skinAge)),
     skin_type:       analysisResult.skinType,
     primary_concern: analysisResult.primaryConcern,
     source:          'web_skin_advisor',
   };
 
-  // Flatten each concern into {name}_score / {name}_severity
+  // Flatten each concern into {key}_score / {key}_severity — schema-keyed only
   if (Array.isArray(analysisResult.concerns)) {
     for (const c of analysisResult.concerns) {
-      const key = c.concern.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-      record[`${key}_score`]    = c.score;
+      const key = normalizeConcernKey(c.concern);
+      if (!key) { console.warn('[save-skin-analysis] unknown concern key, skipping:', c.concern); continue; }
+      record[`${key}_score`]    = Math.round(Number(c.score));
       record[`${key}_severity`] = c.severity;
     }
   }
 
+  console.log('[save-skin-analysis] record fields:', Object.keys(record).join(', '));
   return record;
 }
 
