@@ -12,6 +12,7 @@ import { AccountPage } from './AccountPage';
 import { AppointmentBooking } from './AppointmentBooking';
 import { EmailSignup } from './EmailSignup';
 import { ExitIntentOverlay } from './ExitIntentOverlay';
+import { RecommendationsCarousel } from './RecommendationsCarousel';
 import { useStore } from '@/contexts/StoreContext';
 import { useCustomer } from '@/contexts/CustomerContext';
 import { useBrowseTracking } from '@/hooks/useBrowseTracking';
@@ -139,6 +140,9 @@ export const StorefrontPage: React.FC<StorefrontPageProps> = ({
                 </div>
               </div>
             )}
+
+            {/* SF Personalization — Product Recommendations */}
+            <RecommendationsCarousel />
 
             {/* Featured/Best Sellers */}
             {featuredProducts.length > 0 && (

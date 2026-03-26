@@ -1016,6 +1016,7 @@ export interface PersonalizedProduct {
   name?: string;
   imageUrl?: string;
   subCategory?: string;
+  brand?: string;
   price?: number;
   [key: string]: unknown;  // catch-all for additional DMO fields
 }
@@ -1051,20 +1052,17 @@ export async function getProductRecommendations(): Promise<ProductRecommendation
     const attrs = result.attributes || result.payload || {};
     console.log('[sfp] Product_Recommendations attributes:', attrs);
 
-    // Try to extract products from various possible response shapes
-    // Shape 1: attrs.products (array)
-    // Shape 2: attrs.items (array)
-    // Shape 3: result.products (array)
-    // Shape 4: attrs contains individual product fields (single rec)
-    const rawProducts = attrs.products || attrs.items || result.products || result.items || [];
+    // Products live in result.data (array of ssot__ prefixed DMO records)
+    const rawProducts = result.data || attrs.products || attrs.items || result.products || [];
 
     const products: PersonalizedProduct[] = Array.isArray(rawProducts)
       ? rawProducts.map((p: Record<string, unknown>) => ({
-          productId: (p.Product_Id || p.productId || p.id || '') as string,
-          productSku: (p.Product_SKU || p.productSku || p.sku || '') as string,
-          name: (p.Product_Name || p.productName || p.name || '') as string,
-          imageUrl: (p.Primary_Product_Image_URL || p.imageUrl || p.image_url || '') as string,
-          subCategory: (p.Primary_Product_Sub_Category || p.subCategory || p.category || '') as string,
+          productId: (p['ssot__Id__c'] || p.Product_Id || p.productId || '') as string,
+          productSku: (p['ssot__ProductSKU__c'] || p['ssot__ProductCode__c'] || p.Product_SKU || '') as string,
+          name: (p['ssot__Name__c'] || p.Product_Name || p.name || '') as string,
+          imageUrl: (p['ssot__PrimaryProductImageURL__c'] || p.Primary_Product_Image_URL || '') as string,
+          subCategory: (p['ssot__PrimaryProductCategory__c'] || p.Primary_Product_Sub_Category || '') as string,
+          brand: (p['ssot__BrandId__c'] || p['ssot__ProductFamily__c'] || '') as string,
           price: (p.Price || p.price || 0) as number,
           ...p,
         }))
