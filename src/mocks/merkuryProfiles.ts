@@ -29,8 +29,8 @@ export interface MerkuryArchetype {
 export const MERKURY_ARCHETYPES: MerkuryArchetype[] = [
   {
     id: 'merkury-urban-clean',
-    merkuryId: 'MRK-UC-20001',
-    merkuryPid: 'PID-UC-20001',
+    merkuryId: 'MRK-SC-90210',
+    merkuryPid: 'PID-SC-90210',
     merkuryHid: 'HID-H001',  // Shares household with Male Grooming Minimalist
     label: 'Clean Beauty Urbanite',
     archetype: 'F 28-35 · $80-120k · SF Bay Area',
@@ -54,8 +54,8 @@ export const MERKURY_ARCHETYPES: MerkuryArchetype[] = [
   },
   {
     id: 'merkury-luxury-parent',
-    merkuryId: 'MRK-LP-20002',
-    merkuryPid: 'PID-LP-20002',
+    merkuryId: 'MRK-PS-75201',
+    merkuryPid: 'PID-PS-75201',
     merkuryHid: 'HID-H003',  // Shares household with Premium Retiree (mother/daughter)
     label: 'Luxury Suburban Parent',
     archetype: 'F 40-50 · $150-250k · Dallas Metro',
@@ -81,7 +81,7 @@ export const MERKURY_ARCHETYPES: MerkuryArchetype[] = [
     id: 'merkury-kbeauty-pro',
     merkuryId: 'MRK-KB-20003',
     merkuryPid: 'PID-KB-20003',
-    merkuryHid: 'HID-H004',  // Individual household
+    merkuryHid: 'HID-H004',  // Individual household (no CRM persona match — spare archetype)
     label: 'K-Beauty Professional',
     archetype: 'F 22-28 · $60-80k · Los Angeles',
     appendedProfile: {
@@ -106,7 +106,7 @@ export const MERKURY_ARCHETYPES: MerkuryArchetype[] = [
     id: 'merkury-premium-retiree',
     merkuryId: 'MRK-PR-20004',
     merkuryPid: 'PID-PR-20004',
-    merkuryHid: 'HID-H003',  // Shares household with Luxury Parent (mother/daughter)
+    merkuryHid: 'HID-H003',  // Shares household with Luxury Parent (mother/daughter) — spare archetype
     label: 'Premium Retiree',
     archetype: 'F 55-65 · $200k+ · Palm Beach',
     appendedProfile: {
@@ -129,8 +129,8 @@ export const MERKURY_ARCHETYPES: MerkuryArchetype[] = [
   },
   {
     id: 'merkury-budget-student',
-    merkuryId: 'MRK-BS-20005',
-    merkuryPid: 'PID-BS-20005',
+    merkuryId: 'MRK-JR-78701',
+    merkuryPid: 'PID-JR-78701',
     merkuryHid: 'HID-H005',  // Individual household (dorm/roommates)
     label: 'Budget-Conscious Student',
     archetype: 'F 18-22 · <$30k · College Town',
@@ -154,8 +154,8 @@ export const MERKURY_ARCHETYPES: MerkuryArchetype[] = [
   },
   {
     id: 'merkury-male-minimal',
-    merkuryId: 'MRK-MM-20006',
-    merkuryPid: 'PID-MM-20006',
+    merkuryId: 'MRK-DK-60614',
+    merkuryPid: 'PID-DK-60614',
     merkuryHid: 'HID-H001',  // Shares household with Clean Beauty Urbanite (couple)
     label: 'Male Grooming Minimalist',
     archetype: 'M 30-40 · $100-150k · Chicago',
@@ -179,8 +179,8 @@ export const MERKURY_ARCHETYPES: MerkuryArchetype[] = [
   },
   {
     id: 'merkury-wellness-mom',
-    merkuryId: 'MRK-WM-20007',
-    merkuryPid: 'PID-WM-20007',
+    merkuryId: 'MRK-MT-30302',
+    merkuryPid: 'PID-MT-30302',
     merkuryHid: 'HID-H002',  // Shares household with Active Outdoors (partners)
     label: 'Wellness Mom',
     archetype: 'F 35-45 · $120-180k · Suburban',
@@ -206,7 +206,7 @@ export const MERKURY_ARCHETYPES: MerkuryArchetype[] = [
     id: 'merkury-genz-social',
     merkuryId: 'MRK-GZ-20008',
     merkuryPid: 'PID-GZ-20008',
-    merkuryHid: 'HID-H006',  // Individual household
+    merkuryHid: 'HID-H006',  // Individual household — spare archetype
     label: 'Gen Z Social Beauty',
     archetype: 'NB 18-25 · $30-50k · NYC',
     appendedProfile: {
@@ -229,8 +229,8 @@ export const MERKURY_ARCHETYPES: MerkuryArchetype[] = [
   },
   {
     id: 'merkury-antiaging-pro',
-    merkuryId: 'MRK-AP-20009',
-    merkuryPid: 'PID-AP-20009',
+    merkuryId: 'MRK-AP-10001',
+    merkuryPid: 'PID-AP-10001',
     merkuryHid: 'HID-H007',  // Individual household
     label: 'Anti-Aging Professional',
     archetype: 'F 45-55 · $150-200k · Boston',
@@ -254,8 +254,8 @@ export const MERKURY_ARCHETYPES: MerkuryArchetype[] = [
   },
   {
     id: 'merkury-active-outdoor',
-    merkuryId: 'MRK-AO-20010',
-    merkuryPid: 'PID-AO-20010',
+    merkuryId: 'MRK-MW-11201',
+    merkuryPid: 'PID-MW-11201',
     merkuryHid: 'HID-H002',  // Shares household with Wellness Mom (partners)
     label: 'Active Outdoors SPF',
     archetype: 'M 25-35 · $70-100k · Denver',

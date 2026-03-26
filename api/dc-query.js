@@ -13,12 +13,13 @@ export default async function handler(req, res) {
   try {
     const { access_token: token, instance_url: dcInstance } = await getDcToken();
 
-    // Data Cloud SQL query API — native DC path matches /api/v1/ingest pattern
-    console.log('[dc-query] querying:', `${dcInstance}/api/v1/query`);
-    const r = await fetch(`${dcInstance}/api/v1/query`, {
+    // Data Cloud SQL query — synchronous via CDP Query Service
+    const queryUrl = `${dcInstance}/services/data/v60.0/cdp/query`;
+    console.log('[dc-query] querying:', queryUrl);
+    const r = await fetch(queryUrl, {
       method:  'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ sql }),
+      body:    JSON.stringify({ query: sql }),
     });
 
     if (!r.ok) {

@@ -3,8 +3,9 @@
 // Step 2: SF token → DC JWT via urn:salesforce:grant-type:external:cdp
 
 const SF_INSTANCE   = process.env.VITE_AGENTFORCE_INSTANCE_URL || 'https://me1769724439764.my.salesforce.com';
-const CLIENT_ID     = process.env.VITE_AGENTFORCE_CLIENT_ID;
-const CLIENT_SECRET = process.env.VITE_AGENTFORCE_CLIENT_SECRET;
+// Dedicated DC connected app — separate from the Agentforce app to avoid scope conflicts
+const CLIENT_ID     = process.env.DC_CLIENT_ID     || process.env.VITE_AGENTFORCE_CLIENT_ID;
+const CLIENT_SECRET = process.env.DC_CLIENT_SECRET || process.env.VITE_AGENTFORCE_CLIENT_SECRET;
 
 let cachedDcToken       = null;
 let cachedDcInstanceUrl = null;
