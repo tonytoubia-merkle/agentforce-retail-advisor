@@ -299,18 +299,73 @@ public with sharing class JourneyApprovalService {
             // Update products JSON
             approval.Recommended_Products__c = req.productsJson;
 
-            // Rebuild prompt: prefer updating existing AI-generated prompt with new product names
-            // over regenerating from static templates
-            JourneyPromptBuilder.PromptResult promptResult = JourneyPromptBuilder.rebuildPromptWithProducts(
-                req.productsJson,
-                approval.Event_Summary__c,
-                approval.Event_Type__c,
-                approval.Firefly_Prompt__c  // pass existing prompt for product name swap
-            );
+            // ── Prompt generation strategy (3-tier) ──
+            // 1. If existing AI prompt → swap product names in-place (fast, preserves context)
+            // 2. If no existing prompt → call AI to generate a contextual prompt (handles any event type)
+            // 3. If AI fails → fall back to static templates
+            String newPrompt = null;
 
-            approval.Firefly_Prompt__c = promptResult.prompt;
+            if (String.isNotBlank(approval.Firefly_Prompt__c)) {
+                // Tier 1: Swap product names in existing AI-generated prompt
+                JourneyPromptBuilder.PromptResult promptResult = JourneyPromptBuilder.rebuildPromptWithProducts(
+                    req.productsJson,
+                    approval.Event_Summary__c,
+                    approval.Event_Type__c,
+                    approval.Firefly_Prompt__c
+                );
+                newPrompt = promptResult.prompt;
+            }
 
-            // Also rebuild the email body with new product names
+            if (String.isBlank(newPrompt)) {
+                // Tier 2: Call AI to generate a contextual prompt (handles any event type dynamically)
+                try {
+                    CampaignAgentService.BriefGenerationRequest aiReq = new CampaignAgentService.BriefGenerationRequest();
+                    aiReq.eventType = approval.Event_Type__c;
+                    aiReq.eventDescription = approval.Event_Summary__c;
+                    aiReq.suggestedProducts = req.productsJson;
+
+                    // Get contact name for personalization
+                    if (approval.Contact__c != null) {
+                        try {
+                            Contact c = [SELECT FirstName FROM Contact WHERE Id = :approval.Contact__c LIMIT 1];
+                            aiReq.contactName = c.FirstName;
+                        } catch (Exception e) { /* use default */ }
+                    }
+
+                    List<CampaignAgentService.BriefGenerationResult> aiResults =
+                        CampaignAgentService.generateBriefs(new List<CampaignAgentService.BriefGenerationRequest>{ aiReq });
+
+                    if (!aiResults.isEmpty() && aiResults[0].success && String.isNotBlank(aiResults[0].fireflyPromptSuggestion)) {
+                        newPrompt = aiResults[0].fireflyPromptSuggestion;
+                        System.debug('[updateProducts] AI-generated image prompt for: ' + approval.Event_Type__c);
+
+                        // Also update email content if AI generated better versions
+                        if (String.isNotBlank(aiResults[0].suggestedBody)) {
+                            approval.Suggested_Body__c = aiResults[0].suggestedBody;
+                        }
+                        if (String.isNotBlank(aiResults[0].suggestedSubject)) {
+                            approval.Suggested_Subject__c = aiResults[0].suggestedSubject;
+                        }
+                    }
+                } catch (Exception aiEx) {
+                    System.debug(LoggingLevel.WARN, '[updateProducts] AI prompt generation failed, using templates: ' + aiEx.getMessage());
+                }
+            }
+
+            if (String.isBlank(newPrompt)) {
+                // Tier 3: Fall back to static templates
+                JourneyPromptBuilder.PromptResult promptResult = JourneyPromptBuilder.rebuildPromptWithProducts(
+                    req.productsJson,
+                    approval.Event_Summary__c,
+                    approval.Event_Type__c,
+                    null  // no existing prompt — generates from templates
+                );
+                newPrompt = promptResult.prompt;
+            }
+
+            approval.Firefly_Prompt__c = newPrompt;
+
+            // Also rebuild the email body with new product names (if AI didn't already update it)
             String newBody = rebuildEmailBodyWithProducts(
                 approval.Suggested_Body__c,
                 req.productsJson,
