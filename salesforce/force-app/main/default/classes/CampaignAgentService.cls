@@ -262,7 +262,11 @@ public with sharing class CampaignAgentService {
         prompt += '1. A brief marketing campaign summary (2-3 sentences)\n';
         prompt += '2. An email subject line (under 60 characters)\n';
         prompt += '3. Email body content (personalized, warm, celebratory tone)\n';
-        prompt += '4. A suggested image prompt for generating a hero banner\n';
+        prompt += '4. Image Prompt: A vivid scene description for generating a hero banner image. ' +
+                  'Describe the specific setting, mood, lighting, and atmosphere that matches the event context ' +
+                  '(e.g. destination, season, occasion). Include product placement guidance. ' +
+                  'Do NOT use generic descriptions — make it specific to THIS customer and THIS event. ' +
+                  'IMPORTANT: Start this section with exactly "Image Prompt:" as the label.\n';
         prompt += '\nBRAND: BEAUTÉ Beauty (luxury skincare, soft rose gold aesthetic)\n';
         prompt += 'TONE: Personal, celebratory, helpful, elegant\n';
 
@@ -303,9 +307,14 @@ public with sharing class CampaignAgentService {
             }
         }
 
-        // Extract image prompt
-        if (lower.contains('image prompt:') || lower.contains('hero banner:') || lower.contains('image suggestion:')) {
-            String imagePrompt = extractSection(response, new List<String>{'Image Prompt:', 'Hero Banner:', 'Image Suggestion:'});
+        // Extract image prompt — flexible matching for various AI label formats
+        if (lower.contains('image prompt:') || lower.contains('hero banner:') || lower.contains('image suggestion:') ||
+            lower.contains('image description:') || lower.contains('visual prompt:') || lower.contains('banner prompt:') ||
+            lower.contains('scene description:') || lower.contains('suggested image:') || lower.contains('hero image:')) {
+            String imagePrompt = extractSection(response, new List<String>{
+                'Image Prompt:', 'Hero Banner:', 'Image Suggestion:', 'Image Description:',
+                'Visual Prompt:', 'Banner Prompt:', 'Scene Description:', 'Suggested Image:', 'Hero Image:'
+            });
             if (String.isNotBlank(imagePrompt)) {
                 parsed.put('imagePrompt', imagePrompt);
             }

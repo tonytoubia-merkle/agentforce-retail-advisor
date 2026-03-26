@@ -1206,6 +1206,49 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
             if (unit == 'month') return Date.today().addMonths(num);
         }
 
+        // Seasonal expressions — approximate to mid-season dates in current/next year
+        Integer currentYear = Date.today().year();
+        Integer currentMonth = Date.today().month();
+
+        if (lower.contains('this spring') || lower.contains('in the spring') || lower.contains('spring')) {
+            Date springDate = Date.newInstance(currentYear, 4, 15);  // mid-April
+            return springDate < Date.today() ? Date.newInstance(currentYear + 1, 4, 15) : springDate;
+        }
+        if (lower.contains('this summer') || lower.contains('in the summer') || lower.contains('summer')) {
+            // "end of summer" → late August, otherwise mid-July
+            Date summerDate;
+            if (lower.contains('end of summer') || lower.contains('late summer')) {
+                summerDate = Date.newInstance(currentYear, 8, 20);
+            } else if (lower.contains('early summer') || lower.contains('start of summer')) {
+                summerDate = Date.newInstance(currentYear, 6, 15);
+            } else {
+                summerDate = Date.newInstance(currentYear, 7, 15);
+            }
+            return summerDate < Date.today() ? summerDate.addMonths(12) : summerDate;
+        }
+        if (lower.contains('this fall') || lower.contains('this autumn') || lower.contains('in the fall') || lower.contains('fall') || lower.contains('autumn')) {
+            Date fallDate = Date.newInstance(currentYear, 10, 15);  // mid-October
+            return fallDate < Date.today() ? Date.newInstance(currentYear + 1, 10, 15) : fallDate;
+        }
+        if (lower.contains('this winter') || lower.contains('in the winter')) {
+            Date winterDate = Date.newInstance(currentYear, 12, 15);  // mid-December
+            return winterDate < Date.today() ? Date.newInstance(currentYear + 1, 12, 15) : winterDate;
+        }
+
+        // Named months: "in June", "this July", etc.
+        Map<String, Integer> monthNames = new Map<String, Integer>{
+            'january' => 1, 'february' => 2, 'march' => 3, 'april' => 4,
+            'may' => 5, 'june' => 6, 'july' => 7, 'august' => 8,
+            'september' => 9, 'october' => 10, 'november' => 11, 'december' => 12
+        };
+        for (String monthName : monthNames.keySet()) {
+            if (lower.contains(monthName)) {
+                Integer monthNum = monthNames.get(monthName);
+                Date monthDate = Date.newInstance(currentYear, monthNum, 15);
+                return monthDate < Date.today() ? Date.newInstance(currentYear + 1, monthNum, 15) : monthDate;
+            }
+        }
+
         return null;
     }
 

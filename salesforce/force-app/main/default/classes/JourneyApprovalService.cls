@@ -299,11 +299,13 @@ public with sharing class JourneyApprovalService {
             // Update products JSON
             approval.Recommended_Products__c = req.productsJson;
 
-            // Rebuild prompt with new products
+            // Rebuild prompt: prefer updating existing AI-generated prompt with new product names
+            // over regenerating from static templates
             JourneyPromptBuilder.PromptResult promptResult = JourneyPromptBuilder.rebuildPromptWithProducts(
                 req.productsJson,
                 approval.Event_Summary__c,
-                approval.Event_Type__c
+                approval.Event_Type__c,
+                approval.Firefly_Prompt__c  // pass existing prompt for product name swap
             );
 
             approval.Firefly_Prompt__c = promptResult.prompt;

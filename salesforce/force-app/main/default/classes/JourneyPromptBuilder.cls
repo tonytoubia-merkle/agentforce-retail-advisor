@@ -124,7 +124,7 @@ public with sharing class JourneyPromptBuilder {
         String contextLower = eventContext != null ? eventContext.toLowerCase() : '';
         String normalizedType = normalizeEventType(eventType);
 
-        // Event type templates
+        // Event type templates — used as fallback when AI-generated prompt is unavailable
         Map<String, String> templates = new Map<String, String>{
             'travel' => 'Elegant open suitcase on luxury hotel bed, {products} beautifully arranged inside, ' +
                         'destination cityscape through window, soft natural light, jet-set lifestyle photography',
@@ -141,12 +141,23 @@ public with sharing class JourneyPromptBuilder {
             'anniversary' => 'Romantic celebration scene, {products} beside champagne flutes, ' +
                              'rose petals, candlelight, elegant marble surface, intimate atmosphere',
 
+            'career' => 'Modern executive getting-ready scene, {products} arranged on sleek glass vanity, ' +
+                        'city skyline through floor-to-ceiling window, morning golden hour light, polished professional aesthetic',
+
+            'graduation' => 'Celebratory milestone scene, {products} arranged on elegant dresser, ' +
+                            'fresh flowers, confetti accents, bright optimistic natural light, youthful elegance',
+
+            'relocation' => 'Fresh start in a new space, {products} arranged on modern bathroom counter, ' +
+                            'bright airy new-home atmosphere, optimistic morning light through large window',
+
+            'retirement' => 'Luxurious self-care retreat scene, {products} on elegant spa tray, ' +
+                            'plush robe draped nearby, orchid flowers, warm ambient candlelight, peaceful indulgent atmosphere',
+
             'life-event' => 'Lifestyle flat-lay arrangement, {products} beautifully styled, ' +
                             'clean minimalist background, natural lighting, premium product photography'
         };
 
-        // For specific event types (wedding, birthday, anniversary, baby), use the
-        // event template directly — destination keywords should NOT override these
+        // For specific event types, use the event template directly
         if (normalizedType != 'travel' && normalizedType != 'life-event') {
             String template = templates.get(normalizedType);
             if (template != null) {
@@ -228,13 +239,24 @@ public with sharing class JourneyPromptBuilder {
     /**
      * Rebuild prompt with a custom list of products (for marketer edits).
      * Called when marketer changes product selection in the approval card.
+     * Overload without existing prompt — generates from templates.
+     */
+    public static PromptResult rebuildPromptWithProducts(String productsJson, String eventContext, String eventType) {
+        return rebuildPromptWithProducts(productsJson, eventContext, eventType, null);
+    }
+
+    /**
+     * Rebuild prompt with a custom list of products (for marketer edits).
+     * When an existing AI-generated prompt is provided, swaps product names
+     * in that prompt instead of regenerating from static templates.
      *
      * @param productsJson JSON array of products from LWC
      * @param eventContext Brief description of the event
      * @param eventType Type of event (travel, birthday, wedding, etc.)
+     * @param existingPrompt The current AI-generated Firefly prompt (if any)
      * @return PromptResult with new prompt text
      */
-    public static PromptResult rebuildPromptWithProducts(String productsJson, String eventContext, String eventType) {
+    public static PromptResult rebuildPromptWithProducts(String productsJson, String eventContext, String eventType, String existingPrompt) {
         PromptResult result = new PromptResult();
 
         List<ProductRecommendation> products = new List<ProductRecommendation>();
@@ -265,8 +287,37 @@ public with sharing class JourneyPromptBuilder {
         // Store as JSON
         result.recommendedProductsJson = productsJson;
 
-        // Build prompt with new products
-        result.prompt = buildPromptText(eventContext, eventType, products);
+        // Build new product names phrase
+        List<String> productNames = new List<String>();
+        for (ProductRecommendation p : products) {
+            productNames.add(p.name);
+        }
+        String newProductsPhrase = String.join(productNames, ', ');
+
+        // If we have an existing AI-generated prompt, swap product names in it
+        // instead of regenerating from static templates
+        if (String.isNotBlank(existingPrompt)) {
+            // Remove old product names — they appear as a comma-separated list
+            // between scene description fragments. Replace with new product names.
+            // Strategy: find the longest comma-separated sequence of capitalized words
+            // and replace it, OR just append product names to the existing scene.
+            String updated = existingPrompt;
+
+            // Try to find and replace product names pattern (Title Case words separated by commas)
+            // e.g., "Hydra-Calm Sensitive Moisturizer, Radiance Renewal Serum, Cloud Cream Cleanser"
+            Pattern productPattern = Pattern.compile('(?:[A-Z][\\w-]+(?: [A-Z][\\w-]+)*(?:, [A-Z][\\w-]+(?: [A-Z][\\w-]+)*){1,})');
+            Matcher m = productPattern.matcher(updated);
+            if (m.find()) {
+                updated = updated.substring(0, m.start()) + newProductsPhrase + updated.substring(m.end());
+                result.prompt = updated;
+            } else {
+                // No product names found in existing prompt — append
+                result.prompt = existingPrompt + ', featuring ' + newProductsPhrase;
+            }
+        } else {
+            // No existing prompt — generate from templates
+            result.prompt = buildPromptText(eventContext, eventType, products);
+        }
 
         // Extract reference image URLs
         result.referenceImageUrls = new List<String>();
@@ -506,11 +557,15 @@ public with sharing class JourneyPromptBuilder {
     private static String normalizeEventType(String eventType) {
         if (String.isBlank(eventType)) return 'life-event';
         String lower = eventType.toLowerCase();
-        if (lower.contains('travel') || lower.contains('trip') || lower.contains('vacation')) return 'travel';
+        if (lower.contains('travel') || lower.contains('trip') || lower.contains('vacation') || lower.contains('flight')) return 'travel';
         if (lower.contains('wedding') || lower.contains('bridal')) return 'wedding';
         if (lower.contains('birthday')) return 'birthday';
         if (lower.contains('anniversary')) return 'anniversary';
-        if (lower.contains('baby') || lower.contains('pregnant')) return 'baby';
+        if (lower.contains('baby') || lower.contains('pregnant') || lower.contains('maternity')) return 'baby';
+        if (lower.contains('career') || lower.contains('new job') || lower.contains('promotion') || lower.contains('interview')) return 'career';
+        if (lower.contains('graduation') || lower.contains('prom')) return 'graduation';
+        if (lower.contains('relocation') || lower.contains('moving') || lower.contains('new home')) return 'relocation';
+        if (lower.contains('retirement')) return 'retirement';
         return 'life-event';
     }
 
