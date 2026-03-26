@@ -210,7 +210,8 @@ public with sharing class FireflyApexService {
         Map<String, Object> requestBody = new Map<String, Object>{
             'products' => products,
             'prompt' => safePrompt,
-            'eventType' => eventType
+            'eventType' => eventType,
+            'strategy' => 'decoupled'
         };
 
         req.setBody(JSON.serialize(requestBody));
