@@ -152,9 +152,14 @@ export class DataCloudCustomerService {
     }
     const result = await res.json();
 
-    // DC SQL response: { data: { columns: [...], rows: [[...]] } }
-    const columns: string[] = result?.data?.columns ?? (result?.metadata ? Object.keys(result.metadata) : []);
-    const rows: unknown[][] = result?.data?.rows ?? [];
+    // DC SQL response: { data: [{ field: value }, ...], metadata: { field: { type, ... } } }
+    // Handle both array-of-objects format and legacy columnar format
+    const dataArray = Array.isArray(result?.data) ? result.data as Record<string, unknown>[] : [];
+    if (!dataArray.length) return [];
+
+    // Normalize to a simple getter per row
+    const columns: string[] = Object.keys(dataArray[0]);
+    const rows: unknown[][] = dataArray.map(row => columns.map(col => row[col]));
     if (!rows.length || !columns.length) return [];
 
     const CONCERN_KEYS = [
