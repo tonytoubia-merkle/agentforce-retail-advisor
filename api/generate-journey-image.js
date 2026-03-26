@@ -609,6 +609,236 @@ function buildEnhancedPrompt(basePrompt, eventType) {
   return fullPrompt.length > 1000 ? fullPrompt.substring(0, 1000) : fullPrompt;
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// STRATEGY 2: Decoupled Background + Product Composite
+//
+// 1. Generate background via Firefly Text to Image (no products)
+// 2. Download the generated background
+// 3. Composite products onto it using Sharp (deterministic placement)
+// 4. (Optional future) Photoshop API Remove Background for products
+// 5. (Optional future) Generative Fill for edge blending
+//
+// Advantages over Object Composite:
+// - Background and product placement are independent (retry each)
+// - Product placement is deterministic (no AI guessing)
+// - Background generation is higher quality (not constrained by composite)
+// - Each step can fail/retry independently
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Generate a scene background via Firefly Text to Image (async).
+ * Returns the presigned URL of the generated background image.
+ * No products — just the scene.
+ */
+async function generateBackground(prompt, token, clientId) {
+  // Background prompt: emphasize empty scene, no products
+  const bgPrompt = `${prompt}. Empty scene with no products, bottles, or cosmetics. Leave lower center clear for product placement. Photorealistic luxury editorial.`;
+  const truncatedPrompt = bgPrompt.length > 1000 ? bgPrompt.substring(0, 1000) : bgPrompt;
+
+  const requestBody = JSON.stringify({
+    prompt: truncatedPrompt,
+    contentClass: 'photo',
+    size: {
+      width: OUTPUT_WIDTH,
+      height: OUTPUT_HEIGHT,
+    },
+    numVariations: 1,
+  });
+
+  console.log('[generate-journey-image] [decoupled] Generating background...');
+
+  const result = await httpsRequest({
+    hostname: 'firefly-api.adobe.io',
+    port: 443,
+    path: '/v3/images/generate-async',
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'x-api-key': clientId,
+      'x-model-version': 'image4_standard',
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Content-Length': Buffer.byteLength(requestBody),
+    },
+  }, requestBody);
+
+  if (result.statusCode !== 202 && result.statusCode !== 200) {
+    throw new Error(`Firefly background generation failed: ${result.statusCode} - ${result.body.toString()}`);
+  }
+
+  const data = JSON.parse(result.body.toString());
+
+  if (data.jobId) {
+    console.log(`[generate-journey-image] [decoupled] Background job: ${data.jobId}`);
+    return pollFireflyJob(data.jobId, token, clientId);
+  }
+
+  const imageUrl = data.outputs?.[0]?.image?.url
+    || data.outputs?.[0]?.image?.presignedUrl
+    || data.images?.[0]?.url;
+  if (imageUrl) return imageUrl;
+
+  throw new Error('Firefly background returned no jobId or image URL');
+}
+
+/**
+ * Download image from a presigned URL and return as Buffer.
+ */
+async function downloadGeneratedImage(url) {
+  console.log('[generate-journey-image] [decoupled] Downloading generated background...');
+  const parsedUrl = new URL(url);
+  const result = await httpsRequest({
+    hostname: parsedUrl.hostname,
+    port: 443,
+    path: parsedUrl.pathname + parsedUrl.search,
+    method: 'GET',
+    headers: { 'User-Agent': 'JourneyImageGenerator/1.0' },
+  });
+
+  if (result.statusCode !== 200) {
+    throw new Error(`Background download failed: ${result.statusCode}`);
+  }
+
+  console.log(`[generate-journey-image] [decoupled] Background: ${result.body.length} bytes`);
+  return result.body;
+}
+
+/**
+ * Composite product images onto a generated background.
+ * Uses the same layout logic as compositeProducts() but places onto a real background
+ * instead of a transparent canvas.
+ *
+ * Product placement zones by channel:
+ *   Email hero (1344x768): products in lower 50%, centered horizontally
+ *   SMS (1:1):             products in lower 60%, centered
+ *   Push (small):          single hero product, centered
+ */
+async function compositeProductsOntoBackground(backgroundBuffer, products) {
+  // Load background and get dimensions
+  const bgMetadata = await sharp(backgroundBuffer).metadata();
+  const bgWidth = bgMetadata.width || OUTPUT_WIDTH;
+  const bgHeight = bgMetadata.height || OUTPUT_HEIGHT;
+
+  // Scale product positions to background dimensions
+  const scaleX = bgWidth / COMPOSITE_SIZE;
+  const scaleY = bgHeight / COMPOSITE_SIZE;
+
+  // Use same layout engine as the Object Composite path
+  const positions = getProductPositions(products.length);
+
+  const productLayers = [];
+  for (let i = 0; i < products.length && i < positions.length; i++) {
+    try {
+      const imageBuffer = await downloadImage(products[i].imageUrl);
+      const pos = positions[i];
+
+      // Scale size to background dimensions (use the smaller scale to maintain aspect)
+      const scaledSize = Math.floor(pos.size * Math.min(scaleX, scaleY));
+
+      const resizedImage = await sharp(imageBuffer)
+        .resize(scaledSize, scaledSize, {
+          fit: 'contain',
+          background: { r: 0, g: 0, b: 0, alpha: 0 },
+        })
+        .png()
+        .toBuffer();
+
+      const edgeSoftened = await softProductEdges(resizedImage, scaledSize);
+
+      // Scale position to background coordinates
+      const scaledX = Math.round(pos.x * scaleX);
+      const scaledY = Math.round(pos.y * scaleY);
+
+      productLayers.push({
+        input: edgeSoftened,
+        left: Math.max(0, Math.min(scaledX, bgWidth - scaledSize)),
+        top: Math.max(0, Math.min(scaledY, bgHeight - scaledSize)),
+        zIndex: pos.zIndex,
+        productName: products[i].name,
+      });
+    } catch (err) {
+      console.error(`[generate-journey-image] [decoupled] Failed to process product ${i}:`, err.message);
+    }
+  }
+
+  if (productLayers.length === 0) {
+    throw new Error('No product images could be processed for compositing');
+  }
+
+  // Sort by z-index (back to front)
+  productLayers.sort((a, b) => a.zIndex - b.zIndex);
+
+  console.log('[generate-journey-image] [decoupled] Compositing products onto background:');
+  productLayers.forEach((p, i) => {
+    console.log(`  [${i}] z:${p.zIndex} pos:(${p.left},${p.top}) "${p.productName}"`);
+  });
+
+  // Composite products onto background
+  const finalBuffer = await sharp(backgroundBuffer)
+    .composite(productLayers.map(p => ({
+      input: p.input,
+      left: p.left,
+      top: p.top,
+    })))
+    .jpeg({ quality: 90 }) // JPEG for smaller file size (no transparency needed)
+    .toBuffer();
+
+  console.log(`[generate-journey-image] [decoupled] Final image: ${finalBuffer.length} bytes`);
+  return { buffer: finalBuffer, compositedCount: productLayers.length };
+}
+
+/**
+ * (Optional / Future) Remove background from a product image using Photoshop API.
+ * Useful when product images don't have transparent backgrounds.
+ *
+ * Requires: Photoshop API credentials (same Adobe IMS token)
+ * Endpoint: POST https://image.adobe.io/sensei/cutout
+ *
+ * Currently unused — all products already have transparent backgrounds.
+ * Preserved as a documented pathway for future use.
+ */
+// async function removeProductBackground(imageBuffer, token, clientId) {
+//   // 1. Upload to Photoshop API storage
+//   const uploadResult = await httpsRequest({
+//     hostname: 'image.adobe.io',
+//     port: 443,
+//     path: '/pie/psdService/text',  // or appropriate endpoint
+//     method: 'POST',
+//     headers: {
+//       'Authorization': `Bearer ${token}`,
+//       'x-api-key': clientId,
+//       'Content-Type': 'image/png',
+//     },
+//   }, imageBuffer);
+//
+//   // 2. Call Remove Background
+//   // POST https://image.adobe.io/sensei/cutout
+//   // Body: { input: { href: uploadUrl, storage: 'external' } }
+//
+//   // 3. Poll for result and download
+//   // Returns: PNG with transparent background
+// }
+
+/**
+ * Full decoupled workflow: Background → Download → Composite Products
+ * Returns: { buffer: Buffer, compositedCount: number, backgroundUrl: string }
+ */
+async function decoupledGenerate(products, prompt, eventType, token, clientId) {
+  const enhancedPrompt = buildEnhancedPrompt(prompt, eventType);
+
+  // Step 1: Generate background (no products)
+  const backgroundUrl = await generateBackground(enhancedPrompt, token, clientId);
+  console.log(`[generate-journey-image] [decoupled] Background URL: ${backgroundUrl.substring(0, 80)}...`);
+
+  // Step 2: Download the generated background
+  const backgroundBuffer = await downloadGeneratedImage(backgroundUrl);
+
+  // Step 3: Composite products onto background
+  const { buffer: finalBuffer, compositedCount } = await compositeProductsOntoBackground(backgroundBuffer, products);
+
+  return { buffer: finalBuffer, compositedCount, backgroundUrl };
+}
+
 /**
  * Read request body as Buffer.
  */
@@ -634,7 +864,9 @@ export default async function handler(req, res) {
 
   try {
     const body = await readBody(req);
-    const { products, prompt, eventType, debugComposite } = JSON.parse(body.toString());
+    const { products, prompt, eventType, debugComposite, strategy: requestedStrategy } = JSON.parse(body.toString());
+    // strategy: 'composite' (default, existing Object Composite) or 'decoupled' (new Background + Product overlay)
+    const strategy = requestedStrategy || 'composite';
 
     // Validate input
     if (!products || !Array.isArray(products) || products.length === 0) {
@@ -666,18 +898,12 @@ export default async function handler(req, res) {
     console.log('[generate-journey-image] Getting Firefly token...');
     const token = await getFireflyToken(clientId, clientSecret);
 
-    const enhancedPrompt = buildEnhancedPrompt(prompt, eventType);
-    let imageUrl;
-    let usedFallback = false;
+    console.log(`[generate-journey-image] Strategy: ${strategy}`);
 
-    // Create the product composite
-    console.log('[generate-journey-image] Compositing products...');
-    const { buffer: compositeBuffer, compositedCount } = await compositeProducts(products);
-    console.log(`[generate-journey-image] Composite created: ${compositeBuffer.length} bytes, ${compositedCount}/${products.length} products`);
-
-    // Debug mode: return the composite as base64 without calling Firefly
+    // ─── Debug mode: return product composite as base64 ──────────
     if (debugComposite) {
       console.log('[generate-journey-image] DEBUG MODE: Returning composite image only');
+      const { buffer: compositeBuffer, compositedCount } = await compositeProducts(products);
       const compositeBase64 = compositeBuffer.toString('base64');
       const result = JSON.stringify({
         success: true,
@@ -689,24 +915,77 @@ export default async function handler(req, res) {
       return res.end(result);
     }
 
-    try {
-      // Upload product composite then generate scene around it
-      console.log('[generate-journey-image] Uploading to Firefly...');
-      const uploadId = await uploadToFirefly(compositeBuffer, token, clientId);
-      console.log(`[generate-journey-image] Upload ID: ${uploadId}`);
+    let imageUrl;
+    let usedFallback = false;
+    let compositedCount = 0;
 
-      console.log('[generate-journey-image] Enhanced prompt:', enhancedPrompt);
-      imageUrl = await generateObjectComposite(uploadId, enhancedPrompt, token, clientId);
-      console.log('[generate-journey-image] Object Composite SUCCEEDED - products should be in the output');
-    } catch (compositeErr) {
-      // Fallback to Generate API if Object Composite fails
-      console.log(`[generate-journey-image] ⚠️ OBJECT COMPOSITE FAILED: ${compositeErr.message}`);
-      console.log('[generate-journey-image] ⚠️ Falling back to Generate API - PRODUCTS WILL NOT BE IN OUTPUT');
-      imageUrl = await generateImageFallback(enhancedPrompt, token, clientId);
-      usedFallback = true;
+    if (strategy === 'decoupled') {
+      // ─── STRATEGY: Decoupled Background + Product Overlay ────
+      // 1. Firefly generates background (no products)
+      // 2. Sharp composites products onto background (deterministic)
+      // Products are ALWAYS in the output — no fallback needed
+      console.log('[generate-journey-image] Using DECOUPLED strategy (Background + Product Overlay)');
+
+      const { buffer: finalBuffer, compositedCount: count, backgroundUrl } =
+        await decoupledGenerate(products, prompt, eventType, token, clientId);
+      compositedCount = count;
+
+      // Upload final composited image to Firefly storage for a stable URL
+      console.log('[generate-journey-image] [decoupled] Uploading final image to Firefly storage...');
+      const finalUploadId = await uploadToFirefly(finalBuffer, token, clientId);
+
+      // The upload returns an ID, but we need a URL. Use the background URL
+      // as the response URL and note the final image is the composited version.
+      // For now, convert to base64 data URL as the final output.
+      const base64 = finalBuffer.toString('base64');
+      imageUrl = `data:image/jpeg;base64,${base64}`;
+
+      console.log(`[generate-journey-image] [decoupled] Complete: ${count} products composited onto AI background`);
+
+    } else {
+      // ─── STRATEGY: Object Composite (existing) ───────────────
+      // Single Firefly call generates scene around product composite
+      console.log('[generate-journey-image] Using COMPOSITE strategy (Object Composite)');
+
+      const enhancedPrompt = buildEnhancedPrompt(prompt, eventType);
+
+      // Create the product composite
+      console.log('[generate-journey-image] Compositing products...');
+      const { buffer: compositeBuffer, compositedCount: count } = await compositeProducts(products);
+      compositedCount = count;
+      console.log(`[generate-journey-image] Composite created: ${compositeBuffer.length} bytes, ${count}/${products.length} products`);
+
+      try {
+        // Upload product composite then generate scene around it
+        console.log('[generate-journey-image] Uploading to Firefly...');
+        const uploadId = await uploadToFirefly(compositeBuffer, token, clientId);
+        console.log(`[generate-journey-image] Upload ID: ${uploadId}`);
+
+        console.log('[generate-journey-image] Enhanced prompt:', enhancedPrompt);
+        imageUrl = await generateObjectComposite(uploadId, enhancedPrompt, token, clientId);
+        console.log('[generate-journey-image] Object Composite SUCCEEDED - products should be in the output');
+      } catch (compositeErr) {
+        // Fallback: try decoupled strategy before giving up to text-only
+        console.log(`[generate-journey-image] Object Composite FAILED: ${compositeErr.message}`);
+        console.log('[generate-journey-image] Falling back to DECOUPLED strategy...');
+        try {
+          const { buffer: finalBuffer, compositedCount: fallbackCount } =
+            await decoupledGenerate(products, prompt, eventType, token, clientId);
+          compositedCount = fallbackCount;
+          const base64 = finalBuffer.toString('base64');
+          imageUrl = `data:image/jpeg;base64,${base64}`;
+          console.log('[generate-journey-image] Decoupled fallback SUCCEEDED - products are in the output');
+        } catch (decoupledErr) {
+          // Final fallback: text-only (no products)
+          console.log(`[generate-journey-image] Decoupled fallback also FAILED: ${decoupledErr.message}`);
+          console.log('[generate-journey-image] Last resort: text-only generation (NO products in output)');
+          imageUrl = await generateImageFallback(enhancedPrompt, token, clientId);
+          usedFallback = true;
+        }
+      }
     }
 
-    console.log(`[generate-journey-image] Generated image URL: ${imageUrl.substring(0, 100)}...`);
+    console.log(`[generate-journey-image] Image generated (${strategy}), fallback=${usedFallback}, products=${compositedCount}`);
 
     // Return success
     const result = JSON.stringify({
@@ -714,6 +993,7 @@ export default async function handler(req, res) {
       imageUrl: imageUrl,
       productCount: compositedCount,
       usedFallback: usedFallback,
+      strategy: strategy,
     });
 
     res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
