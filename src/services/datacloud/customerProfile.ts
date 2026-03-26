@@ -346,14 +346,14 @@ export class DataCloudCustomerService {
     // AND Contact__c (lookup field, set when the flow resolves the contact by email/ID lookup).
     // This covers both paths so events appear regardless of which field the flow populated.
     const data = await this.fetchJson(
-      `/services/data/v60.0/query/?q=SELECT+Id,Event_Type__c,Description__c,Captured_At__c,Agent_Note__c,Metadata_JSON__c+FROM+Meaningful_Event__c+WHERE+(Customer_Id__c='${safe}'+OR+Contact__c='${safe}')+ORDER+BY+Captured_At__c+DESC`
+      `/services/data/v60.0/query/?q=SELECT+Id,Event_Type__c,Description__c,Captured_At__c,Agent_Note__c,Metadata_JSON__c,Event_Date__c,Relative_Time_Text__c+FROM+Meaningful_Event__c+WHERE+(Customer_Id__c='${safe}'+OR+Contact__c='${safe}')+ORDER+BY+Captured_At__c+DESC`
     );
 
     return ((data.records || []) as Record<string, string | null>[]).map((r) => {
       const metadata = r.Metadata_JSON__c ? JSON.parse(r.Metadata_JSON__c) : undefined;
-      // Resolve eventDate: metadata → compute from relativeTimeText + capturedAt → parse description
-      let eventDate: string | undefined = metadata?.eventDate;
-      const relativeTimeText: string | undefined = metadata?.relativeTimeText;
+      // Resolve eventDate: CRM field (set by nightly batch) → metadata → compute from description
+      let eventDate: string | undefined = r.Event_Date__c ?? metadata?.eventDate;
+      const relativeTimeText: string | undefined = r.Relative_Time_Text__c ?? metadata?.relativeTimeText;
       if (!eventDate && r.Captured_At__c) {
         // Try to compute from relative time expression in metadata or description
         const timeText = relativeTimeText || r.Description__c || '';
