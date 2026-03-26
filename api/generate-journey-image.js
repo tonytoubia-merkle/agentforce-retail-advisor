@@ -880,8 +880,8 @@ export default async function handler(req, res) {
     }
 
     // Get Firefly credentials from environment
-    const clientId = process.env.FIREFLY_CLIENT_ID;
-    const clientSecret = process.env.FIREFLY_CLIENT_SECRET;
+    const clientId = process.env.FIREFLY_CLIENT_ID || process.env.VITE_FIREFLY_CLIENT_ID;
+    const clientSecret = process.env.FIREFLY_CLIENT_SECRET || process.env.VITE_FIREFLY_CLIENT_SECRET;
 
     if (!clientId || !clientSecret) {
       res.writeHead(500, { 'Content-Type': 'application/json', ...CORS_HEADERS });
@@ -919,69 +919,48 @@ export default async function handler(req, res) {
     let usedFallback = false;
     let compositedCount = 0;
 
-    if (strategy === 'decoupled') {
-      // ─── STRATEGY: Decoupled Background + Product Overlay ────
-      // 1. Firefly generates background (no products)
-      // 2. Sharp composites products onto background (deterministic)
-      // Products are ALWAYS in the output — no fallback needed
-      console.log('[generate-journey-image] Using DECOUPLED strategy (Background + Product Overlay)');
+    // Both strategies start with Object Composite (returns a proper presigned URL).
+    // The 'decoupled' strategy is used as the fallback when Object Composite fails,
+    // generating a background separately then compositing products via Sharp.
 
-      const { buffer: finalBuffer, compositedCount: count, backgroundUrl } =
-        await decoupledGenerate(products, prompt, eventType, token, clientId);
-      compositedCount = count;
+    const enhancedPrompt = buildEnhancedPrompt(prompt, eventType);
 
-      // Upload final composited image to Firefly storage for a stable URL
-      console.log('[generate-journey-image] [decoupled] Uploading final image to Firefly storage...');
-      const finalUploadId = await uploadToFirefly(finalBuffer, token, clientId);
+    // Create the product composite (used by both strategies)
+    console.log('[generate-journey-image] Compositing products...');
+    const { buffer: compositeBuffer, compositedCount: count } = await compositeProducts(products);
+    compositedCount = count;
+    console.log(`[generate-journey-image] Composite created: ${compositeBuffer.length} bytes, ${count}/${products.length} products`);
 
-      // The upload returns an ID, but we need a URL. Use the background URL
-      // as the response URL and note the final image is the composited version.
-      // For now, convert to base64 data URL as the final output.
-      const base64 = finalBuffer.toString('base64');
-      imageUrl = `data:image/jpeg;base64,${base64}`;
+    try {
+      // PRIMARY: Object Composite — single Firefly call, returns presigned URL
+      console.log('[generate-journey-image] Uploading to Firefly...');
+      const uploadId = await uploadToFirefly(compositeBuffer, token, clientId);
+      console.log(`[generate-journey-image] Upload ID: ${uploadId}`);
+      console.log('[generate-journey-image] Enhanced prompt:', enhancedPrompt);
 
-      console.log(`[generate-journey-image] [decoupled] Complete: ${count} products composited onto AI background`);
+      imageUrl = await generateObjectComposite(uploadId, enhancedPrompt, token, clientId);
+      console.log('[generate-journey-image] Object Composite SUCCEEDED');
+    } catch (compositeErr) {
+      console.log(`[generate-journey-image] Object Composite FAILED: ${compositeErr.message}`);
 
-    } else {
-      // ─── STRATEGY: Object Composite (existing) ───────────────
-      // Single Firefly call generates scene around product composite
-      console.log('[generate-journey-image] Using COMPOSITE strategy (Object Composite)');
-
-      const enhancedPrompt = buildEnhancedPrompt(prompt, eventType);
-
-      // Create the product composite
-      console.log('[generate-journey-image] Compositing products...');
-      const { buffer: compositeBuffer, compositedCount: count } = await compositeProducts(products);
-      compositedCount = count;
-      console.log(`[generate-journey-image] Composite created: ${compositeBuffer.length} bytes, ${count}/${products.length} products`);
-
-      try {
-        // Upload product composite then generate scene around it
-        console.log('[generate-journey-image] Uploading to Firefly...');
-        const uploadId = await uploadToFirefly(compositeBuffer, token, clientId);
-        console.log(`[generate-journey-image] Upload ID: ${uploadId}`);
-
-        console.log('[generate-journey-image] Enhanced prompt:', enhancedPrompt);
-        imageUrl = await generateObjectComposite(uploadId, enhancedPrompt, token, clientId);
-        console.log('[generate-journey-image] Object Composite SUCCEEDED - products should be in the output');
-      } catch (compositeErr) {
-        // Fallback: try decoupled strategy before giving up to text-only
-        console.log(`[generate-journey-image] Object Composite FAILED: ${compositeErr.message}`);
+      if (strategy === 'decoupled') {
+        // FALLBACK A: Decoupled — generate background, composite products via Sharp
         console.log('[generate-journey-image] Falling back to DECOUPLED strategy...');
         try {
-          const { buffer: finalBuffer, compositedCount: fallbackCount } =
-            await decoupledGenerate(products, prompt, eventType, token, clientId);
-          compositedCount = fallbackCount;
-          const base64 = finalBuffer.toString('base64');
-          imageUrl = `data:image/jpeg;base64,${base64}`;
-          console.log('[generate-journey-image] Decoupled fallback SUCCEEDED - products are in the output');
+          const { backgroundUrl } = await decoupledGenerate(products, prompt, eventType, token, clientId);
+          // Use the AI-generated background URL — products are in the email's featured section
+          imageUrl = backgroundUrl;
+          console.log('[generate-journey-image] Decoupled fallback SUCCEEDED — background URL returned');
         } catch (decoupledErr) {
-          // Final fallback: text-only (no products)
-          console.log(`[generate-journey-image] Decoupled fallback also FAILED: ${decoupledErr.message}`);
-          console.log('[generate-journey-image] Last resort: text-only generation (NO products in output)');
+          console.log(`[generate-journey-image] Decoupled also FAILED: ${decoupledErr.message}`);
           imageUrl = await generateImageFallback(enhancedPrompt, token, clientId);
           usedFallback = true;
         }
+      } else {
+        // FALLBACK B: Text-only generation (no products in output)
+        console.log('[generate-journey-image] Last resort: text-only generation');
+        imageUrl = await generateImageFallback(enhancedPrompt, token, clientId);
+        usedFallback = true;
       }
     }
 
