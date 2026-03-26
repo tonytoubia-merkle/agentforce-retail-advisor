@@ -1035,9 +1035,21 @@ export interface ProductRecommendationsResult {
  * Call this and check the browser console for the full payload structure.
  */
 export async function getProductRecommendations(): Promise<ProductRecommendationsResult | null> {
-  if (!isPersonalizationConfigured() || !initialized) {
-    console.warn('[sfp] getProductRecommendations: not configured or not initialized');
+  if (!isPersonalizationConfigured()) {
+    console.warn('[sfp] getProductRecommendations: not configured');
     return null;
+  }
+
+  // Wait for SDK initialization (up to 10s) — the carousel may mount before the SDK loads
+  if (!initialized) {
+    for (let i = 0; i < 20; i++) {
+      await new Promise(r => setTimeout(r, 500));
+      if (initialized) break;
+    }
+    if (!initialized) {
+      console.warn('[sfp] getProductRecommendations: SDK did not initialize within 10s');
+      return null;
+    }
   }
 
   try {

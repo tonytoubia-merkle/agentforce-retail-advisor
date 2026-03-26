@@ -43,7 +43,7 @@ let tokenCache: { token: string; expiresAt: number } | null = null;
 async function getToken(): Promise<string> {
   if (tokenCache && Date.now() < tokenCache.expiresAt) return tokenCache.token;
 
-  const res = await fetch('/api/sf/token');
+  const res = await fetch('/api/sf/token', { method: 'POST' });
   if (!res.ok) throw new Error(`Token fetch failed (${res.status})`);
   const data = await res.json();
   tokenCache = {
