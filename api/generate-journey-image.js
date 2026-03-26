@@ -256,53 +256,62 @@ async function softProductEdges(imageBuffer, _size) {
  *
  * Returns array of { x, y, size, zIndex, originalIndex } for each product.
  */
+/**
+ * Get positions for products in a horizontal row.
+ *
+ * Layout strategy:
+ * - All products are the SAME size (uniform, clean look)
+ * - Arranged horizontally in lower portion of canvas
+ * - Depth is created by z-index (center products on top) and
+ *   subtle vertical offset (edge products slightly higher/behind)
+ * - Moderate overlap creates visual cohesion
+ * - Lower positioning leaves upper area clear for text overlay
+ *
+ * Returns array of { x, y, size, zIndex, originalIndex } for each product.
+ */
 function getProductPositions(count) {
   if (count === 0) return [];
 
   const cw = COMPOSITE_SIZE;
   const ch = COMPOSITE_SIZE;
 
-  // Size configuration - MUCH BIGGER products with heavy overlap
-  // Product images have transparent padding, so they can overlap significantly
-  const heroSize = Math.floor(cw * 1.0);       // Center/hero product = full canvas width
-  const minSize = Math.floor(cw * 0.70);       // Edge products = 70% of canvas
-  const overlapFactor = 0.55;                   // Heavy overlap (products have transparent edges)
+  // All products same size — scale down as count increases to fit canvas
+  const sizeByCount = {
+    1: Math.floor(cw * 0.85),
+    2: Math.floor(cw * 0.70),
+    3: Math.floor(cw * 0.55),
+    4: Math.floor(cw * 0.48),
+    5: Math.floor(cw * 0.42),
+  };
+  const productSize = sizeByCount[Math.min(count, 5)] || Math.floor(cw * 0.40);
+  const overlapFactor = 0.40;  // Moderate overlap (products have transparent edges)
 
-  // Vertical positioning: place products in lower 60% of canvas
-  // This leaves upper 40% clear for text overlay
-  const verticalCenter = Math.floor(ch * 0.6); // Products centered at 60% down
+  // Vertical positioning: products centered at 60% down (upper 40% clear for text)
+  const verticalCenter = Math.floor(ch * 0.6);
 
-  // For single product, center horizontally but in lower portion
   if (count === 1) {
     return [{
-      x: Math.floor((cw - heroSize) / 2),
-      y: Math.floor(verticalCenter - heroSize / 2),
-      size: heroSize,
+      x: Math.floor((cw - productSize) / 2),
+      y: Math.floor(verticalCenter - productSize / 2),
+      size: productSize,
       zIndex: 1,
       originalIndex: 0
     }];
   }
 
   const positions = [];
-  const centerIndex = (count - 1) / 2;  // Can be fractional for even counts
-
-  // Calculate sizes based on distance from center
-  // Center = heroSize, edges = minSize, interpolate between
+  const centerIndex = (count - 1) / 2;
   const maxDistance = Math.floor(count / 2);
 
   for (let i = 0; i < count; i++) {
     const distanceFromCenter = Math.abs(i - centerIndex);
     const normalizedDistance = maxDistance > 0 ? distanceFromCenter / maxDistance : 0;
 
-    // Interpolate size: center is largest, edges are smallest
-    const size = Math.floor(heroSize - (heroSize - minSize) * normalizedDistance);
-
-    // Z-index: higher for center products (will be composited last = on top)
-    // Use inverse of distance, scaled to be positive integers
+    // Z-index: center products on top (composited last = foreground)
     const zIndex = Math.floor((1 - normalizedDistance) * 100);
 
     positions.push({
-      size,
+      size: productSize,
       zIndex,
       originalIndex: i
     });
@@ -310,37 +319,21 @@ function getProductPositions(count) {
 
   // Calculate X positions with overlap
   const centerX = cw / 2;
-
-  // Calculate total width needed (accounting for overlap)
-  let totalWidth = 0;
-  for (let i = 0; i < count; i++) {
-    if (i === 0) {
-      totalWidth += positions[i].size;
-    } else {
-      // Each subsequent product overlaps the previous by overlapFactor
-      totalWidth += positions[i].size * (1 - overlapFactor);
-    }
-  }
-
-  // Starting X position (left edge of first product)
+  const effectiveWidth = productSize * (1 - overlapFactor);
+  const totalWidth = productSize + (count - 1) * effectiveWidth;
   let currentX = Math.floor(centerX - totalWidth / 2);
 
   for (let i = 0; i < count; i++) {
     const pos = positions[i];
     pos.x = Math.round(currentX);
 
-    // Position in lower portion, with slight upward shift for smaller products (depth illusion)
+    // Subtle vertical offset: edge products slightly higher (depth illusion)
     const distanceFromCenter = Math.abs(i - centerIndex);
     const normalizedDistance = maxDistance > 0 ? distanceFromCenter / maxDistance : 0;
-    const verticalOffset = Math.floor(normalizedDistance * 20); // Smaller products slightly higher
-    pos.y = Math.round(verticalCenter - pos.size / 2 - verticalOffset);
+    const verticalOffset = Math.floor(normalizedDistance * 15);
+    pos.y = Math.round(verticalCenter - productSize / 2 - verticalOffset);
 
-    // Move X for next product (with overlap)
-    if (i < count - 1) {
-      const nextSize = positions[i + 1].size;
-      const overlap = Math.min(pos.size, nextSize) * overlapFactor;
-      currentX += pos.size - overlap;
-    }
+    currentX += effectiveWidth;
   }
 
   return positions;
