@@ -281,6 +281,58 @@ function renderProfileDetail(customer: CustomerProfile, manage?: ManageOptions) 
     );
   }
 
+  // Journey Approvals (active marketing campaigns)
+  if (customer.journeyApprovals && customer.journeyApprovals.length > 0) {
+    const statusColor: Record<string, string> = {
+      'Pending': 'text-amber-400 bg-amber-400/15',
+      'Approved': 'text-blue-400 bg-blue-400/15',
+      'Sent': 'text-emerald-400 bg-emerald-400/15',
+      'Failed': 'text-red-400 bg-red-400/15',
+      'Declined': 'text-white/30 bg-white/5',
+    };
+    const channelIcon: Record<string, string> = {
+      'Email': '✉', 'SMS': '💬', 'Push': '🔔', 'Video': '🎬', 'Media': '📺',
+    };
+    // Group by journeyId — show each journey once with step progress
+    const journeyMap = new Map<string, typeof customer.journeyApprovals>();
+    for (const ja of customer.journeyApprovals) {
+      const key = ja.journeyId || ja.id;
+      if (!journeyMap.has(key)) journeyMap.set(key, []);
+      journeyMap.get(key)!.push(ja);
+    }
+    sections.push(
+      <DetailSection key="journeys" title={`Active Journeys (${journeyMap.size})`} source="Journey_Approval__c">
+        {[...journeyMap.entries()].map(([jId, steps]) => {
+          const first = steps[0];
+          const sentCount = steps.filter(s => s.status === 'Sent').length;
+          const total = first.totalSteps || steps.length;
+          const channels = [...new Set(steps.map(s => s.channel))];
+          return (
+            <div key={jId} className="py-1 border-b border-white/5 last:border-b-0">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] px-1 rounded bg-white/10 text-white/50">{first.eventType}</span>
+                  <span className={`text-[9px] px-1 rounded ${statusColor[first.status] || 'text-white/30 bg-white/5'}`}>{first.status}</span>
+                </div>
+                <span className="text-[10px] text-white/30">{channels.map(c => channelIcon[c] || c).join(' ')}</span>
+              </div>
+              {first.subject && <p className="text-[10px] text-white/60 mt-0.5 truncate">{first.subject}</p>}
+              <div className="flex justify-between items-center mt-0.5">
+                <span className="text-[9px] text-white/30">Step {sentCount}/{total}</span>
+                {first.eventDate && <span className="text-[9px] text-white/30">{first.eventDate}</span>}
+              </div>
+              {total > 1 && (
+                <div className="mt-1 h-1 bg-white/5 rounded-full overflow-hidden">
+                  <div className="h-full bg-emerald-400/40 rounded-full" style={{ width: `${(sentCount / total) * 100}%` }} />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </DetailSection>
+    );
+  }
+
   if (customer.appendedProfile) {
     const ap = customer.appendedProfile;
     sections.push(

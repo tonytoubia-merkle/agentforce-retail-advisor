@@ -11,6 +11,7 @@ import type {
   MerkuryIdentity,
   AppendedProfile,
   SkinAnalysisSummary,
+  JourneyApproval,
 } from '@/types/customer';
 import type { DataCloudConfig } from './types';
 
@@ -99,6 +100,7 @@ export class DataCloudCustomerService {
       loyalty: LoyaltyData | null;
       agentCapturedProfile: AgentCapturedProfile | undefined;
       skinAnalyses: SkinAnalysisSummary[];
+      journeyApprovals: JourneyApproval[];
     },
     merkuryIdentity?: CustomerProfile['merkuryIdentity'],
   ): CustomerProfile {
@@ -204,7 +206,7 @@ export class DataCloudCustomerService {
   }
 
   private async fetchRelatedData(contactId: string, email?: string) {
-    const [orders, chatSummaries, meaningfulEvents, browseSessions, loyalty, agentCapturedProfile, skinAnalysis] =
+    const [orders, chatSummaries, meaningfulEvents, browseSessions, loyalty, agentCapturedProfile, skinAnalysis, journeyApprovals] =
       await Promise.all([
         this.getCustomerOrders(contactId).catch(() => [] as OrderRecord[]),
         this.getCustomerChatSummaries(contactId).catch(() => [] as ChatSummary[]),
@@ -213,8 +215,9 @@ export class DataCloudCustomerService {
         this.getCustomerLoyalty(contactId).catch(() => null),
         this.getCustomerCapturedProfile(contactId).catch(() => undefined),
         email ? this.getSkinAnalysis(email).catch(() => []) : Promise.resolve([]),
+        this.getCustomerJourneyApprovals(contactId).catch(() => [] as JourneyApproval[]),
       ]);
-    return { orders, chatSummaries, meaningfulEvents, browseSessions, loyalty, agentCapturedProfile, skinAnalyses: skinAnalysis };
+    return { orders, chatSummaries, meaningfulEvents, browseSessions, loyalty, agentCapturedProfile, skinAnalyses: skinAnalysis, journeyApprovals };
   }
 
   private static readonly CONTACT_FIELDS = 'Id,FirstName,LastName,Email,Merkury_Id__c,Skin_Type__c,Skin_Concerns__c,Allergies__c,Preferred_Brands__c,MailingStreet,MailingCity,MailingState,MailingPostalCode,MailingCountry';
@@ -487,6 +490,28 @@ export class DataCloudCustomerService {
       tierExpiryDate: undefined,
       rewardsAvailable: [],
     };
+  }
+
+  async getCustomerJourneyApprovals(contactId: string): Promise<JourneyApproval[]> {
+    const safe = this.sanitizeSoql(contactId);
+    const data = await this.fetchJson(
+      `/services/data/v60.0/query/?q=SELECT+Id,Journey_Id__c,Event_Type__c,Suggested_Subject__c,Channel__c,Status__c,Urgency__c,Event_Date__c,Days_Until_Event__c,Step_Number__c,Total_Steps__c,CreatedDate+FROM+Journey_Approval__c+WHERE+Contact__c='${safe}'+AND+Status__c+IN+('Pending','Approved','Sent')+ORDER+BY+CreatedDate+DESC+LIMIT+20`
+    );
+
+    return ((data.records || []) as Record<string, string | number | null>[]).map((r) => ({
+      id: r.Id as string,
+      journeyId: (r.Journey_Id__c as string) || '',
+      eventType: (r.Event_Type__c as string) || '',
+      subject: (r.Suggested_Subject__c as string) || undefined,
+      channel: (r.Channel__c as string) || 'Email',
+      status: (r.Status__c as JourneyApproval['status']) || 'Pending',
+      urgency: (r.Urgency__c as string) || undefined,
+      eventDate: (r.Event_Date__c as string) || undefined,
+      daysUntilEvent: r.Days_Until_Event__c as number | undefined,
+      stepNumber: r.Step_Number__c as number | undefined,
+      totalSteps: r.Total_Steps__c as number | undefined,
+      createdAt: (r.CreatedDate as string) || '',
+    }));
   }
 
   async getCustomerCapturedProfile(customerId: string): Promise<AgentCapturedProfile | undefined> {

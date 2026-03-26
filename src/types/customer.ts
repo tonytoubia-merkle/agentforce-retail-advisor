@@ -114,6 +114,22 @@ export interface MeaningfulEvent {
   urgency?: EventUrgency;     // Calculated urgency bucket
 }
 
+// ─── Journey Approvals (Marketing campaigns) ───────────────────
+export interface JourneyApproval {
+  id: string;
+  journeyId: string;
+  eventType: string;
+  subject?: string;
+  channel: string;
+  status: 'Pending' | 'Approved' | 'Declined' | 'Sent' | 'Failed';
+  urgency?: string;
+  eventDate?: string;
+  daysUntilEvent?: number;
+  stepNumber?: number;
+  totalSteps?: number;
+  createdAt: string;
+}
+
 // ─── Browse Data ────────────────────────────────────────────────
 export interface BrowseSession {
   sessionDate: string;
@@ -272,6 +288,9 @@ export interface CustomerProfile {
 
   // Skin analyses from Data Cloud Skin_Analysis DMO (newest first)
   skinAnalyses?: SkinAnalysisSummary[];
+
+  // Active journey approvals (marketing campaigns the customer is enrolled in)
+  journeyApprovals?: JourneyApproval[];
 
   // Identity
   merkuryIdentity?: MerkuryIdentity;
