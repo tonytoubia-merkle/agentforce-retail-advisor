@@ -137,7 +137,7 @@ export class DataCloudCustomerService {
 
   async getSkinAnalysis(email: string): Promise<SkinAnalysisSummary[]> {
     const safe = email.replace(/'/g, '');
-    const sql = `SELECT analysis_date, overall_score, skin_age, skin_type, primary_concern, acne_score, acne_severity, wrinkle_score, wrinkle_severity, dark_circle_score, dark_circle_severity, pore_score, pore_severity, spot_score, spot_severity, redness_score, redness_severity, hydration_score, hydration_severity, firmness_score, firmness_severity, radiance_score, radiance_severity FROM SkinAdvisor_Skin_Analysis_F2B26733__dll WHERE email = '${safe}' ORDER BY analysis_date DESC LIMIT 20`;
+    const sql = `SELECT analysis_date__c, overall_score__c, skin_age__c, skin_type__c, primary_concern__c, acne_score__c, acne_severity__c, wrinkle_score__c, wrinkle_severity__c, dark_circle_score__c, dark_circle_severity__c, pore_score__c, pore_severity__c, spot_score__c, spot_severity__c, redness_score__c, redness_severity__c, hydration_score__c, hydration_severity__c, firmness_score__c, firmness_severity__c, radiance_score__c, radiance_severity__c FROM SkinAdvisor_Skin_Analysis_F2B26733__dll WHERE email__c = '${safe}' ORDER BY analysis_date__c DESC LIMIT 20`;
 
     const res = await fetch('/api/dc-query', {
       method:  'POST',
@@ -174,19 +174,19 @@ export class DataCloudCustomerService {
       const topConcerns = CONCERN_KEYS
         .map(({ key, label }) => ({
           label,
-          score:    Number(get(`${key}_score`) ?? 0),
-          severity: String(get(`${key}_severity`) ?? 'none'),
+          score:    Number(get(`${key}_score__c`) ?? 0),
+          severity: String(get(`${key}_severity__c`) ?? 'none'),
         }))
         .filter((c) => c.score >= 20)
         .sort((a, b) => b.score - a.score)
         .slice(0, 5);
 
       return {
-        analyzedAt:     String(get('analysis_date') ?? ''),
-        overallScore:   Number(get('overall_score') ?? 0),
-        skinAge:        Number(get('skin_age') ?? 0),
-        skinType:       String(get('skin_type') ?? ''),
-        primaryConcern: String(get('primary_concern') ?? ''),
+        analyzedAt:     String(get('analysis_date__c') ?? ''),
+        overallScore:   Number(get('overall_score__c') ?? 0),
+        skinAge:        Number(get('skin_age__c') ?? 0),
+        skinType:       String(get('skin_type__c') ?? ''),
+        primaryConcern: String(get('primary_concern__c') ?? ''),
         topConcerns,
       };
     });
