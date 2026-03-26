@@ -420,6 +420,67 @@ public with sharing class JourneyPromptBuilder {
                       + 'pastel colors, soft diffused light, peaceful nurturing atmosphere'
         });
 
+        // Career / new job templates
+        stepTemplatesCache.put('career', new Map<String, String>{
+            'first' => 'Modern executive getting-ready scene, {products} arranged on sleek glass vanity, '
+                     + 'city skyline through floor-to-ceiling window, morning golden hour light, '
+                     + 'tailored blazer on hanger, polished professional aesthetic',
+            'middle' => 'Confident morning routine, {products} on clean marble bathroom counter, '
+                      + 'bright natural light, fresh coffee nearby, crisp white shirt on door, '
+                      + 'modern urban professional atmosphere',
+            'last' => 'Power prep moment, {products} beside leather portfolio, '
+                    + 'elegant desk lamp, warm morning glow, sophisticated workspace, '
+                    + 'ready-for-anything confidence',
+            'single' => 'Modern executive getting-ready scene, {products} arranged on sleek glass vanity, '
+                      + 'city skyline through floor-to-ceiling window, morning golden hour light, '
+                      + 'polished professional aesthetic'
+        });
+
+        // Graduation templates
+        stepTemplatesCache.put('graduation', new Map<String, String>{
+            'first' => 'Celebratory milestone scene, {products} arranged on elegant dresser, '
+                     + 'fresh flowers in vase, bright optimistic natural light, '
+                     + 'new chapter energy, youthful elegance',
+            'middle' => 'Fresh start morning routine, {products} on modern vanity, '
+                      + 'bright airy space, inspiring motivational atmosphere, '
+                      + 'clean and optimistic aesthetic',
+            'last' => 'New beginning beauty ritual, {products} artfully arranged, '
+                    + 'sunrise light through window, fresh flowers, '
+                    + 'hopeful and exciting atmosphere',
+            'single' => 'Celebratory milestone scene, {products} arranged on elegant dresser, '
+                      + 'fresh flowers, bright optimistic natural light, youthful elegance'
+        });
+
+        // Relocation / new home templates
+        stepTemplatesCache.put('relocation', new Map<String, String>{
+            'first' => 'Fresh start in a new space, {products} arranged on modern bathroom counter, '
+                     + 'bright airy new-home atmosphere, fresh white towels, '
+                     + 'optimistic morning light through large window',
+            'middle' => 'Settling-in self-care moment, {products} on wooden shelf, '
+                      + 'cozy new apartment vibes, warm afternoon light, '
+                      + 'plants and fresh decor, nesting atmosphere',
+            'last' => 'Home sweet home beauty corner, {products} on curated vanity, '
+                    + 'personal touches visible, warm lamplight, '
+                    + 'established and comfortable new space',
+            'single' => 'Fresh start in a new space, {products} arranged on modern bathroom counter, '
+                      + 'bright airy atmosphere, optimistic morning light through large window'
+        });
+
+        // Retirement templates
+        stepTemplatesCache.put('retirement', new Map<String, String>{
+            'first' => 'Luxurious self-care retreat scene, {products} on elegant spa tray, '
+                     + 'plush robe draped nearby, orchid flowers, warm ambient candlelight, '
+                     + 'peaceful indulgent atmosphere',
+            'middle' => 'Morning wellness ritual, {products} beside herbal tea, '
+                      + 'garden visible through window, soft natural light, '
+                      + 'serene and unhurried self-care moment',
+            'last' => 'Pampered elegance, {products} on marble vanity, '
+                    + 'fresh peonies, champagne glass, golden hour light, '
+                    + 'well-deserved luxury moment',
+            'single' => 'Luxurious self-care retreat scene, {products} on elegant spa tray, '
+                      + 'plush robe nearby, orchid flowers, warm candlelight, peaceful atmosphere'
+        });
+
         // Default life-event templates
         stepTemplatesCache.put('life-event', new Map<String, String>{
             'first' => 'Lifestyle flat-lay arrangement, {products} beautifully styled, '
@@ -488,12 +549,13 @@ public with sharing class JourneyPromptBuilder {
             }
         }
 
-        // For travel/generic events, check destination-specific overrides
-        if (template == null) {
+        // For travel/generic life-events ONLY, check destination-specific overrides.
+        // Non-travel events (career, graduation, etc.) should NEVER get destination scenes.
+        if (template == null && (eventKey == 'travel' || eventKey == 'life-event')) {
             template = getDestinationOverride(contextLower, position);
         }
 
-        // Fall back to event type template
+        // Fall back to event type template, then life-event generic
         if (template == null) {
             Map<String, String> typeTemplates = getStepTemplates().get(eventKey);
             if (typeTemplates == null) {
