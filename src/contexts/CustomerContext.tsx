@@ -325,6 +325,7 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           agentCapturedProfile: fresh.agentCapturedProfile ?? prev.agentCapturedProfile,
           beautyProfile: fresh.beautyProfile ?? prev.beautyProfile,
           loyalty: fresh.loyalty ?? prev.loyalty,
+          skinAnalyses: fresh.skinAnalyses ?? prev.skinAnalyses,
         } : prev);
         // Clear flag after React processes the state update
         setTimeout(() => { isRefreshRef.current = false; }, 0);
