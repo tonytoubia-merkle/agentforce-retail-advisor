@@ -96,6 +96,44 @@ function renderProfileDetail(customer: CustomerProfile, manage?: ManageOptions) 
   const sections: React.ReactNode[] = [];
   const bp = customer.beautyProfile;
 
+  // Skin Analysis (from Data Cloud)
+  if (customer.skinAnalyses && customer.skinAnalyses.length > 0) {
+    const latest = customer.skinAnalyses[0];
+    const severityColor: Record<string, string> = { severe: 'text-red-400 bg-red-400/15', moderate: 'text-orange-400 bg-orange-400/15', mild: 'text-amber-400 bg-amber-400/15', none: 'text-white/30 bg-white/5' };
+    sections.push(
+      <DetailSection key="skin-analysis" title={`Skin Analysis (${customer.skinAnalyses.length})`} source="Data Cloud">
+        <div className="space-y-1">
+          <div className="flex justify-between">
+            <span className="text-[10px] text-white/40">Overall Score</span>
+            <span className="text-[11px] text-white/80 font-medium">{latest.overallScore}/100</span>
+          </div>
+          {latest.skinAge > 0 && <div className="flex justify-between">
+            <span className="text-[10px] text-white/40">Skin Age</span>
+            <span className="text-[11px] text-white/80">{latest.skinAge}</span>
+          </div>}
+          <div className="flex justify-between">
+            <span className="text-[10px] text-white/40">Skin Type</span>
+            <span className="text-[11px] text-white/80">{latest.skinType}</span>
+          </div>
+          {latest.primaryConcern && <div className="flex justify-between">
+            <span className="text-[10px] text-white/40">Primary Concern</span>
+            <span className="text-[11px] text-white/80">{latest.primaryConcern}</span>
+          </div>}
+          {latest.topConcerns.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1">
+              {latest.topConcerns.map((c, i) => (
+                <span key={i} className={`text-[9px] px-1.5 py-0.5 rounded ${severityColor[c.severity] || severityColor.none}`}>
+                  {c.label} ({c.score})
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="text-[9px] text-white/25 mt-1">{latest.analyzedAt?.split('T')[0]}</div>
+        </div>
+      </DetailSection>
+    );
+  }
+
   if (bp?.skinType) {
     sections.push(
       <DetailSection key="beauty" title="Beauty Profile" source="Contact">
@@ -149,24 +187,47 @@ function renderProfileDetail(customer: CustomerProfile, manage?: ManageOptions) 
   }
 
   if (customer.meaningfulEvents && customer.meaningfulEvents.length > 0) {
-    sections.push(
-      <DetailSection key="events" title={`Meaningful Events (${customer.meaningfulEvents.length})`} source="Meaningful_Event__c">
-        {customer.meaningfulEvents.map((e, i) => (
-          <div key={e.id || i} className={`py-0.5 ${manage?.isManageMode ? 'flex items-start gap-2' : ''}`}>
-            {manage?.isManageMode && e.id && (
-              <DeleteCheckbox id={e.id} selected={manage.selectedIds.has(e.id)} onToggle={manage.onToggle} />
-            )}
-            <div className="flex-1 min-w-0">
-              <div className="flex justify-between">
-                <span className="text-[10px] px-1 rounded bg-white/10 text-white/50">{e.eventType}</span>
-                <span className="text-[10px] text-white/30">{e.capturedAt}</span>
+    const activeEvents = customer.meaningfulEvents.filter(e => e.urgency !== 'Past');
+    const urgencyColor: Record<string, string> = {
+      'Immediate': 'text-red-400 bg-red-400/15', 'This Week': 'text-orange-400 bg-orange-400/15',
+      'This Month': 'text-amber-400 bg-amber-400/15', 'Future': 'text-blue-400 bg-blue-400/15',
+      'Just Passed': 'text-emerald-400 bg-emerald-400/15', 'Recent Past': 'text-white/40 bg-white/5',
+      'No Date': 'text-white/40 bg-white/10',
+    };
+    const relLabel = (e: typeof customer.meaningfulEvents[0]) => {
+      if (!e.eventDate) return null;
+      const diffDays = Math.ceil((new Date(e.eventDate).getTime() - Date.now()) / 86_400_000);
+      if (diffDays > 0) return `in ${diffDays}d`;
+      if (diffDays === 0) return 'today';
+      return `${Math.abs(diffDays)}d ago`;
+    };
+    if (activeEvents.length > 0) {
+      sections.push(
+        <DetailSection key="events" title={`Meaningful Events (${activeEvents.length})`} source="Meaningful_Event__c">
+          {activeEvents.map((e, i) => {
+            const rel = relLabel(e);
+            const opacity = e.urgency === 'Recent Past' ? 'opacity-60' : '';
+            return (
+              <div key={e.id || i} className={`py-0.5 ${opacity} ${manage?.isManageMode ? 'flex items-start gap-2' : ''}`}>
+                {manage?.isManageMode && e.id && (
+                  <DeleteCheckbox id={e.id} selected={manage.selectedIds.has(e.id)} onToggle={manage.onToggle} />
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-1">
+                      <span className="text-[10px] px-1 rounded bg-white/10 text-white/50">{e.eventType}</span>
+                      {rel && <span className={`text-[9px] px-1 rounded ${urgencyColor[e.urgency ?? 'No Date']}`}>{rel}</span>}
+                    </div>
+                    <span className="text-[10px] text-white/30">{e.capturedAt?.split('T')[0]}</span>
+                  </div>
+                  <p className="text-[10px] text-white/60 mt-0.5 leading-snug">{e.description}</p>
+                </div>
               </div>
-              <p className="text-[10px] text-white/60 mt-0.5 leading-snug">{e.description}</p>
-            </div>
-          </div>
-        ))}
-      </DetailSection>
-    );
+            );
+          })}
+        </DetailSection>
+      );
+    }
   }
 
   if (customer.agentCapturedProfile) {
