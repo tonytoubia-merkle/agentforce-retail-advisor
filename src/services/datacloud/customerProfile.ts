@@ -346,17 +346,37 @@ export class DataCloudCustomerService {
     // AND Contact__c (lookup field, set when the flow resolves the contact by email/ID lookup).
     // This covers both paths so events appear regardless of which field the flow populated.
     const data = await this.fetchJson(
-      `/services/data/v60.0/query/?q=SELECT+Id,Event_Type__c,Description__c,Captured_At__c,Agent_Note__c,Metadata_JSON__c+FROM+Meaningful_Event__c+WHERE+(Customer_Id__c='${safe}'+OR+Contact__c='${safe}')+ORDER+BY+Captured_At__c+DESC`
+      `/services/data/v60.0/query/?q=SELECT+Id,Event_Type__c,Description__c,Captured_At__c,Agent_Note__c,Metadata_JSON__c,Event_Date__c,Relative_Time_Text__c+FROM+Meaningful_Event__c+WHERE+(Customer_Id__c='${safe}'+OR+Contact__c='${safe}')+ORDER+BY+Captured_At__c+DESC`
     );
 
-    return ((data.records || []) as Record<string, string | null>[]).map((r) => ({
-      id: r.Id as string,
-      eventType: r.Event_Type__c as MeaningfulEvent['eventType'],
-      description: r.Description__c as string,
-      capturedAt: r.Captured_At__c as string,
-      agentNote: r.Agent_Note__c as string | undefined,
-      metadata: r.Metadata_JSON__c ? JSON.parse(r.Metadata_JSON__c) : undefined,
-    }));
+    return ((data.records || []) as Record<string, string | null>[]).map((r) => {
+      const metadata = r.Metadata_JSON__c ? JSON.parse(r.Metadata_JSON__c) : undefined;
+      // Event_Date__c from CRM, or fall back to metadata.eventDate, or try parsing from description
+      const eventDate = r.Event_Date__c ?? metadata?.eventDate ?? undefined;
+      const relativeTimeText = r.Relative_Time_Text__c ?? metadata?.relativeTimeText ?? undefined;
+      // Compute urgency relative to TODAY (not capture date)
+      let urgency: MeaningfulEvent['urgency'] = 'No Date';
+      if (eventDate) {
+        const diffDays = Math.ceil((new Date(eventDate).getTime() - Date.now()) / 86_400_000);
+        if (diffDays < -56) urgency = 'Past';           // > 8 weeks ago
+        else if (diffDays < -14) urgency = 'Recent Past'; // 2-8 weeks ago
+        else if (diffDays < 0) urgency = 'Just Passed';   // 0-2 weeks ago
+        else if (diffDays <= 7) urgency = 'This Week';
+        else if (diffDays <= 30) urgency = 'This Month';
+        else urgency = 'Future';
+      }
+      return {
+        id: r.Id as string,
+        eventType: r.Event_Type__c as MeaningfulEvent['eventType'],
+        description: r.Description__c as string,
+        capturedAt: r.Captured_At__c as string,
+        agentNote: r.Agent_Note__c as string | undefined,
+        metadata,
+        eventDate,
+        relativeTimeText,
+        urgency,
+      };
+    });
   }
 
   async getCustomerBrowseSessions(customerId: string): Promise<BrowseSession[]> {

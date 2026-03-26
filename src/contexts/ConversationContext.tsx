@@ -47,12 +47,25 @@ function buildSessionContext(customer: CustomerProfile, campaignAttribution?: im
     .slice(0, 3)
     .map((c) => `[${c.sessionDate}] ${c.summary}`);
 
-  // Meaningful events
+  // Meaningful events — annotated with temporal context for agent awareness
   const meaningfulEvents = (customer.meaningfulEvents || [])
-    .sort((a, b) => b.capturedAt.localeCompare(a.capturedAt))
+    .filter((e) => e.urgency !== 'Past') // Drop events > 8 weeks past — no longer relevant
+    .sort((a, b) => {
+      // Upcoming first, then just-passed, then recent-past, then undated
+      const order: Record<string, number> = { 'Immediate': 0, 'This Week': 1, 'This Month': 2, 'Future': 3, 'Just Passed': 4, 'Recent Past': 5, 'No Date': 6 };
+      return (order[a.urgency ?? 'No Date'] ?? 6) - (order[b.urgency ?? 'No Date'] ?? 6);
+    })
     .map((e) => {
       const note = e.agentNote ? ` (Note: ${e.agentNote})` : '';
-      return `[${e.capturedAt}] ${e.description}${note}`;
+      let temporal = '';
+      if (e.eventDate) {
+        const diffDays = Math.ceil((new Date(e.eventDate).getTime() - Date.now()) / 86_400_000);
+        if (diffDays > 0) temporal = ` [UPCOMING: in ${diffDays} day${diffDays !== 1 ? 's' : ''}]`;
+        else if (diffDays === 0) temporal = ' [TODAY]';
+        else if (diffDays >= -14) temporal = ` [JUST PASSED: ${Math.abs(diffDays)} day${Math.abs(diffDays) !== 1 ? 's' : ''} ago — ask how it went]`;
+        else temporal = ` [PASSED: ${Math.abs(diffDays)} days ago — only reference if user brings it up]`;
+      }
+      return `[${e.capturedAt}] ${e.description}${temporal}${note}`;
     });
 
   // Browse interests
@@ -135,10 +148,17 @@ function buildSessionContext(customer: CustomerProfile, campaignAttribution?: im
     taggedContext.push({ value: `[${chat.sessionDate}] ${chat.summary}`, provenance: 'observed', usage: 'direct' });
   }
 
-  // Meaningful events — may be stated or agent-inferred
-  for (const event of customer.meaningfulEvents || []) {
+  // Meaningful events — may be stated or agent-inferred, filtered by temporal relevance
+  for (const event of (customer.meaningfulEvents || []).filter(e => e.urgency !== 'Past')) {
     const prov = event.eventType === 'preference' || event.eventType === 'milestone' ? 'stated' : 'agent_inferred';
-    taggedContext.push({ value: event.description, provenance: prov, usage: PROVENANCE_USAGE[prov] });
+    let temporalTag = '';
+    if (event.eventDate) {
+      const diffDays = Math.ceil((new Date(event.eventDate).getTime() - Date.now()) / 86_400_000);
+      if (diffDays > 0) temporalTag = ` [UPCOMING: ${diffDays}d]`;
+      else if (diffDays >= -14) temporalTag = ` [JUST PASSED: ${Math.abs(diffDays)}d ago]`;
+      else temporalTag = ` [PASSED]`;
+    }
+    taggedContext.push({ value: `${event.description}${temporalTag}`, provenance: prov, usage: PROVENANCE_USAGE[prov] });
   }
 
   // 1P-IMPLICIT (inferred): browse sessions

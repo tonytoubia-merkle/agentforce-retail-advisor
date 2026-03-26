@@ -99,7 +99,7 @@ export interface ChatSummary {
 }
 
 // ─── Meaningful Events (Agent-captured) ─────────────────────────
-export type EventUrgency = 'Immediate' | 'This Week' | 'This Month' | 'Future' | 'No Date';
+export type EventUrgency = 'Immediate' | 'This Week' | 'This Month' | 'Future' | 'Just Passed' | 'Recent Past' | 'Past' | 'No Date';
 
 export interface MeaningfulEvent {
   id?: string;  // Salesforce record ID for delete operations

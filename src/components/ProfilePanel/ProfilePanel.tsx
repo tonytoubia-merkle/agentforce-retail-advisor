@@ -178,22 +178,48 @@ function formatProfile(customer: CustomerProfile) {
     );
   }
 
-  // Meaningful Events
+  // Meaningful Events — with temporal awareness
   if (customer.meaningfulEvents.length > 0) {
-    sections.push(
-      <Section key="events" title={`Meaningful Events (${customer.meaningfulEvents.length})`} source="Meaningful_Event__c" defaultOpen={false}>
-        {customer.meaningfulEvents.map((e, i) => (
-          <div key={i} className="py-1 border-b border-white/5 last:border-b-0">
-            <div className="flex justify-between">
-              <span className="text-[10px] px-1 rounded bg-white/10 text-white/50">{e.eventType}</span>
-              <span className="text-[10px] text-white/40">{e.capturedAt}</span>
-            </div>
-            <p className="text-[11px] text-white/70 mt-0.5 leading-snug">{e.description}</p>
-            {e.agentNote && <p className="text-[10px] text-white/40 italic mt-0.5">{e.agentNote}</p>}
-          </div>
-        ))}
-      </Section>
-    );
+    const activeEvents = customer.meaningfulEvents.filter(e => e.urgency !== 'Past');
+    const urgencyColor: Record<string, string> = {
+      'Immediate': 'text-red-400 bg-red-400/15',
+      'This Week': 'text-orange-400 bg-orange-400/15',
+      'This Month': 'text-amber-400 bg-amber-400/15',
+      'Future': 'text-blue-400 bg-blue-400/15',
+      'Just Passed': 'text-emerald-400 bg-emerald-400/15',
+      'Recent Past': 'text-white/40 bg-white/5',
+      'No Date': 'text-white/40 bg-white/10',
+    };
+    const relativeLabel = (e: typeof customer.meaningfulEvents[0]) => {
+      if (!e.eventDate) return null;
+      const diffDays = Math.ceil((new Date(e.eventDate).getTime() - Date.now()) / 86_400_000);
+      if (diffDays > 0) return `in ${diffDays}d`;
+      if (diffDays === 0) return 'today';
+      return `${Math.abs(diffDays)}d ago`;
+    };
+    if (activeEvents.length > 0) {
+      sections.push(
+        <Section key="events" title={`Meaningful Events (${activeEvents.length})`} source="Meaningful_Event__c" defaultOpen={false}>
+          {activeEvents.map((e, i) => {
+            const rel = relativeLabel(e);
+            const opacity = e.urgency === 'Recent Past' ? 'opacity-60' : '';
+            return (
+              <div key={i} className={`py-1 border-b border-white/5 last:border-b-0 ${opacity}`}>
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-1">
+                    <span className="text-[10px] px-1 rounded bg-white/10 text-white/50">{e.eventType}</span>
+                    {rel && <span className={`text-[9px] px-1 rounded ${urgencyColor[e.urgency ?? 'No Date']}`}>{rel}</span>}
+                  </div>
+                  <span className="text-[10px] text-white/40">{e.capturedAt?.split('T')[0]}</span>
+                </div>
+                <p className="text-[11px] text-white/70 mt-0.5 leading-snug">{e.description}</p>
+                {e.agentNote && <p className="text-[10px] text-white/40 italic mt-0.5">{e.agentNote}</p>}
+              </div>
+            );
+          })}
+        </Section>
+      );
+    }
   }
 
   // Agent Captured Profile
