@@ -16,15 +16,11 @@ import { RecommendationsCarousel } from './RecommendationsCarousel';
 import { useStore } from '@/contexts/StoreContext';
 import { useCustomer } from '@/contexts/CustomerContext';
 import { useBrowseTracking } from '@/hooks/useBrowseTracking';
+import { useProducts } from '@/contexts/ProductContext';
 import type { Product, ProductCategory } from '@/types/product';
 
-interface StorefrontPageProps {
-  products: Product[];
-}
-
-export const StorefrontPage: React.FC<StorefrontPageProps> = ({
-  products,
-}) => {
+export const StorefrontPage: React.FC = () => {
+  const { products, loading: productsLoading } = useProducts();
   const { view, selectedCategory, selectedProduct, navigateHome, navigateToCategory } = useStore();
   const { customer, isAuthenticated } = useCustomer();
   const navigate = useNavigate();

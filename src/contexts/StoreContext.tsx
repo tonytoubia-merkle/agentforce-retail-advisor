@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { Product, ProductCategory } from '@/types/product';
-import { MOCK_PRODUCTS } from '@/mocks/products';
+import { useProducts } from '@/contexts/ProductContext';
 import { isPersonalizationConfigured, notifyNavigation } from '@/services/personalization';
 
 export type StoreView = 'home' | 'category' | 'product' | 'cart' | 'checkout' | 'order-confirmation' | 'account' | 'appointment';
@@ -50,6 +50,7 @@ const STATIC_ROUTES: Record<string, StoreView> = {
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { products: catalog } = useProducts();
 
   // ── Derive view, selectedCategory, selectedProduct from URL ──────────
   const derived = useMemo(() => {
@@ -60,7 +61,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (productMatch) {
       const category = productMatch[1] as ProductCategory;
       const productId = productMatch[2];
-      const product = MOCK_PRODUCTS.find((p) => p.id === productId) || null;
+      const product = catalog.find((p) => p.id === productId) || null;
       return {
         view: 'product' as StoreView,
         selectedCategory: category,
@@ -86,7 +87,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     // Default: home
     return { view: 'home' as StoreView, selectedCategory: null, selectedProduct: null };
-  }, [location.pathname]);
+  }, [location.pathname, catalog]);
 
   const { view, selectedCategory, selectedProduct } = derived;
 

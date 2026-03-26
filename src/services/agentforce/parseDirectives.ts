@@ -1,7 +1,7 @@
 import type { UIDirective, UIAction } from '@/types/agent';
 import type { Product } from '@/types/product';
 import type { RawAgentResponse } from './types';
-import { MOCK_PRODUCTS } from '@/mocks/products';
+import { getProductBySalesforceId, getProductByName } from '@/services/catalog/productCatalogService';
 
 /**
  * Strip invisible/control characters that Agentforce sometimes injects,
@@ -12,18 +12,15 @@ function sanitize(raw: string): string {
   return raw.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\u200B-\u200F\uFEFF]/g, '').trim();
 }
 
-/** Lookup maps for resolving agent products to local catalog entries */
-const sfIdMap = new Map<string, Product>();
-const nameMap = new Map<string, Product>();
-for (const p of MOCK_PRODUCTS) {
-  if (p.salesforceId) sfIdMap.set(p.salesforceId, p);
-  nameMap.set(p.name.toLowerCase(), p);
-}
-
 /**
  * Ensure every product has an `id` and valid `imageUrl`.
- * The agent often returns Salesforce Product2 record IDs instead of local
- * catalog IDs, so we resolve them against the mock product catalog.
+ * Resolves Salesforce Product2 IDs against the CRM-loaded catalog
+ * for URL routing (slug IDs) and missing fields.
+ *
+ * The agent returns most product data (name, imageUrl, brand, price)
+ * from ProductCatalogService, so enrichment is mainly for:
+ * - Resolving slug IDs for URL navigation
+ * - Filling in imageUrl when the agent omits it
  *
  * Exported so Card Carousel items from Adaptive Response Formats can be
  * enriched with the same catalog data as text-parsed directives.
@@ -38,17 +35,19 @@ export function normalizeProducts(products: unknown[]): Product[] {
     // Filter out template placeholders the agent returns when Search_Product_Catalog isn't wired up
     if (typeof raw.id === 'string' && raw.id.startsWith('<')) return [];
 
-    // Try to resolve to a local catalog product for correct imageUrl
+    // Resolve against CRM-loaded catalog (by SF ID or name)
     const catalogProduct =
-      sfIdMap.get(raw.id as string) ||
-      sfIdMap.get(raw.productId as string) ||
-      sfIdMap.get(raw.salesforceId as string) ||
-      nameMap.get(((raw.name as string) || '').toLowerCase());
+      getProductBySalesforceId(raw.id as string) ||
+      getProductBySalesforceId((raw.productId as string) || '') ||
+      getProductBySalesforceId((raw.salesforceId as string) || '') ||
+      getProductByName(((raw.name as string) || ''));
 
     if (catalogProduct) {
+      // Use catalog slug for URL routing
       raw.id = catalogProduct.id;
-      raw.imageUrl = catalogProduct.imageUrl;
-      raw.images = catalogProduct.images;
+      // Only fill missing fields — prefer agent-provided data
+      if (!raw.imageUrl) raw.imageUrl = catalogProduct.imageUrl;
+      if (!raw.images) raw.images = catalogProduct.images;
       if (!raw.brand) raw.brand = catalogProduct.brand;
       if (!raw.category) raw.category = catalogProduct.category;
       if (!raw.price && catalogProduct.price) raw.price = catalogProduct.price;

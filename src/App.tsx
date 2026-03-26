@@ -1,5 +1,5 @@
-import { useEffect, useState, useMemo } from 'react';
-import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { useState, useMemo } from 'react';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SceneProvider } from '@/contexts/SceneContext';
 import { ConversationProvider } from '@/contexts/ConversationContext';
@@ -12,12 +12,10 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AdvisorPage } from '@/components/AdvisorPage';
 import { StorefrontPage } from '@/components/Storefront';
 import { MediaWallPage } from '@/components/MediaWall';
+import { ProductProvider } from '@/contexts/ProductContext';
 import { resolveUTMToCampaign } from '@/mocks/adCreatives';
-import type { Product } from '@/types/product';
 import type { CampaignAttribution } from '@/types/campaign';
-import { MOCK_PRODUCTS } from '@/mocks/products';
 
-const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
 
 /**
  * AdvisorWrapper — wraps AdvisorPage (beauty mode) with ConversationProvider.
@@ -48,7 +46,7 @@ function SkinAdvisorWrapper() {
  * AnimatedRoutes — wraps Routes in AnimatePresence.
  * Uses a section-level key so only storefront ↔ advisor ↔ media transitions fade.
  */
-function AnimatedRoutes({ products }: { products: Product[] }) {
+function AnimatedRoutes() {
   const location = useLocation();
 
   const animationKey = useMemo(() => {
@@ -72,7 +70,7 @@ function AnimatedRoutes({ products }: { products: Product[] }) {
           <Route path="/advisor" element={<AdvisorWrapper />} />
           <Route path="/skin-advisor" element={<SkinAdvisorWrapper />} />
           <Route path="/media-wall" element={<MediaWallPage />} />
-          <Route path="*" element={<StorefrontPage products={products} />} />
+          <Route path="*" element={<StorefrontPage />} />
         </Routes>
       </motion.div>
     </AnimatePresence>
@@ -83,49 +81,20 @@ function AnimatedRoutes({ products }: { products: Product[] }) {
  * AppShell — provider tree + animated routes.
  */
 function AppShell({ initialCampaign }: { initialCampaign: CampaignAttribution | null }) {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (useMockData) {
-      setProducts(MOCK_PRODUCTS);
-      setLoading(false);
-      return;
-    }
-
-    // Use local catalog on initial load; Commerce Cloud is queried via agent responses
-    setProducts(MOCK_PRODUCTS);
-    setLoading(false);
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 mx-auto mb-4">
-            <svg className="animate-spin w-full h-full text-rose-500" viewBox="0 0 24 24" fill="none">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
-          </div>
-          <p className="text-stone-500">Loading products...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <CampaignProvider initialCampaign={initialCampaign}>
-      <CartProvider>
-        <StoreProvider>
-          <SceneProvider>
-            <ActivityToastProvider>
-              <AnimatedRoutes products={products} />
-            </ActivityToastProvider>
-          </SceneProvider>
-        </StoreProvider>
-      </CartProvider>
-    </CampaignProvider>
+    <ProductProvider>
+      <CampaignProvider initialCampaign={initialCampaign}>
+        <CartProvider>
+          <StoreProvider>
+            <SceneProvider>
+              <ActivityToastProvider>
+                <AnimatedRoutes />
+              </ActivityToastProvider>
+            </SceneProvider>
+          </StoreProvider>
+        </CartProvider>
+      </CampaignProvider>
+    </ProductProvider>
   );
 }
 
