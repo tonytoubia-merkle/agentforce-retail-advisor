@@ -1007,3 +1007,85 @@ export function trackPersonalizationEngagement(
     console.warn('[sfp] Personalization engagement tracking failed:', err);
   }
 }
+
+// ── Product Recommendations from SF Personalization ────────────────────────
+
+export interface PersonalizedProduct {
+  productId?: string;
+  productSku?: string;
+  name?: string;
+  imageUrl?: string;
+  subCategory?: string;
+  price?: number;
+  [key: string]: unknown;  // catch-all for additional DMO fields
+}
+
+export interface ProductRecommendationsResult {
+  products: PersonalizedProduct[];
+  introText?: string;
+  campaignId?: string;
+  experienceId?: string;
+  raw?: unknown;  // full raw response for debugging
+}
+
+/**
+ * Fetch product recommendations from SF Personalization.
+ * Returns the raw response and a normalized products array.
+ * Call this and check the browser console for the full payload structure.
+ */
+export async function getProductRecommendations(): Promise<ProductRecommendationsResult | null> {
+  if (!isPersonalizationConfigured() || !initialized) {
+    console.warn('[sfp] getProductRecommendations: not configured or not initialized');
+    return null;
+  }
+
+  try {
+    const result = await fetchPersonalizationPoint('Product_Recommendations');
+    console.log('[sfp] Product_Recommendations RAW response:', JSON.stringify(result, null, 2));
+
+    if (!result) {
+      console.warn('[sfp] Product_Recommendations: no result returned');
+      return null;
+    }
+
+    const attrs = result.attributes || result.payload || {};
+    console.log('[sfp] Product_Recommendations attributes:', attrs);
+
+    // Try to extract products from various possible response shapes
+    // Shape 1: attrs.products (array)
+    // Shape 2: attrs.items (array)
+    // Shape 3: result.products (array)
+    // Shape 4: attrs contains individual product fields (single rec)
+    const rawProducts = attrs.products || attrs.items || result.products || result.items || [];
+
+    const products: PersonalizedProduct[] = Array.isArray(rawProducts)
+      ? rawProducts.map((p: Record<string, unknown>) => ({
+          productId: (p.Product_Id || p.productId || p.id || '') as string,
+          productSku: (p.Product_SKU || p.productSku || p.sku || '') as string,
+          name: (p.Product_Name || p.productName || p.name || '') as string,
+          imageUrl: (p.Primary_Product_Image_URL || p.imageUrl || p.image_url || '') as string,
+          subCategory: (p.Primary_Product_Sub_Category || p.subCategory || p.category || '') as string,
+          price: (p.Price || p.price || 0) as number,
+          ...p,
+        }))
+      : [];
+
+    console.log('[sfp] Product_Recommendations parsed products:', products.length, products);
+
+    return {
+      products,
+      introText: attrs.Introduction_Text || attrs.introText || attrs.introduction_text || undefined,
+      campaignId: result.personalizationId || result.campaignId,
+      experienceId: result.personalizationContentId || result.experienceId,
+      raw: result,
+    };
+  } catch (err) {
+    console.error('[sfp] Product_Recommendations fetch failed:', err);
+    return null;
+  }
+}
+
+// Expose on window for console debugging
+if (typeof window !== 'undefined') {
+  (window as any).__sfpGetProductRecs = getProductRecommendations;
+}
