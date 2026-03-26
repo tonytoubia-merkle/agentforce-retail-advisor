@@ -142,7 +142,7 @@ export const StorefrontPage: React.FC<StorefrontPageProps> = ({
             )}
 
             {/* SF Personalization — Product Recommendations */}
-            <RecommendationsCarousel />
+            <RecommendationsCarousel products={products} />
 
             {/* Featured/Best Sellers */}
             {featuredProducts.length > 0 && (
