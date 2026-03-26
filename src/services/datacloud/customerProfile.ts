@@ -351,9 +351,25 @@ export class DataCloudCustomerService {
 
     return ((data.records || []) as Record<string, string | null>[]).map((r) => {
       const metadata = r.Metadata_JSON__c ? JSON.parse(r.Metadata_JSON__c) : undefined;
-      // Temporal data lives in Metadata_JSON__c (avoids FLS issues with dedicated fields)
-      const eventDate = metadata?.eventDate ?? undefined;
-      const relativeTimeText = metadata?.relativeTimeText ?? undefined;
+      // Resolve eventDate: metadata → compute from relativeTimeText + capturedAt → parse description
+      let eventDate: string | undefined = metadata?.eventDate;
+      const relativeTimeText: string | undefined = metadata?.relativeTimeText;
+      if (!eventDate && r.Captured_At__c) {
+        // Try to compute from relative time expression in metadata or description
+        const timeText = relativeTimeText || r.Description__c || '';
+        const capturedDate = new Date(r.Captured_At__c);
+        const match = timeText.match(/in\s+(\d+|a|one|two|three|four|five|six|seven|eight)\s+(week|month|day)s?/i);
+        if (match) {
+          const numWords: Record<string, number> = { a: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8 };
+          const n = numWords[match[1].toLowerCase()] ?? (parseInt(match[1], 10) || 1);
+          const unit = match[2].toLowerCase();
+          const computed = new Date(capturedDate);
+          if (unit === 'day') computed.setDate(computed.getDate() + n);
+          else if (unit === 'week') computed.setDate(computed.getDate() + n * 7);
+          else if (unit === 'month') computed.setMonth(computed.getMonth() + n);
+          eventDate = computed.toISOString().split('T')[0];
+        }
+      }
       // Compute urgency relative to TODAY (not capture date)
       let urgency: MeaningfulEvent['urgency'] = 'No Date';
       if (eventDate) {
