@@ -31,7 +31,7 @@ async function enrichFromCRM(productIds: string[]): Promise<Map<string, { imageU
 
   // Build SOQL IN clause
   const idList = productIds.map(id => `'${id}'`).join(',');
-  const soql = `SELECT Id, Name, Image_URL__c, Category__c, Brand__c FROM Product2 WHERE Id IN (${idList})`;
+  const soql = `SELECT Id, Name, Image_URL__c, Category__c, Brand__c FROM Product2 WHERE Id IN (${idList}) AND IsActive = true`;
 
   try {
     const res = await fetch(`/api/datacloud/query/?q=${encodeURIComponent(soql)}`);
@@ -88,9 +88,9 @@ export const RecommendationsCarousel: React.FC<Props> = ({ products: catalog }) 
           const catProduct = rec.name ? catalogByName.get(rec.name.toLowerCase()) : undefined;
           return {
             ...rec,
-            crmImageUrl: crm?.imageUrl || '',
-            crmCategory: crm?.category || rec.subCategory || '',
-            crmBrand: crm?.brand || rec.brand || '',
+            crmImageUrl: crm?.imageUrl || catProduct?.imageUrl || '',
+            crmCategory: crm?.category || catProduct?.category || rec.subCategory || '',
+            crmBrand: crm?.brand || catProduct?.brand || rec.brand || '',
             catalogProduct: catProduct,
           };
         });
