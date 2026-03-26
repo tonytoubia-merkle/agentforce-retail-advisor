@@ -24,6 +24,11 @@ export default async function handler(req, res) {
 
     if (!r.ok) {
       const text = await r.text();
+      // Table-not-found or no-data errors → return empty result instead of noisy 502
+      if (r.status === 400 && (text.includes('Table name') || text.includes('does not exist'))) {
+        console.warn('[dc-query] table not found or empty — returning empty result:', text.slice(0, 120));
+        return res.status(200).json({ data: [], metadata: {} });
+      }
       console.error('[dc-query] error:', r.status, text);
       return res.status(502).json({ error: 'DC query failed', status: r.status, detail: text });
     }
