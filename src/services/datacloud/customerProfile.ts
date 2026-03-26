@@ -137,7 +137,7 @@ export class DataCloudCustomerService {
 
   async getSkinAnalysis(email: string): Promise<SkinAnalysisSummary[]> {
     const safe = email.replace(/'/g, '');
-    const sql = `SELECT analysis_date__c, overall_score__c, skin_age__c, skin_type__c, primary_concern__c, acne_score__c, acne_severity__c, wrinkle_score__c, wrinkle_severity__c, dark_circle_score__c, dark_circle_severity__c, pore_score__c, pore_severity__c, spot_score__c, spot_severity__c, redness_score__c, redness_severity__c, hydration_score__c, hydration_severity__c, firmness_score__c, firmness_severity__c, radiance_score__c, radiance_severity__c FROM SkinAdvisor_Skin_Analysis_F2B26733__dll WHERE email__c = '${safe}' ORDER BY analysis_date__c DESC LIMIT 20`;
+    const sql = `SELECT analysis_date__c, overall_score__c, skin_age__c, skin_type__c, primary_concern__c, acne_score__c, acne_severity__c, wrinkle_score__c, wrinkle_severity__c, dark_circle_score__c, dark_circle_severity__c, eye_bag_score__c, eye_bag_severity__c, pore_score__c, pore_severity__c, spot_score__c, spot_severity__c, redness_score__c, redness_severity__c, hydration_score__c, hydration_severity__c, firmness_score__c, firmness_severity__c, radiance_score__c, radiance_severity__c, oiliness_score__c, oiliness_severity__c, sensitivity_score__c, sensitivity_severity__c, texture_score__c, texture_severity__c, uneven_tone_score__c, uneven_tone_severity__c, uv_damage_score__c, uv_damage_severity__c FROM SkinAdvisor_Skin_Analysis_F2B26733__dll WHERE email__c = '${safe}' ORDER BY analysis_date__c DESC LIMIT 20`;
 
     const res = await fetch('/api/dc-query', {
       method:  'POST',
@@ -161,12 +161,18 @@ export class DataCloudCustomerService {
       { key: 'acne',        label: 'Acne' },
       { key: 'wrinkle',     label: 'Wrinkles' },
       { key: 'dark_circle', label: 'Dark Circles' },
+      { key: 'eye_bag',     label: 'Eye Bags' },
       { key: 'pore',        label: 'Enlarged Pores' },
       { key: 'spot',        label: 'Dark Spots' },
       { key: 'redness',     label: 'Redness' },
       { key: 'hydration',   label: 'Dehydration' },
       { key: 'firmness',    label: 'Loss of Firmness' },
       { key: 'radiance',    label: 'Dullness' },
+      { key: 'oiliness',    label: 'Oiliness' },
+      { key: 'sensitivity', label: 'Sensitivity' },
+      { key: 'texture',     label: 'Texture' },
+      { key: 'uneven_tone', label: 'Uneven Tone' },
+      { key: 'uv_damage',   label: 'UV Damage' },
     ];
 
     return rows.map((row) => {
