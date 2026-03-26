@@ -346,14 +346,14 @@ export class DataCloudCustomerService {
     // AND Contact__c (lookup field, set when the flow resolves the contact by email/ID lookup).
     // This covers both paths so events appear regardless of which field the flow populated.
     const data = await this.fetchJson(
-      `/services/data/v60.0/query/?q=SELECT+Id,Event_Type__c,Description__c,Captured_At__c,Agent_Note__c,Metadata_JSON__c,Event_Date__c,Relative_Time_Text__c+FROM+Meaningful_Event__c+WHERE+(Customer_Id__c='${safe}'+OR+Contact__c='${safe}')+ORDER+BY+Captured_At__c+DESC`
+      `/services/data/v60.0/query/?q=SELECT+Id,Event_Type__c,Description__c,Captured_At__c,Agent_Note__c,Metadata_JSON__c+FROM+Meaningful_Event__c+WHERE+(Customer_Id__c='${safe}'+OR+Contact__c='${safe}')+ORDER+BY+Captured_At__c+DESC`
     );
 
     return ((data.records || []) as Record<string, string | null>[]).map((r) => {
       const metadata = r.Metadata_JSON__c ? JSON.parse(r.Metadata_JSON__c) : undefined;
-      // Event_Date__c from CRM, or fall back to metadata.eventDate, or try parsing from description
-      const eventDate = r.Event_Date__c ?? metadata?.eventDate ?? undefined;
-      const relativeTimeText = r.Relative_Time_Text__c ?? metadata?.relativeTimeText ?? undefined;
+      // Temporal data lives in Metadata_JSON__c (avoids FLS issues with dedicated fields)
+      const eventDate = metadata?.eventDate ?? undefined;
+      const relativeTimeText = metadata?.relativeTimeText ?? undefined;
       // Compute urgency relative to TODAY (not capture date)
       let urgency: MeaningfulEvent['urgency'] = 'No Date';
       if (eventDate) {
