@@ -19,7 +19,7 @@ export default async function handler(req, res) {
     const r = await fetch(queryUrl, {
       method:  'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ query: sql }),
+      body:    JSON.stringify({ sql }),
     });
 
     if (!r.ok) {
