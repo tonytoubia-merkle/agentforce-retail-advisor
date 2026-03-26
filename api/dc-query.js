@@ -13,8 +13,8 @@ export default async function handler(req, res) {
   try {
     const { access_token: token, instance_url: dcInstance } = await getDcToken();
 
-    // Data Cloud SQL query — synchronous via CDP Query Service
-    const queryUrl = `${dcInstance}/services/data/v60.0/cdp/query`;
+    // Data Cloud SQL query — /api/v1/query on the DC tenant
+    const queryUrl = `${dcInstance}/api/v1/query`;
     console.log('[dc-query] querying:', queryUrl);
     const r = await fetch(queryUrl, {
       method:  'POST',
