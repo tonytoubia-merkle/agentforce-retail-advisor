@@ -14,6 +14,8 @@ import { StorefrontPage } from '@/components/Storefront';
 import { MediaWallPage } from '@/components/MediaWall';
 import { ProductProvider } from '@/contexts/ProductContext';
 import { resolveUTMToCampaign } from '@/mocks/adCreatives';
+import { setPersonalizationCampaign } from '@/services/personalization';
+import { pushUtmToDataLayer } from '@/services/merkury/dataLayer';
 import type { CampaignAttribution } from '@/types/campaign';
 
 
@@ -106,7 +108,15 @@ function App() {
   // Parse UTM from URL once on mount (lazy initializer — no re-renders)
   const [initialCampaign] = useState<CampaignAttribution | null>(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('utm_source')) {
+    const utmSource = params.get('utm_source');
+    if (utmSource) {
+      // Always push UTM params to personalization SDK + dataLayer
+      // (regardless of whether they match a mock ad creative)
+      const utmCampaign = params.get('utm_campaign') || '';
+      const utmMedium = params.get('utm_medium') || '';
+      setPersonalizationCampaign(utmCampaign, utmSource, utmMedium);
+      pushUtmToDataLayer(utmCampaign, utmSource, utmMedium);
+
       const attribution = resolveUTMToCampaign(params);
       window.history.replaceState({}, '', window.location.pathname);
       return attribution;
