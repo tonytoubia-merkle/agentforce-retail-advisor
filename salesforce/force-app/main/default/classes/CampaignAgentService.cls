@@ -458,10 +458,30 @@ public with sharing class CampaignAgentService {
                  + 'rose petals, candlelight, elegant marble surface, intimate atmosphere, '
                  + 'premium editorial photography';
         }
-        if (eventDescLower.contains('baby') || eventDescLower.contains('pregnant')) {
+        if (eventDescLower.contains('baby') || eventDescLower.contains('pregnant') || eventDescLower.contains('maternity')) {
             return 'Gentle nursery setting, luxury beauty products arranged on soft white blanket, '
                  + 'pastel colors, soft diffused light, peaceful nurturing atmosphere, '
                  + 'cotton details, tender motherhood moment';
+        }
+        if (eventDescLower.contains('new job') || eventDescLower.contains('career') || eventDescLower.contains('promotion') || eventDescLower.contains('interview')) {
+            return 'Modern executive getting-ready scene, luxury beauty products arranged on sleek glass vanity, '
+                 + 'city skyline through floor-to-ceiling window, morning golden hour light, '
+                 + 'tailored blazer on hanger, polished professional aesthetic, editorial photography';
+        }
+        if (eventDescLower.contains('graduation') || eventDescLower.contains('prom')) {
+            return 'Celebratory milestone scene, luxury beauty products arranged on elegant dresser, '
+                 + 'fresh flowers in vase, confetti accents, bright optimistic natural light, '
+                 + 'youthful elegance, editorial photography';
+        }
+        if (eventDescLower.contains('relocation') || eventDescLower.contains('moving') || eventDescLower.contains('new home')) {
+            return 'Fresh start in a new space, luxury beauty products on modern bathroom counter, '
+                 + 'bright airy new-home atmosphere, fresh white towels, '
+                 + 'optimistic morning light through large window, editorial photography';
+        }
+        if (eventDescLower.contains('retirement')) {
+            return 'Luxurious self-care retreat scene, luxury beauty products on elegant spa tray, '
+                 + 'plush robe draped nearby, orchid flowers, warm ambient candlelight, '
+                 + 'peaceful indulgent atmosphere, editorial photography';
         }
         return 'Lifestyle flat-lay arrangement, luxury beauty products beautifully styled, '
              + 'clean minimalist background, natural lighting, premium product photography, '
