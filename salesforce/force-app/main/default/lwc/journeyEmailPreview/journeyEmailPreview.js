@@ -109,8 +109,8 @@ export default class JourneyEmailPreview extends LightningElement {
     }
 
     get displayProducts() {
-        // Limit to 3 products for email preview
-        return (this.products || []).slice(0, 3);
+        // Show all recommended products (up to 5)
+        return (this.products || []).slice(0, 5);
     }
 
     get previewDate() {

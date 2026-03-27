@@ -146,11 +146,15 @@ export class CommerceClient {
     const response = await fetch(`${this.baseUrl}/carts`, {
       method: 'POST',
       headers: await this.authHeaders(),
-      body: JSON.stringify({}),
+      body: JSON.stringify({
+        type: 'Cart',
+      }),
     });
 
     if (!response.ok) {
-      throw new Error(`Create cart failed: ${response.statusText}`);
+      const errText = await response.text().catch(() => '');
+      console.error('[commerce] Create cart failed:', response.status, errText);
+      throw new Error(`Create cart failed (${response.status}): ${errText || response.statusText}`);
     }
 
     const data = await response.json() as { cartId?: string };

@@ -106,7 +106,7 @@ export class DataCloudCustomerService {
   ): CustomerProfile {
     return {
       id: contactId,
-      name: raw.FirstName || 'Guest',
+      name: [raw.FirstName, raw.LastName].filter(Boolean).join(' ') || 'Guest',
       email: raw.Email || '',
       beautyProfile: {
         skinType: (raw.Skin_Type__c || 'normal').toLowerCase() as 'dry' | 'oily' | 'combination' | 'sensitive' | 'normal',
@@ -114,6 +114,11 @@ export class DataCloudCustomerService {
         allergies: this.parseSemicolon(raw.Allergies__c),
         preferredBrands: this.parseSemicolon(raw.Preferred_Brands__c),
         ageRange: '',
+        communicationPrefs: {
+          email: raw.Email_Opt_In__c != null && String(raw.Email_Opt_In__c) !== 'false',
+          sms: raw.SMS_Opt_In__c != null && String(raw.SMS_Opt_In__c) === 'true',
+          push: raw.Push_Opt_In__c != null && String(raw.Push_Opt_In__c) === 'true',
+        },
       },
       ...relatedData,
       skinAnalyses: relatedData.skinAnalyses,
@@ -220,7 +225,7 @@ export class DataCloudCustomerService {
     return { orders, chatSummaries, meaningfulEvents, browseSessions, loyalty, agentCapturedProfile, skinAnalyses: skinAnalysis, journeyApprovals };
   }
 
-  private static readonly CONTACT_FIELDS = 'Id,FirstName,LastName,Email,Merkury_Id__c,Skin_Type__c,Skin_Concerns__c,Allergies__c,Preferred_Brands__c,MailingStreet,MailingCity,MailingState,MailingPostalCode,MailingCountry';
+  private static readonly CONTACT_FIELDS = 'Id,FirstName,LastName,Email,Merkury_Id__c,Skin_Type__c,Skin_Concerns__c,Allergies__c,Preferred_Brands__c,MailingStreet,MailingCity,MailingState,MailingPostalCode,MailingCountry,Email_Opt_In__c,SMS_Opt_In__c,Push_Opt_In__c';
 
   // ─── Full Profile (parallel sub-queries) ────────────────────────
 
