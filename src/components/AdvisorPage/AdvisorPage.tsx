@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useScene } from '@/contexts/SceneContext';
 import { useConversation } from '@/contexts/ConversationContext';
+import { useCustomer } from '@/contexts/CustomerContext';
 import { GenerativeBackground } from '@/components/GenerativeBackground';
 import { ChatInterface } from '@/components/ChatInterface';
 import { CheckoutOverlay } from '@/components/CheckoutOverlay';
@@ -22,6 +23,9 @@ export const AdvisorPage: React.FC<AdvisorPageProps> = ({ mode = 'beauty' }) => 
   const { scene, setAdvisorMode } = useScene();
   const { messages, sendMessage, isAgentTyping, isLoadingWelcome, suggestedActions } = useConversation();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { customer } = useCustomer();
+  const productContextSent = useRef(false);
 
   // Skin concierge has its own landing — show it until the user takes an action
   const [skinWelcomeActive, setSkinWelcomeActive] = useState(mode === 'skin-concierge');
@@ -30,6 +34,57 @@ export const AdvisorPage: React.FC<AdvisorPageProps> = ({ mode = 'beauty' }) => 
   useEffect(() => {
     setAdvisorMode(mode);
   }, [mode, setAdvisorMode]);
+
+  // ─── Product Context from Storefront ─────────────────────────────
+  // When user clicks "Ask our Beauty Advisor" from a product page,
+  // auto-send a contextualized message based on identity tier.
+  useEffect(() => {
+    const state = location.state as { productContext?: Record<string, unknown> } | null;
+    if (!state?.productContext || productContextSent.current || isLoadingWelcome) return;
+    productContextSent.current = true;
+
+    const p = state.productContext;
+    const name = p.name as string || '';
+    const brand = p.brand as string || '';
+    const description = p.description as string || '';
+    const price = p.price as number || 0;
+    const concerns = (p.concerns as string[]) || [];
+    const tier = customer?.merkuryIdentity?.identityTier || 'anonymous';
+
+    // Build the message based on identity tier and data provenance
+    let message = '';
+
+    if (tier === 'known' && customer) {
+      // KNOWN: Use 1P data (stated/observed) directly — reference their profile
+      const profileConcerns = customer.beautyProfile?.concerns || [];
+      const skinType = customer.beautyProfile?.skinType || '';
+      const matchingConcerns = concerns.filter(c =>
+        profileConcerns.some(pc => pc.toLowerCase().includes(c.toLowerCase()) || c.toLowerCase().includes(pc.toLowerCase()))
+      );
+
+      if (matchingConcerns.length > 0) {
+        message = `I'm looking at the ${name} by ${brand} ($${price}). I noticed it addresses ${matchingConcerns.join(' and ')}, which are concerns on my profile. Can you tell me more about how this would work for my ${skinType} skin?`;
+      } else {
+        message = `I'm interested in the ${name} by ${brand} ($${price}). Would this be a good fit for my ${skinType} skin? Any tips on how to incorporate it into my routine?`;
+      }
+    } else if (tier === 'appended' && customer?.appendedProfile) {
+      // APPENDED: 3P data is INFLUENCE ONLY — do NOT reference it directly.
+      // Frame as general interest, let the agent use appended signals silently.
+      message = `I was just browsing and came across the ${name} by ${brand}. It looks interesting — can you tell me more about it and who it's best suited for?`;
+    } else {
+      // ANONYMOUS: No personalization — product description + open question
+      message = `I'd like to learn more about the ${name} by ${brand} ($${price}). ${description ? description.split('.')[0] + '.' : ''} Can you help me understand if this would be right for me?`;
+    }
+
+    // Wait for welcome to finish, then send
+    const timer = setTimeout(() => {
+      sendMessage(message);
+      // Clear the route state so refreshing doesn't re-send
+      navigate(location.pathname, { replace: true, state: null });
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [location.state, isLoadingWelcome, customer, sendMessage, navigate, location.pathname]);
 
   // Skin concierge always uses a fixed consultative gradient — bypasses scene state entirely
   const SKIN_CONCIERGE_BG = {

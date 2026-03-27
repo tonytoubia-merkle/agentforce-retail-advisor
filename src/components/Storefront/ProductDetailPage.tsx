@@ -13,7 +13,9 @@ interface ProductDetailPageProps {
 
 export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product }) => {
   const navigate = useNavigate();
-  const onBeautyAdvisor = useCallback(() => navigate('/advisor'), [navigate]);
+  const onBeautyAdvisor = useCallback(() => navigate('/advisor', {
+    state: { productContext: { id: product.id, salesforceId: product.salesforceId, name: product.name, brand: product.brand, category: product.category, price: product.price, description: product.description, imageUrl: product.imageUrl, concerns: product.attributes?.concerns, skinType: product.attributes?.skinType } }
+  }), [navigate, product]);
   const { goBack, navigateToCart } = useStore();
   const { addItem, isInCart, items } = useCart();
   const [quantity, setQuantity] = useState(1);
