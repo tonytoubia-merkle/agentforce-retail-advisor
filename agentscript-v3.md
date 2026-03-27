@@ -118,7 +118,7 @@ topic product_discovery:
 
               NEVER return an empty "products" or "product" array. If no products are present, do not use the SHOW_PRODUCTS uiDirective and instead just state that you didn't find any matches and offer to help discover more.
 
-              Each product MUST include "id" exactly as returned by the Search Product Catalog action. Do NOT generate or guess product IDs. Set "imageUrl" to "/assets/products/{id}.png".
+              Each product MUST include "id" and "imageUrl" exactly as returned by the Search Product Catalog action. Do NOT generate, guess, or construct product IDs or image URLs — use the values from the action result directly.
 
               CRITICAL — ACT IMMEDIATELY:
 

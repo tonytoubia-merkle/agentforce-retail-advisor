@@ -45,8 +45,11 @@ export function normalizeProducts(products: unknown[]): Product[] {
     if (catalogProduct) {
       // Use catalog slug for URL routing
       raw.id = catalogProduct.id;
-      // Only fill missing fields — prefer agent-provided data
-      if (!raw.imageUrl) raw.imageUrl = catalogProduct.imageUrl;
+      // Override imageUrl if it's missing OR looks like a constructed path with a Salesforce ID
+      // (e.g., "/assets/products/01tKa0000098TyPIAU.png" — doesn't exist)
+      const imgStr = (raw.imageUrl as string) || '';
+      const isBadUrl = !imgStr || imgStr.match(/\/assets\/products\/01[a-zA-Z0-9]{14,17}\.png/);
+      if (isBadUrl) raw.imageUrl = catalogProduct.imageUrl;
       if (!raw.images) raw.images = catalogProduct.images;
       if (!raw.brand) raw.brand = catalogProduct.brand;
       if (!raw.category) raw.category = catalogProduct.category;
