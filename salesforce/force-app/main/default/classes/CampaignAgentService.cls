@@ -66,35 +66,111 @@ public with sharing class CampaignAgentService {
 
     // ─── Invocable Method ─────────────────────────────────────────────
 
-    @InvocableMethod(label='Generate Campaign Brief' description='Uses Campaign Creation Agent to generate marketing brief and email content')
+    @InvocableMethod(label='Generate Campaign Brief' description='Uses GenAI Prompt Template to generate marketing brief and email content')
     public static List<BriefGenerationResult> generateBriefs(List<BriefGenerationRequest> requests) {
         List<BriefGenerationResult> results = new List<BriefGenerationResult>();
 
         for (BriefGenerationRequest req : requests) {
             BriefGenerationResult result = new BriefGenerationResult();
             try {
-                // Build the prompt for the Campaign Creation Agent
-                String agentPrompt = buildAgentPrompt(req);
+                // Primary: Use GenAI Prompt Template (Campaign_Brief_Generator)
+                Map<String, String> aiResponse = invokePromptTemplate(req);
 
-                // Invoke the agent and get response
-                Map<String, String> agentResponse = invokeAgent(agentPrompt);
-
-                result.success = true;
-                result.briefContent = agentResponse.get('briefContent');
-                result.suggestedSubject = agentResponse.get('subject');
-                result.suggestedBody = agentResponse.get('body');
-                result.fireflyPromptSuggestion = agentResponse.get('imagePrompt');
-                result.sessionId = agentResponse.get('sessionId');
+                if (aiResponse != null && !aiResponse.isEmpty()) {
+                    result.success = true;
+                    result.briefContent = aiResponse.get('briefContent');
+                    result.suggestedSubject = aiResponse.get('subject');
+                    result.suggestedBody = aiResponse.get('body');
+                    result.fireflyPromptSuggestion = aiResponse.get('imagePrompt');
+                } else {
+                    // Fallback: legacy agent invocation
+                    String agentPrompt = buildAgentPrompt(req);
+                    Map<String, String> agentResponse = invokeAgent(agentPrompt);
+                    result.success = true;
+                    result.briefContent = agentResponse.get('briefContent');
+                    result.suggestedSubject = agentResponse.get('subject');
+                    result.suggestedBody = agentResponse.get('body');
+                    result.fireflyPromptSuggestion = agentResponse.get('imagePrompt');
+                    result.sessionId = agentResponse.get('sessionId');
+                }
 
             } catch (Exception e) {
                 result.success = false;
                 result.errorMessage = e.getMessage();
-                System.debug(LoggingLevel.ERROR, 'Campaign agent invocation failed: ' + e.getMessage());
+                System.debug(LoggingLevel.ERROR, 'Campaign brief generation failed: ' + e.getMessage());
             }
             results.add(result);
         }
 
         return results;
+    }
+
+    /**
+     * Invoke the Campaign_Brief_Generator GenAI Prompt Template.
+     * Uses ConnectApi.EinsteinLlm to call the prompt template with structured inputs.
+     * Returns parsed response map with subject, body, imagePrompt, briefContent.
+     */
+    private static Map<String, String> invokePromptTemplate(BriefGenerationRequest req) {
+        try {
+            // Consolidate description + additional context into one field (5 input limit)
+            String eventContext = (req.eventDescription != null ? req.eventDescription : '');
+            if (String.isNotBlank(req.additionalContext)) {
+                eventContext += '\n' + req.additionalContext;
+            }
+
+            // Build input map for the prompt template
+            ConnectApi.EinsteinPromptTemplateGenerationsInput input = new ConnectApi.EinsteinPromptTemplateGenerationsInput();
+            input.additionalConfig = new ConnectApi.EinsteinLlmAdditionalConfigInput();
+            input.additionalConfig.applicationName = 'CampaignBriefGenerator';
+            input.isPreview = false;
+
+            Map<String, ConnectApi.WrappedValue> inputMap = new Map<String, ConnectApi.WrappedValue>();
+
+            ConnectApi.WrappedValue wvType = new ConnectApi.WrappedValue();
+            wvType.value = req.eventType != null ? req.eventType : '';
+            inputMap.put('Input:EventType', wvType);
+
+            ConnectApi.WrappedValue wvContext = new ConnectApi.WrappedValue();
+            wvContext.value = eventContext;
+            inputMap.put('Input:EventContext', wvContext);
+
+            ConnectApi.WrappedValue wvName = new ConnectApi.WrappedValue();
+            wvName.value = req.contactName != null ? req.contactName : 'there';
+            inputMap.put('Input:CustomerName', wvName);
+
+            ConnectApi.WrappedValue wvDate = new ConnectApi.WrappedValue();
+            wvDate.value = req.eventDate != null ? String.valueOf(req.eventDate) : 'not specified';
+            inputMap.put('Input:EventDate', wvDate);
+
+            ConnectApi.WrappedValue wvProducts = new ConnectApi.WrappedValue();
+            wvProducts.value = req.suggestedProducts != null ? req.suggestedProducts : 'none specified';
+            inputMap.put('Input:SuggestedProducts', wvProducts);
+
+            input.inputParams = inputMap;
+
+            // Call the prompt template
+            ConnectApi.EinsteinPromptTemplateGenerationsRepresentation response =
+                ConnectApi.EinsteinLlm.generateMessagesForPromptTemplate(
+                    'Campaign_Brief_Generator', input
+                );
+
+            // Extract the generated text
+            if (response != null && response.generations != null && !response.generations.isEmpty()) {
+                String responseText = response.generations[0].text;
+                System.debug('[CampaignAgentService] Prompt template response length: ' + (responseText != null ? responseText.length() : 0));
+
+                if (String.isNotBlank(responseText)) {
+                    return parseAgentResponse(responseText);
+                }
+            }
+
+            System.debug(LoggingLevel.WARN, '[CampaignAgentService] Prompt template returned no generations');
+            return null;
+
+        } catch (Exception e) {
+            System.debug(LoggingLevel.WARN, '[CampaignAgentService] Prompt template invocation failed: ' + e.getMessage());
+            return null;
+        }
     }
 
     // ─── Agent Invocation ─────────────────────────────────────────────

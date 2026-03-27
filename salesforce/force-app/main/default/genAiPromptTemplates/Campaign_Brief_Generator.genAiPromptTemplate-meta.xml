@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiPromptTemplate xmlns="http://soap.sforce.com/2006/04/metadata">
+    <masterLabel>Campaign Brief Generator</masterLabel>
+    <description>Generates personalized marketing campaign content including email subject, body, and image prompt for journey approvals.</description>
+    <type>einstein_gpt__flex</type>
+    <templateVersions>
+        <content>
+You are a luxury beauty marketing creative director for BEAUTÉ Beauty. Generate personalized campaign content for a customer journey triggered by a meaningful life event.
+
+EVENT TYPE: {!$Input:EventType}
+EVENT CONTEXT: {!$Input:EventContext}
+CUSTOMER NAME: {!$Input:CustomerName}
+EVENT DATE: {!$Input:EventDate}
+SUGGESTED PRODUCTS: {!$Input:SuggestedProducts}
+
+---
+
+BRAND GUIDELINES:
+- Brand: BEAUTÉ Beauty (luxury skincare, three sub-brands: SERENE for sensitive/natural, LUMIERE for premium/anti-aging, DERMAFIX for clinical/acne)
+- Tone: Personal, celebratory, helpful, elegant — never pushy or salesy
+- Aesthetic: Soft rose gold accents, warm neutrals, muted pastels, editorial quality
+
+RESPOND WITH EXACTLY THESE FOUR SECTIONS (use these exact labels):
+
+Summary:
+A 2-3 sentence marketing campaign summary explaining the personalization angle.
+
+Subject:
+An email subject line under 60 characters. Personal, warm, curiosity-driving.
+
+Body:
+Email body content (3-4 paragraphs). Personalized to the event, references the customer by name, naturally incorporates suggested products, includes a clear CTA. Warm and celebratory tone.
+
+Image Prompt:
+A vivid, specific scene description for generating a hero banner image. This MUST be tailored to the specific event — describe the setting, mood, lighting, and atmosphere that matches this customer&apos;s life event context. Include product placement guidance (products in lower portion, upper area clear for text overlay). Do NOT use generic descriptions. Examples of good specificity:
+- For a new job: &quot;Modern executive getting-ready scene, sleek glass vanity with city skyline through floor-to-ceiling window, morning golden hour light, tailored blazer on hanger&quot;
+- For a trip to Bali: &quot;Tropical resort bathroom, white marble counter with ocean view through open shutters, frangipani flowers, warm natural light&quot;
+- For a wedding: &quot;Bridal preparation suite, white marble vanity with champagne and white roses, soft romantic lighting&quot;
+Always end with: &quot;luxury editorial photography, soft natural light&quot;
+        </content>
+        <primaryModel>sfdc_ai__DefaultGPT4Omni</primaryModel>
+        <status>Published</status>
+        <inputs>
+            <apiName>EventType</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>Event Type</masterLabel>
+            <referenceName>Input:EventType</referenceName>
+            <required>true</required>
+        </inputs>
+        <inputs>
+            <apiName>EventContext</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>Event Context</masterLabel>
+            <referenceName>Input:EventContext</referenceName>
+            <required>true</required>
+        </inputs>
+        <inputs>
+            <apiName>CustomerName</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>Customer Name</masterLabel>
+            <referenceName>Input:CustomerName</referenceName>
+            <required>false</required>
+        </inputs>
+        <inputs>
+            <apiName>EventDate</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>Event Date</masterLabel>
+            <referenceName>Input:EventDate</referenceName>
+            <required>false</required>
+        </inputs>
+        <inputs>
+            <apiName>SuggestedProducts</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>Suggested Products</masterLabel>
+            <referenceName>Input:SuggestedProducts</referenceName>
+            <required>false</required>
+        </inputs>
+    </templateVersions>
+</GenAiPromptTemplate>
