@@ -59,14 +59,14 @@ function AnimatedRoutes() {
   }, [location.pathname]);
 
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence mode="popLayout">
       <motion.div
         key={animationKey}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        transition={{ duration: 0.3 }}
-        className={animationKey === 'advisor' ? 'relative' : undefined}
+        transition={{ duration: 0.2 }}
+        className={animationKey === 'advisor' || animationKey === 'skin-advisor' ? 'relative' : undefined}
       >
         <Routes location={location}>
           <Route path="/advisor" element={<AdvisorWrapper />} />
