@@ -112,20 +112,14 @@ export const RecommendationsCarousel: React.FC<Props> = ({ products: catalog }) 
     <section className="py-8 bg-white border-b border-stone-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between mb-4">
-          <div>
-            <p className="text-[10px] uppercase tracking-widest text-rose-400 font-medium mb-1">
-              Salesforce Personalization
-            </p>
-            <h2 className="text-xl sm:text-2xl font-medium text-stone-900">
-              {introText}
-            </h2>
-          </div>
-          <span className="text-xs text-stone-400">{enrichedProducts.length} items</span>
+          <h2 className="text-xl sm:text-2xl font-medium text-stone-900">
+            {introText}
+          </h2>
         </div>
 
         <div
           className="flex gap-3 overflow-x-auto pb-3 -mx-1 px-1 snap-x snap-mandatory"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          style={{ scrollbarWidth: 'thin' }}
         >
           {enrichedProducts.map((product, i) => {
             const brand = product.crmBrand || product.brand || '';

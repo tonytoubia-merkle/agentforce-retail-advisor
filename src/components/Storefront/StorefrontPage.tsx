@@ -140,15 +140,6 @@ export const StorefrontPage: React.FC = () => {
             {/* SF Personalization — Product Recommendations */}
             <RecommendationsCarousel products={products} />
 
-            {/* Featured/Best Sellers */}
-            {featuredProducts.length > 0 && (
-              <ProductSection
-                title="Best Sellers"
-                subtitle="Our most-loved products"
-                products={featuredProducts}
-              />
-            )}
-
             {/* Categories quick links */}
             <section className="py-12 bg-stone-50">
               <div className="max-w-7xl mx-auto px-4 sm:px-6">
