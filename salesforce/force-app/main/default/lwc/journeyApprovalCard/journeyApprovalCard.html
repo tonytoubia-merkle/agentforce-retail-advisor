@@ -269,7 +269,7 @@
                                 <div class="slds-m-top_xx-small">
                                     <lightning-button
                                         variant="base"
-                                        label="Regenerate"
+                                        label={generateImageLabel}
                                         icon-name="utility:refresh"
                                         onclick={handleRegenerateClick}
                                         size="small">
@@ -286,7 +286,7 @@
                                     <p class="slds-text-body_regular slds-m-bottom_small">Ready to generate personalized image</p>
                                     <lightning-button
                                         variant="brand"
-                                        label="Generate Image"
+                                        label={generateImageLabel}
                                         icon-name="utility:sparkles"
                                         onclick={handleRegenerateClick}>
                                     </lightning-button>
@@ -702,7 +702,7 @@
                     <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" onclick={closeRegenerateModal}>
                         <lightning-icon icon-name="utility:close" size="small"></lightning-icon>
                     </button>
-                    <h2 class="slds-modal__title">Regenerate Image</h2>
+                    <h2 class="slds-modal__title">{generateImageModalTitle}</h2>
                 </header>
                 <div class="slds-modal__content slds-p-around_medium">
                     <lightning-textarea
@@ -714,7 +714,7 @@
                 </div>
                 <footer class="slds-modal__footer">
                     <lightning-button label="Cancel" onclick={closeRegenerateModal}></lightning-button>
-                    <lightning-button variant="brand" label="Regenerate" onclick={confirmRegenerate}></lightning-button>
+                    <lightning-button variant="brand" label={generateImageLabel} onclick={confirmRegenerate}></lightning-button>
                 </footer>
             </div>
         </section>

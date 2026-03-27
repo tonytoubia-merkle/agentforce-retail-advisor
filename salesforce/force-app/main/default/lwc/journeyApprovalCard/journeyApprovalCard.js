@@ -854,6 +854,14 @@ export default class JourneyApprovalCard extends LightningElement {
         return this.hasGeneratedVideo ? 'Regenerate Video' : 'Generate Video';
     }
 
+    get generateImageLabel() {
+        return this.hasGeneratedImage ? 'Regenerate' : 'Generate';
+    }
+
+    get generateImageModalTitle() {
+        return this.hasGeneratedImage ? 'Regenerate Image' : 'Generate Image';
+    }
+
     handleVideoPromptChange(event) {
         this.editedVideoPrompt = event.target.value;
     }
