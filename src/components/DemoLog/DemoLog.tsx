@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useSyncExternalStore, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { demoLog, type LogEntry, type EventCategory } from '@/services/demoLog';
 
@@ -112,17 +112,26 @@ function LogEntryRow({ entry }: { entry: LogEntry }) {
 // ─── Main DemoLog panel ──────────────────────────────────────────────────────
 
 export const DemoLog: React.FC = () => {
-  const entries = useSyncExternalStore(demoLog.subscribe, demoLog.getSnapshot);
-  // Auto-open on first entries — either already present on mount or arriving later
-  const [open, setOpen] = useState(() => demoLog.getSnapshot().length > 0);
+  // Use useState + subscribe instead of useSyncExternalStore.
+  // This guarantees we pick up entries logged before this component mounted
+  // (e.g. UTM params logged in App's useState initializer).
+  const [entries, setEntries] = useState<LogEntry[]>(() => demoLog.getSnapshot());
+  const [open, setOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Set<EventCategory>>(new Set(ALL_CATEGORIES));
   const scrollRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
-  const hasAutoOpenedRef = useRef(open);
+
+  useEffect(() => {
+    // Sync immediately — catches entries logged between initial render and this effect
+    setEntries(demoLog.getSnapshot());
+    // Subscribe for all future updates
+    return demoLog.subscribe(() => setEntries(demoLog.getSnapshot()));
+  }, []);
 
   const filtered = entries.filter(e => activeFilters.has(e.category));
 
-  // Auto-open on first entry if panel was initially empty
+  // Auto-open the panel when entries exist
+  const hasAutoOpenedRef = useRef(false);
   useEffect(() => {
     if (!hasAutoOpenedRef.current && entries.length > 0) {
       hasAutoOpenedRef.current = true;
