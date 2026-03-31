@@ -122,12 +122,33 @@ export const DemoLog: React.FC = () => {
   const [autoScroll, setAutoScroll] = useState(true);
 
   useEffect(() => {
-    // Native DOM listener — fires outside React's batching
+    // Native DOM listener for future entries
     const handler = () => bump();
     window.addEventListener('demolog', handler);
-    // Sync on mount: catch entries logged before we attached
-    bump();
-    return () => window.removeEventListener('demolog', handler);
+
+    // Poll every 200ms for the first 3 seconds to catch entries logged
+    // during the initial render tree (UTM, identity, nav, personalization).
+    // Stops early once we've seen a stable count for 2 consecutive polls.
+    let lastSeen = 0;
+    let stableCount = 0;
+    const poll = setInterval(() => {
+      const current = demoLog.entries.length;
+      if (current !== lastSeen) {
+        lastSeen = current;
+        stableCount = 0;
+        bump();
+      } else {
+        stableCount++;
+        if (stableCount >= 2) clearInterval(poll);
+      }
+    }, 200);
+    const stopPoll = setTimeout(() => clearInterval(poll), 3000);
+
+    return () => {
+      window.removeEventListener('demolog', handler);
+      clearInterval(poll);
+      clearTimeout(stopPoll);
+    };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Read entries directly from the singleton on every render
