@@ -117,8 +117,19 @@ export const DemoLog: React.FC = () => {
   const [activeFilters, setActiveFilters] = useState<Set<EventCategory>>(new Set(ALL_CATEGORIES));
   const scrollRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
+  const prevCountRef = useRef(0);
 
   const filtered = entries.filter(e => activeFilters.has(e.category));
+
+  // Auto-open the panel when the first entries arrive
+  useEffect(() => {
+    if (entries.length > 0 && prevCountRef.current === 0 && !open) {
+      // Small delay so the page has time to paint first
+      const timer = setTimeout(() => setOpen(true), 600);
+      return () => clearTimeout(timer);
+    }
+    prevCountRef.current = entries.length;
+  }, [entries.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-scroll to bottom on new entries
   useEffect(() => {
