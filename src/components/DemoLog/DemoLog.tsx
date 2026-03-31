@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, useReducer } from 'react';
+import { useState, useRef, useEffect, useCallback, useReducer, type Reducer } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { demoLog, type LogEntry, type EventCategory } from '@/services/demoLog';
 
@@ -112,23 +112,25 @@ function LogEntryRow({ entry }: { entry: LogEntry }) {
 // ─── Main DemoLog panel ──────────────────────────────────────────────────────
 
 export const DemoLog: React.FC = () => {
-  // Force re-render via a monotonic counter that increments on every demoLog mutation.
-  // This sidesteps all React deduplication / batching issues — a new number is always
-  // !== the previous one, so React always re-renders.
-  const [, bump] = useReducer((c: number) => c + 1, 0);
+  // Track demoLog.version via native DOM event listener — completely bypasses
+  // React's batching/deduplication. Every demoLog.log() dispatches a 'demolog'
+  // event on window; we listen for it and force a re-render.
+  const [, bump] = useReducer<Reducer<number, void>>((c) => c + 1, 0);
   const [open, setOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Set<EventCategory>>(new Set(ALL_CATEGORIES));
   const scrollRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
 
   useEffect(() => {
-    // Catch entries logged before this component mounted
-    if (demoLog.entries.length > 0) bump();
-    // Subscribe: every future log() triggers a re-render via bump()
-    return demoLog.subscribe(bump);
-  }, []);
+    // Native DOM listener — fires outside React's batching
+    const handler = () => bump();
+    window.addEventListener('demolog', handler);
+    // Sync on mount: catch entries logged before we attached
+    bump();
+    return () => window.removeEventListener('demolog', handler);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Read entries directly from the singleton on every render — no stale state
+  // Read entries directly from the singleton on every render
   const entries = demoLog.entries;
   const filtered = entries.filter(e => activeFilters.has(e.category));
 

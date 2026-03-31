@@ -24,20 +24,12 @@ export interface LogEntry {
   details?: Record<string, unknown>;
 }
 
-type Listener = () => void;
-
 let nextId = 0;
 const SESSION_START = Date.now();
 
 class DemoEventLog {
   entries: LogEntry[] = [];
-  /** Monotonic counter — increments on every mutation. Components can
-   *  track this in state to guarantee re-renders even when React
-   *  batches or deduplicates setState calls. */
   version = 0;
-  private listeners = new Set<Listener>();
-
-  private pendingNotify: number | null = null;
 
   log(entry: Omit<LogEntry, 'id' | 'timestamp'>) {
     this.entries = [
@@ -45,27 +37,16 @@ class DemoEventLog {
       { ...entry, id: String(++nextId), timestamp: Date.now() - SESSION_START },
     ];
     this.version++;
-    // Notify current subscribers synchronously
-    this.listeners.forEach(fn => fn());
-    // ALSO schedule a deferred notification — catches subscribers that
-    // attach after this call (e.g. DemoLog mounting after App logs UTM).
-    if (this.pendingNotify === null) {
-      this.pendingNotify = window.setTimeout(() => {
-        this.pendingNotify = null;
-        this.listeners.forEach(fn => fn());
-      }, 0);
-    }
+    // Fire a native DOM event — this is NOT subject to React batching,
+    // so listeners attached via addEventListener always get notified.
+    window.dispatchEvent(new Event('demolog'));
   }
 
-  subscribe = (listener: Listener) => {
-    this.listeners.add(listener);
-    return () => { this.listeners.delete(listener); };
-  };
 
   clear() {
     this.entries = [];
     this.version++;
-    this.listeners.forEach(fn => fn());
+    window.dispatchEvent(new Event('demolog'));
   }
 }
 
