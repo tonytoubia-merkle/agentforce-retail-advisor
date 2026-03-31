@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { flushSync } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { demoLog, type LogEntry, type EventCategory } from '@/services/demoLog';
 
@@ -113,54 +112,41 @@ function LogEntryRow({ entry }: { entry: LogEntry }) {
 // ─── Main DemoLog panel ──────────────────────────────────────────────────────
 
 export const DemoLog: React.FC = () => {
-  // Use a simple version counter in state. flushSync forces React to
-  // render synchronously, bypassing React 18 automatic batching.
-  const [ver, setVer] = useState(0);
+  // Store entries in React state — the ONLY source of truth for rendering.
+  // Synced from the singleton via poll + DOM event.
+  const [entries, setEntries] = useState<LogEntry[]>([]);
   const [open, setOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Set<EventCategory>>(new Set(ALL_CATEGORIES));
   const scrollRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
+  const lastVersionRef = useRef(-1);
 
   useEffect(() => {
-    // Force-sync: flushSync bypasses React 18 batching entirely
-    const forceSync = () => {
-      try {
-        flushSync(() => setVer(v => v + 1));
-      } catch {
-        setVer(v => v + 1);
+    const sync = () => {
+      // Only update state if the singleton has new entries
+      if (demoLog.version !== lastVersionRef.current) {
+        lastVersionRef.current = demoLog.version;
+        // Spread into a NEW array so React always sees a new reference
+        setEntries([...demoLog.entries]);
       }
     };
 
-    // Native DOM listener for future entries
-    window.addEventListener('demolog', forceSync);
+    // DOM event for future entries
+    window.addEventListener('demolog', sync);
 
-    // Poll to catch initial burst (UTM, identity, nav logged during parent render)
-    let lastSeen = 0;
-    const poll = setInterval(() => {
-      const current = demoLog.entries.length;
-      if (current !== lastSeen) {
-        lastSeen = current;
-        console.log('[DemoLog] poll: found', current, 'entries, forcing render');
-        forceSync();
-      }
-    }, 150);
+    // Poll every 150ms for 4s to catch initial burst
+    const poll = setInterval(sync, 150);
     const stopPoll = setTimeout(() => clearInterval(poll), 4000);
 
-    console.log('[DemoLog] mounted, entries already in log:', demoLog.entries.length);
-    if (demoLog.entries.length > 0) forceSync();
+    // Immediate sync on mount
+    sync();
 
     return () => {
-      window.removeEventListener('demolog', forceSync);
+      window.removeEventListener('demolog', sync);
       clearInterval(poll);
       clearTimeout(stopPoll);
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Suppress unused var warning — ver is used to trigger re-reads of demoLog.entries
-  void ver;
-
-  // Read entries directly from the singleton on every render
-  const entries = demoLog.entries;
+  }, []);
   const filtered = entries.filter(e => activeFilters.has(e.category));
 
   // Auto-open the panel when entries exist
