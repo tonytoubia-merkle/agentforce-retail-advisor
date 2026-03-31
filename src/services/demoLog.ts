@@ -1,8 +1,9 @@
 /**
- * Global demo event log — singleton pub/sub for real-time explainability.
+ * Global demo event log — append-only queue architecture.
  *
- * Any service or context can `demoLog.log(...)` and the DemoLog panel
- * re-renders via a monotonic version counter (avoids React deduplication).
+ * demoLog.log() pushes to both a permanent entries array AND a pending queue.
+ * DemoLog component drains the pending queue and APPENDS to its own React state.
+ * This eliminates all "read stale snapshot" timing issues.
  */
 
 export type EventCategory =
@@ -27,27 +28,35 @@ export interface LogEntry {
 let nextId = 0;
 const SESSION_START = Date.now();
 
+/** Entries not yet consumed by the DemoLog component. */
+const pending: LogEntry[] = [];
+
 class DemoEventLog {
   entries: LogEntry[] = [];
-  version = 0;
 
   log(entry: Omit<LogEntry, 'id' | 'timestamp'>) {
-    this.entries = [
-      ...(this.entries.length > 500 ? this.entries.slice(-400) : this.entries),
-      { ...entry, id: String(++nextId), timestamp: Date.now() - SESSION_START },
-    ];
-    this.version++;
-    // Fire a native DOM event — this is NOT subject to React batching,
-    // so listeners attached via addEventListener always get notified.
+    const e: LogEntry = {
+      ...entry,
+      id: String(++nextId),
+      timestamp: Date.now() - SESSION_START,
+    };
+    this.entries.push(e);
+    pending.push(e);
+    if (this.entries.length > 500) this.entries.splice(0, this.entries.length - 400);
     window.dispatchEvent(new Event('demolog'));
   }
-
 
   clear() {
-    this.entries = [];
-    this.version++;
-    window.dispatchEvent(new Event('demolog'));
+    this.entries.length = 0;
+    pending.length = 0;
+    window.dispatchEvent(new Event('demolog-clear'));
   }
+}
+
+/** Drain pending entries — returns new entries not yet consumed. */
+export function drainPending(): LogEntry[] {
+  if (pending.length === 0) return [];
+  return pending.splice(0, pending.length);
 }
 
 export const demoLog = new DemoEventLog();

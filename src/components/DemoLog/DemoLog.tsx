@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { demoLog, type LogEntry, type EventCategory } from '@/services/demoLog';
+import { demoLog, drainPending, type LogEntry, type EventCategory } from '@/services/demoLog';
 
 // ─── Category visual config ──────────────────────────────────────────────────
 
@@ -112,37 +112,39 @@ function LogEntryRow({ entry }: { entry: LogEntry }) {
 // ─── Main DemoLog panel ──────────────────────────────────────────────────────
 
 export const DemoLog: React.FC = () => {
-  // Store entries in React state — the ONLY source of truth for rendering.
-  // Synced from the singleton via poll + DOM event.
+  // DemoLog owns its entries in React state. New entries are APPENDED
+  // by draining a pending queue — never a full snapshot replacement.
   const [entries, setEntries] = useState<LogEntry[]>([]);
   const [open, setOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Set<EventCategory>>(new Set(ALL_CATEGORIES));
   const scrollRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
-  const lastVersionRef = useRef(-1);
 
   useEffect(() => {
-    const sync = () => {
-      // Only update state if the singleton has new entries
-      if (demoLog.version !== lastVersionRef.current) {
-        lastVersionRef.current = demoLog.version;
-        // Spread into a NEW array so React always sees a new reference
-        setEntries([...demoLog.entries]);
+    // Drain pending queue and APPEND to state (functional updater = always latest)
+    const drain = () => {
+      const newItems = drainPending();
+      if (newItems.length > 0) {
+        setEntries(prev => [...prev, ...newItems]);
       }
     };
 
     // DOM event for future entries
-    window.addEventListener('demolog', sync);
+    window.addEventListener('demolog', drain);
+    // Clear handler
+    const onClear = () => setEntries([]);
+    window.addEventListener('demolog-clear', onClear);
 
-    // Poll every 150ms for 4s to catch initial burst
-    const poll = setInterval(sync, 150);
-    const stopPoll = setTimeout(() => clearInterval(poll), 4000);
+    // Drain on mount — catches entries logged before component mounted
+    drain();
 
-    // Immediate sync on mount
-    sync();
+    // Poll every 200ms for 5s as safety net
+    const poll = setInterval(drain, 200);
+    const stopPoll = setTimeout(() => clearInterval(poll), 5000);
 
     return () => {
-      window.removeEventListener('demolog', sync);
+      window.removeEventListener('demolog', drain);
+      window.removeEventListener('demolog-clear', onClear);
       clearInterval(poll);
       clearTimeout(stopPoll);
     };
