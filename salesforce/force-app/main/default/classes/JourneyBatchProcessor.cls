@@ -84,6 +84,9 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
 
             // Save email content to MC Content Workspace
             saveEmailContentToWorkspace(approvalsToInsert);
+
+            // Create personalized hero moment variations for journey-relevant segments
+            createJourneyHeroVariations(approvalsToInsert, events);
         }
 
         // Update events
@@ -107,6 +110,85 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
      *
      * @param approvals List of newly inserted Journey_Approval__c records
      */
+    /**
+     * Create personalized Hero_Banner variations tied to journey campaigns.
+     * Each journey's event type + UTM context generates a hero moment that displays
+     * on the storefront for matching visitors during the journey window.
+     */
+    private void createJourneyHeroVariations(List<Journey_Approval__c> approvals, List<Meaningful_Event__c> events) {
+        try {
+            // Group by journeyId to create one variation per journey (not per step)
+            Map<String, Journey_Approval__c> journeyFirstSteps = new Map<String, Journey_Approval__c>();
+            for (Journey_Approval__c a : approvals) {
+                if (a.Step_Number__c == 1 && String.isNotBlank(a.Journey_Id__c)) {
+                    journeyFirstSteps.put(a.Journey_Id__c, a);
+                }
+            }
+
+            // Build event lookup for UTM context
+            Map<Id, Meaningful_Event__c> eventMap = new Map<Id, Meaningful_Event__c>();
+            for (Meaningful_Event__c e : events) eventMap.put(e.Id, e);
+
+            List<Personalization_Variation__c> variations = new List<Personalization_Variation__c>();
+
+            for (Journey_Approval__c step : journeyFirstSteps.values()) {
+                Meaningful_Event__c event = eventMap.get(step.Meaningful_Event__c);
+                if (event == null) continue;
+
+                // Build hero content from the journey's first email subject/body
+                String headline = String.isNotBlank(step.Suggested_Subject__c)
+                    ? step.Suggested_Subject__c : 'Personalized For You';
+                String bodyText = String.isNotBlank(step.Suggested_Body__c)
+                    ? step.Suggested_Body__c.left(200) : '';
+
+                Map<String, Object> content = new Map<String, Object>{
+                    'badge' => step.Event_Type__c,
+                    'header_text' => headline,
+                    'body_text' => bodyText,
+                    'cta' => 'Learn More',
+                    'journey_id' => step.Journey_Id__c
+                };
+
+                // Segment rules: target the contact specifically + any matching UTM source
+                Map<String, Object> rules = new Map<String, Object>();
+                if (step.Contact__c != null) {
+                    rules.put('contact_id', String.valueOf(step.Contact__c));
+                }
+
+                // Calculate variation window: active from now until journey end
+                Integer totalDays = 0;
+                for (Journey_Approval__c a : approvals) {
+                    if (a.Journey_Id__c == step.Journey_Id__c && a.Send_Delay_Days__c != null) {
+                        totalDays = Math.max(totalDays, (Integer) a.Send_Delay_Days__c);
+                    }
+                }
+
+                Personalization_Variation__c v = new Personalization_Variation__c(
+                    Point_Name__c = 'Hero_Banner',
+                    Variation_Name__c = 'Journey: ' + headline.left(80),
+                    Content_JSON__c = JSON.serialize(content),
+                    Segment_Rules__c = JSON.serialize(rules),
+                    Priority__c = 300, // Journey variations win over campaign-level
+                    Is_Active__c = true,
+                    Channel__c = 'Web',
+                    Created_By_API__c = true,
+                    Start_Date__c = Datetime.now(),
+                    End_Date__c = Datetime.now().addDays(totalDays + 3) // Buffer
+                );
+
+                variations.add(v);
+            }
+
+            if (!variations.isEmpty()) {
+                insert variations;
+                System.debug('Created ' + variations.size() + ' hero moment variations from journeys');
+            }
+        } catch (Exception e) {
+            // Non-fatal — log but don't fail the batch
+            System.debug(LoggingLevel.WARN, 'Hero variation creation failed: ' + e.getMessage());
+        }
+    }
+
     private void saveEmailContentToWorkspace(List<Journey_Approval__c> approvals) {
         List<Journey_Approval__c> approvalsToUpdate = new List<Journey_Approval__c>();
 

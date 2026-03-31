@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { demoLog } from '@/services/demoLog';
 
 const SESSION_KEY = 'beaute-exit-intent-shown';
 
@@ -37,6 +38,7 @@ export function useExitIntent(): { triggered: boolean; dismiss: () => void } {
           if (firedRef.current) return;
           firedRef.current = true;
           sessionStorage.setItem(SESSION_KEY, '1');
+          demoLog.log({ category: 'navigation', title: 'Exit Intent Detected', subtitle: 'Mouse left viewport (SDK)' });
           setTriggered(true);
         });
         return;
@@ -50,6 +52,7 @@ export function useExitIntent(): { triggered: boolean; dismiss: () => void } {
 
         firedRef.current = true;
         sessionStorage.setItem(SESSION_KEY, '1');
+        demoLog.log({ category: 'navigation', title: 'Exit Intent Detected', subtitle: 'Mouse left viewport (native)' });
         setTriggered(true);
         document.documentElement.removeEventListener('mouseleave', handleMouseLeave);
       };

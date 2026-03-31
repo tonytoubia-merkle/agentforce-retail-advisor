@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Point_Name__c</fullName>
+    <description>The personalization point this variation targets (e.g., Hero_Banner, Exit_Intent_Capture, Product_Recommendations).</description>
+    <externalId>false</externalId>
+    <label>Point Name</label>
+    <length>80</length>
+    <required>true</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

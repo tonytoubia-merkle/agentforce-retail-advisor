@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>API-driven personalization variations. Each record defines content for a personalization point (Hero_Banner, Exit_Intent_Capture, etc.) targeted at a visitor segment. Resolved at runtime by matching Segment_Rules against visitor context.</description>
+    <label>Personalization Variation</label>
+    <nameField>
+        <displayFormat>PV-{0000}</displayFormat>
+        <label>Variation ID</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Personalization Variations</pluralLabel>
+    <sharingModel>ReadWrite</sharingModel>
+</CustomObject>

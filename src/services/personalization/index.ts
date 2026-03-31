@@ -33,6 +33,9 @@
  * 5. The SDK script is loaded dynamically by initPersonalization()
  */
 
+import { demoLog } from '@/services/demoLog';
+import { resolveVariation, type VisitorContext } from './variations';
+
 export interface PersonalizationDecision {
   badge: string;
   headlineTop: string;
@@ -153,6 +156,24 @@ function resolveCtx(field: keyof PersonalizationContext): string {
     case 'identityTier':    return merkury?.identityTier || 'anonymous';
     default:                return '';
   }
+}
+
+/**
+ * Build a VisitorContext from current module state for custom variation resolution.
+ */
+function buildVisitorContext(): VisitorContext {
+  const interests = resolveCtx('interests');
+  return {
+    utm_source: resolveCtx('utmSource') || undefined,
+    utm_medium: resolveCtx('utmMedium') || undefined,
+    utm_campaign: resolveCtx('utmCampaign') || undefined,
+    identity_tier: resolveCtx('identityTier') || 'anonymous',
+    interests: interests ? interests.split(',').map(s => s.trim()) : undefined,
+    age_range: resolveCtx('ageRange') || undefined,
+    gender: resolveCtx('gender') || undefined,
+    skin_type: resolveCtx('skinType') || undefined,
+    channel: 'Web',
+  };
 }
 
 // ── Public helpers ───────────────────────────────────────────────────────────
@@ -554,6 +575,7 @@ export function initPersonalization(userId?: string): void {
   initialized = true;
 
   console.log('[sfp] Initializing SF Personalization', { dataset: SFP_DATASET });
+  demoLog.log({ category: 'system', title: 'SF Personalization SDK Init', subtitle: `Dataset: ${SFP_DATASET}` });
 
   sdkReady = loadSdk().then((loaded) => {
     if (!loaded) {
@@ -771,6 +793,7 @@ export function syncIdentity(
  * @param salesforceId - Optional Salesforce Product2 ID for Data Cloud integration
  */
 export function trackAddToCart(productId: string, productName: string, price: number, salesforceId?: string): void {
+  demoLog.log({ category: 'commerce', title: 'Add to Cart', subtitle: `${productName} — $${price}`, details: { productId, salesforceId, price } });
   if (!isPersonalizationConfigured() || !initialized) return;
 
   const sfp = getSdk();
@@ -805,6 +828,12 @@ export function trackPurchase(
   lineItems: Array<{ product2Id: string; productName: string; quantity: number; unitPrice: number }>,
   currency = 'USD',
 ): void {
+  demoLog.log({
+    category: 'commerce',
+    title: 'Purchase Completed',
+    subtitle: `$${orderTotal.toFixed(2)} — ${lineItems.length} items`,
+    details: { orderId, total: orderTotal, items: lineItems.map(i => i.productName).join(', ') },
+  });
   if (!isPersonalizationConfigured() || !initialized) return;
 
   const sfp = getSdk();
@@ -890,6 +919,27 @@ async function fetchPersonalizationPoint(pointName: string): Promise<any | null>
  * Returns null if not configured or if the campaign decision fails.
  */
 export async function getHeroCampaignDecision(): Promise<PersonalizationDecision | null> {
+  // Try custom Variation__c records first (API-created overrides)
+  try {
+    const variation = await resolveVariation('Hero_Banner', buildVisitorContext());
+    if (variation) {
+      const c = variation.content as Record<string, string>;
+      const headerText = c.header_text || '';
+      const [topLine, ...rest] = headerText.split('\n');
+      return {
+        badge: c.badge || '',
+        headlineTop: topLine || '',
+        headlineBottom: rest.join('\n') || '',
+        subtitle: c.body_text || '',
+        heroImage: c.background_image || '',
+        campaignId: `variation:${variation.id}`,
+      };
+    }
+  } catch (err) {
+    console.warn('[variations] Hero_Banner resolve failed:', err);
+  }
+
+  // Fall back to SF Personalization SDK
   if (!isPersonalizationConfigured() || !initialized) return null;
 
   try {
@@ -901,7 +951,7 @@ export async function getHeroCampaignDecision(): Promise<PersonalizationDecision
     // header_text may contain both lines separated by \n, or we split on comma
     const headerText = attrs.header_text || '';
     const [topLine, ...rest] = headerText.split('\n');
-    return {
+    const decision = {
       badge: attrs.badge || attrs.cta || '',
       headlineTop: topLine || attrs.headlineTop || '',
       headlineBottom: rest.join('\n') || attrs.headlineBottom || '',
@@ -911,6 +961,13 @@ export async function getHeroCampaignDecision(): Promise<PersonalizationDecision
       campaignId: result.personalizationId || result.campaignId,
       experienceId: result.personalizationContentId || result.experienceId,
     };
+    demoLog.log({
+      category: 'personalization',
+      title: 'Hero Banner Decision',
+      subtitle: `${decision.headlineTop} ${decision.headlineBottom}`.trim() || 'Default',
+      details: { badge: decision.badge, subtitle: decision.subtitle, campaignId: decision.campaignId },
+    });
+    return decision;
   } catch (err) {
     console.warn('[sfp] Hero campaign decision failed, using fallback:', err);
     return null;
@@ -923,6 +980,34 @@ export async function getHeroCampaignDecision(): Promise<PersonalizationDecision
  * Returns null if not configured, not initialized, or no decision matches.
  */
 export async function getExitIntentDecision(): Promise<ExitIntentDecision | null> {
+  // Try custom Variation__c records first
+  try {
+    const variation = await resolveVariation('Exit_Intent_Capture', buildVisitorContext());
+    if (variation) {
+      const c = variation.content as Record<string, string>;
+      const decision = {
+        headline: c.header_text || c.headline || '',
+        bodyText: c.body_text || '',
+        discountCode: c.discount_code || '',
+        discountPercent: Number(c.discount_value) || 0,
+        imageUrl: c.background_image || '',
+        ctaText: c.cta || 'Claim Offer',
+        backgroundColor: c.background_color || '',
+        personalizationId: `variation:${variation.id}`,
+      };
+      demoLog.log({
+        category: 'personalization',
+        title: 'Exit Intent Decision (Custom)',
+        subtitle: decision.headline || 'Default capture',
+        details: { variationName: variation.variationName, discount: decision.discountPercent ? `${decision.discountPercent}%` : 'none' },
+      });
+      return decision;
+    }
+  } catch (err) {
+    console.warn('[variations] Exit_Intent resolve failed:', err);
+  }
+
+  // Fall back to SF Personalization SDK
   if (!isPersonalizationConfigured() || !initialized) return null;
 
   try {
@@ -930,8 +1015,7 @@ export async function getExitIntentDecision(): Promise<ExitIntentDecision | null
     if (!result) return null;
 
     const attrs = result.attributes || result.payload || {};
-    return {
-      // Map from SF response template API names (snake_case) to our interface
+    const decision = {
       headline: attrs.header_text || attrs.headline || '',
       bodyText: attrs.body_text || attrs.bodyText || '',
       discountCode: attrs.discount_code || attrs.discountCode || '',
@@ -942,6 +1026,13 @@ export async function getExitIntentDecision(): Promise<ExitIntentDecision | null
       personalizationId: result.personalizationId,
       personalizationContentId: result.personalizationContentId,
     };
+    demoLog.log({
+      category: 'personalization',
+      title: 'Exit Intent Decision',
+      subtitle: decision.headline || 'Default capture',
+      details: { discount: decision.discountPercent ? `${decision.discountPercent}%` : 'none', code: decision.discountCode },
+    });
+    return decision;
   } catch (err) {
     console.warn('[sfp] Exit intent decision failed:', err);
     return null;
@@ -1082,13 +1173,22 @@ export async function getProductRecommendations(): Promise<ProductRecommendation
 
     console.log('[sfp] Product_Recommendations parsed products:', products.length, products);
 
-    return {
+    const recs = {
       products,
       introText: attrs.Introduction_Text || attrs.introText || attrs.introduction_text || undefined,
       campaignId: result.personalizationId || result.campaignId,
       experienceId: result.personalizationContentId || result.experienceId,
       raw: result,
     };
+    if (products.length > 0) {
+      demoLog.log({
+        category: 'personalization',
+        title: 'Product Recommendations',
+        subtitle: `${products.length} products from SF Personalization`,
+        details: { products: products.map(p => p.name).join(', '), campaignId: recs.campaignId },
+      });
+    }
+    return recs;
   } catch (err) {
     console.error('[sfp] Product_Recommendations fetch failed:', err);
     return null;

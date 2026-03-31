@@ -16,6 +16,8 @@ import { ProductProvider } from '@/contexts/ProductContext';
 import { resolveUTMToCampaign } from '@/mocks/adCreatives';
 import { setPersonalizationCampaign } from '@/services/personalization';
 import { pushUtmToDataLayer } from '@/services/merkury/dataLayer';
+import { DemoLog } from '@/components/DemoLog';
+import { demoLog } from '@/services/demoLog';
 import type { CampaignAttribution } from '@/types/campaign';
 
 
@@ -110,14 +112,28 @@ function App() {
     const params = new URLSearchParams(window.location.search);
     const utmSource = params.get('utm_source');
     if (utmSource) {
-      // Always push UTM params to personalization SDK + dataLayer
-      // (regardless of whether they match a mock ad creative)
       const utmCampaign = params.get('utm_campaign') || '';
       const utmMedium = params.get('utm_medium') || '';
       setPersonalizationCampaign(utmCampaign, utmSource, utmMedium);
       pushUtmToDataLayer(utmCampaign, utmSource, utmMedium);
 
+      demoLog.log({
+        category: 'campaign',
+        title: 'UTM Parameters Captured',
+        subtitle: `${utmSource} / ${utmMedium} / ${utmCampaign}`,
+        details: { utm_source: utmSource, utm_medium: utmMedium, utm_campaign: utmCampaign, utm_content: params.get('utm_content'), utm_term: params.get('utm_term') },
+      });
+
       const attribution = resolveUTMToCampaign(params);
+      if (attribution) {
+        demoLog.log({
+          category: 'campaign',
+          title: 'Campaign Attribution Resolved',
+          subtitle: attribution.adCreative.campaignName,
+          details: { platform: attribution.adCreative.platform, audience: attribution.adCreative.audienceSegment.segmentName, strategy: attribution.adCreative.targetingStrategy },
+        });
+      }
+
       window.history.replaceState({}, '', window.location.pathname);
       return attribution;
     }
@@ -128,6 +144,7 @@ function App() {
     <ErrorBoundary>
       <CustomerProvider>
         <AppShell initialCampaign={initialCampaign} />
+        <DemoLog />
       </CustomerProvider>
     </ErrorBoundary>
   );

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Created_By_API__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>True if this variation was created programmatically via API rather than manually in Setup.</description>
+    <externalId>false</externalId>
+    <label>Created By API</label>
+    <type>Checkbox</type>
+</CustomField>

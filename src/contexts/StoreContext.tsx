@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import type { Product, ProductCategory } from '@/types/product';
 import { useProducts } from '@/contexts/ProductContext';
 import { isPersonalizationConfigured, notifyNavigation } from '@/services/personalization';
+import { demoLog } from '@/services/demoLog';
 
 export type StoreView = 'home' | 'category' | 'product' | 'cart' | 'checkout' | 'order-confirmation' | 'account' | 'appointment';
 
@@ -138,6 +139,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // ── SF Personalization: notify SDK of SPA navigation changes ─────────
   useEffect(() => {
+    demoLog.log({
+      category: 'navigation',
+      title: `Page: ${view}`,
+      subtitle: selectedProduct?.name || selectedCategory || undefined,
+      details: selectedProduct ? { product: selectedProduct.name, category: selectedProduct.category, price: selectedProduct.price } : undefined,
+    });
     if (!isPersonalizationConfigured()) return;
     notifyNavigation(view, {
       categoryId: selectedCategory || undefined,

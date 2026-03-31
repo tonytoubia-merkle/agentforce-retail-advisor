@@ -13,6 +13,7 @@ import { getAgentforceClient, createAgentforceClient } from '@/services/agentfor
 import type { AgentforceClient } from '@/services/agentforce/client';
 import { getDataCloudWriteService } from '@/services/datacloud';
 import type { SceneSnapshot } from './SceneContext';
+import { demoLog } from '@/services/demoLog';
 import { useActivityToast } from '@/components/ActivityToast';
 
 const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
@@ -701,6 +702,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode; agentId
     setMessages((prev) => [...prev, userMessage]);
     setSuggestedActions([]);
     setIsAgentTyping(true);
+    demoLog.log({ category: 'agent', title: 'User Message Sent', subtitle: content.length > 80 ? content.slice(0, 80) + '...' : content });
 
     // Stable ID for the agent reply — used to update the streaming placeholder in-place
     const agentMsgId = uuidv4();
@@ -773,6 +775,13 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode; agentId
       setSuggestedActions(response.suggestedActions || []);
       setIsAgentTyping(false);
 
+      demoLog.log({
+        category: 'agent',
+        title: 'Agent Response',
+        subtitle: response.message?.length > 80 ? response.message.slice(0, 80) + '...' : response.message,
+        details: response.uiDirective ? { action: response.uiDirective.action, hasProducts: !!response.uiDirective.payload?.products?.length } : undefined,
+      });
+
       if (response.uiDirective) {
         // Handle identity capture: upgrade anonymous → known without resetting conversation
         if (response.uiDirective.action === 'IDENTIFY_CUSTOMER' && response.uiDirective.payload?.customerEmail) {
@@ -781,6 +790,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode; agentId
           const success = await identifyByEmail(email);
           if (success) {
             showCapture({ type: 'contact_created', label: 'New Contact Created' });
+            demoLog.log({ category: 'data-capture', title: 'Contact Created via Agent', subtitle: email });
           }
         } else {
           await processUIDirective(response.uiDirective);
@@ -797,6 +807,12 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode; agentId
           for (const c of captures) {
             if (!shown.has(c.type)) {
               showCapture(c);
+              demoLog.log({
+                category: 'data-capture',
+                title: c.type === 'meaningful_event' ? 'Meaningful Event Captured' : c.type === 'profile_enrichment' ? 'Profile Enriched' : 'Contact Created',
+                subtitle: c.label,
+                details: { ...c },
+              });
               shown.add(c.type);
             }
           }
@@ -841,6 +857,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode; agentId
             }
             console.log('[conversation] Skincare-video event created successfully');
             showCapture({ type: 'meaningful_event', label: 'Skin Concern Captured — Video Journey Triggered' });
+            demoLog.log({ category: 'data-capture', title: 'Skin Concern → Video Journey', subtitle: 'Meaningful event written to CRM', details: { type: 'skincare-video', customerId: customer.id } });
           }).catch((err) => {
             console.error('[conversation] Failed to create skincare-video event:', err);
           });

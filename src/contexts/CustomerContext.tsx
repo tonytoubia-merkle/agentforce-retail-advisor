@@ -6,6 +6,7 @@ import { getDataCloudService } from '@/services/datacloud';
 import { getMerkuryArchetypeByMerkuryId, getMerkuryArchetypeById } from '@/mocks/merkuryProfiles';
 import { createContact } from '@/services/demo/contacts';
 import { initPersonalization, isPersonalizationConfigured, syncIdentity, setPersonalizationProfile, clearPersonalizationContext } from '@/services/personalization';
+import { demoLog } from '@/services/demoLog';
 
 const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
 
@@ -93,6 +94,23 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const resolution = await resolveMerkuryIdentity(personaId);
       console.log('[merkury] Identity resolved:', resolution.identityTier, 'confidence:', resolution.confidence);
 
+      demoLog.log({
+        category: 'identity',
+        title: 'Merkury Identity Resolution',
+        subtitle: `${resolution.identityTier} (${(resolution.confidence * 100).toFixed(0)}% confidence)`,
+        details: {
+          tier: resolution.identityTier,
+          confidence: resolution.confidence,
+          merkuryId: resolution.merkuryId,
+          ...(resolution.appendedData ? {
+            interests: resolution.appendedData.interests?.join(', '),
+            ageRange: resolution.appendedData.ageRange,
+            gender: resolution.appendedData.gender,
+            income: resolution.appendedData.householdIncome,
+          } : {}),
+        },
+      });
+
       // Appended-tier: Merkury resolved identity via 3P data only.
       // These people are NOT in Data Cloud — don't look them up there.
       // Build a minimal anonymous-like profile with only appended signals attached.
@@ -121,11 +139,18 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           appendedProfile: resolution.appendedData,
         };
         console.log('[customer] Appended-tier identity — using minimal profile with 3P signals only');
+        demoLog.log({
+          category: 'identity',
+          title: 'Appended Profile Loaded',
+          subtitle: '3rd-party data enrichment (no CRM match)',
+          details: { interests: resolution.appendedData?.interests, lifestyle: resolution.appendedData?.lifestyleSignals },
+        });
         setCustomer(appendedProfile);
       } else if (resolution.identityTier === 'anonymous' || !resolution.merkuryId) {
         // Anonymous: Merkury found no match. Stay on the default starting page —
         // no agent session, no welcome, no profile data. Just the baseline experience.
         console.log('[customer] Anonymous — no identity resolved, staying on default experience');
+        demoLog.log({ category: 'identity', title: 'Anonymous Visitor', subtitle: 'No Merkury match — generic experience' });
         setCustomer(null);
       } else if (useMockData) {
         // MOCK MODE: Load known profiles from mock personas
@@ -150,6 +175,12 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           const profile = await dataCloudService.getCustomerProfile(resolution.merkuryId);
           profile.merkuryIdentity = merkuryIdentity;
           if (resolution.appendedData) profile.appendedProfile = resolution.appendedData;
+          demoLog.log({
+            category: 'identity',
+            title: 'CRM Profile Loaded',
+            subtitle: `${profile.name} (${profile.email})`,
+            details: { id: profile.id, skinType: profile.beautyProfile?.skinType, orders: profile.orders?.length, loyalty: profile.loyalty?.tier },
+          });
           setCustomer(profile);
         } catch (dcError) {
           console.error('[datacloud] Profile fetch failed:', dcError);
@@ -193,6 +224,12 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           hid: customer.merkuryIdentity?.merkuryHid,
         }
       );
+      demoLog.log({
+        category: 'system',
+        title: 'Identity Synced → SF Personalization',
+        subtitle: `PID: ${customer.merkuryIdentity?.merkuryId || 'none'}`,
+        details: { email: customer.email, customerId: customer.id, hid: customer.merkuryIdentity?.merkuryHid },
+      });
     }
   }, [customer?.id]);
 
@@ -278,6 +315,7 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             resolvedAt: new Date().toISOString(),
           };
           console.log('[identity] Found existing profile in Data Cloud for:', email);
+          demoLog.log({ category: 'identity', title: 'Email Identification', subtitle: `Matched CRM profile: ${email}`, details: { email, profileId: profile.id } });
         } catch {
           console.warn('[identity] Email not found in Data Cloud:', email);
           // The Agentforce agent should have already called CreateSalesContactRecord,

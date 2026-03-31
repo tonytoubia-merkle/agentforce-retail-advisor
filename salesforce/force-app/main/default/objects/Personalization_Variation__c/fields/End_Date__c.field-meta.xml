@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>End_Date__c</fullName>
+    <description>Optional end date. Variation is no longer eligible after this timestamp.</description>
+    <externalId>false</externalId>
+    <label>End Date</label>
+    <required>false</required>
+    <type>DateTime</type>
+</CustomField>

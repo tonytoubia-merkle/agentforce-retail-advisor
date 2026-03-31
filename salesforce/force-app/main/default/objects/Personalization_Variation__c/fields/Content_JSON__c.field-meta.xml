@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Content_JSON__c</fullName>
+    <description>JSON payload for the variation content. Shape depends on Point_Name. Hero_Banner: {"badge","header_text","body_text","background_image","cta"}. Exit_Intent: {"header_text","body_text","discount_code","discount_value","cta"}.</description>
+    <externalId>false</externalId>
+    <label>Content JSON</label>
+    <length>32000</length>
+    <type>LongTextArea</type>
+    <visibleLines>8</visibleLines>
+</CustomField>

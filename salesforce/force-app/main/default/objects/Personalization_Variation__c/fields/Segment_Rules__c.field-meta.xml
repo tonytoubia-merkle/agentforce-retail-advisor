@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Segment_Rules__c</fullName>
+    <description>JSON targeting rules. Each key-value pair is a matching condition. All must match for the variation to be eligible. Example: {"utm_source":"tiktok","identity_tier":"known"}. Empty/null = default (matches all visitors).</description>
+    <externalId>false</externalId>
+    <label>Segment Rules</label>
+    <length>10000</length>
+    <type>LongTextArea</type>
+    <visibleLines>5</visibleLines>
+</CustomField>
