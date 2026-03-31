@@ -113,23 +113,23 @@ function LogEntryRow({ entry }: { entry: LogEntry }) {
 
 export const DemoLog: React.FC = () => {
   const entries = useSyncExternalStore(demoLog.subscribe, demoLog.getSnapshot);
-  const [open, setOpen] = useState(false);
+  // Auto-open on first entries — either already present on mount or arriving later
+  const [open, setOpen] = useState(() => demoLog.getSnapshot().length > 0);
   const [activeFilters, setActiveFilters] = useState<Set<EventCategory>>(new Set(ALL_CATEGORIES));
   const scrollRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
-  const prevCountRef = useRef(0);
+  const hasAutoOpenedRef = useRef(open);
 
   const filtered = entries.filter(e => activeFilters.has(e.category));
 
-  // Auto-open the panel when the first entries arrive
+  // Auto-open on first entry if panel was initially empty
   useEffect(() => {
-    if (entries.length > 0 && prevCountRef.current === 0 && !open) {
-      // Small delay so the page has time to paint first
+    if (!hasAutoOpenedRef.current && entries.length > 0) {
+      hasAutoOpenedRef.current = true;
       const timer = setTimeout(() => setOpen(true), 600);
       return () => clearTimeout(timer);
     }
-    prevCountRef.current = entries.length;
-  }, [entries.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [entries.length]);
 
   // Auto-scroll to bottom on new entries
   useEffect(() => {
