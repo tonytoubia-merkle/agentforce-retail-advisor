@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SceneProvider } from '@/contexts/SceneContext';
@@ -117,28 +117,33 @@ function App() {
       setPersonalizationCampaign(utmCampaign, utmSource, utmMedium);
       pushUtmToDataLayer(utmCampaign, utmSource, utmMedium);
 
-      demoLog.log({
-        category: 'campaign',
-        title: 'UTM Parameters Captured',
-        subtitle: `${utmSource} / ${utmMedium} / ${utmCampaign}`,
-        details: { utm_source: utmSource, utm_medium: utmMedium, utm_campaign: utmCampaign, utm_content: params.get('utm_content'), utm_term: params.get('utm_term') },
-      });
-
       const attribution = resolveUTMToCampaign(params);
-      if (attribution) {
-        demoLog.log({
-          category: 'campaign',
-          title: 'Campaign Attribution Resolved',
-          subtitle: attribution.adCreative.campaignName,
-          details: { platform: attribution.adCreative.platform, audience: attribution.adCreative.audienceSegment.segmentName, strategy: attribution.adCreative.targetingStrategy },
-        });
-      }
-
       window.history.replaceState({}, '', window.location.pathname);
       return attribution;
     }
     return null;
   });
+
+  // Log UTM capture to DemoLog AFTER mount so the DemoLog component has
+  // subscribed via useSyncExternalStore before we emit.
+  const utmLoggedRef = useRef(false);
+  useEffect(() => {
+    if (utmLoggedRef.current || !initialCampaign) return;
+    utmLoggedRef.current = true;
+    const { utmParams } = initialCampaign.adCreative;
+    demoLog.log({
+      category: 'campaign',
+      title: 'UTM Parameters Captured',
+      subtitle: `${utmParams.utm_source} / ${utmParams.utm_medium} / ${utmParams.utm_campaign}`,
+      details: { ...utmParams },
+    });
+    demoLog.log({
+      category: 'campaign',
+      title: 'Campaign Attribution Resolved',
+      subtitle: initialCampaign.adCreative.campaignName,
+      details: { platform: initialCampaign.adCreative.platform, audience: initialCampaign.adCreative.audienceSegment.segmentName, strategy: initialCampaign.adCreative.targetingStrategy },
+    });
+  }, [initialCampaign]);
 
   return (
     <ErrorBoundary>
