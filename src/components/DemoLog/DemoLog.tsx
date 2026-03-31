@@ -112,30 +112,24 @@ function LogEntryRow({ entry }: { entry: LogEntry }) {
 // ─── Main DemoLog panel ──────────────────────────────────────────────────────
 
 export const DemoLog: React.FC = () => {
-  // Pure polling approach. No DOM events, no queues, no drain.
-  // Every 250ms, check if the singleton has new entries and copy them
-  // into React state using a cursor. Bulletproof — no race conditions.
+  // Poll window.__demoLogEntries every 250ms.
+  // Always copies the FULL array — no cursor, no chance of skipping entries
+  // if React defers a setState call.
   const [entries, setEntries] = useState<LogEntry[]>([]);
   const [open, setOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Set<EventCategory>>(new Set(ALL_CATEGORIES));
   const scrollRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
-  const cursorRef = useRef(0);
+  const lastLenRef = useRef(0);
 
   useEffect(() => {
-    const sync = () => {
+    const poll = setInterval(() => {
       const all = demoLog.entries;
-      if (all.length > cursorRef.current) {
-        const newItems = all.slice(cursorRef.current);
-        cursorRef.current = all.length;
-        setEntries(prev => [...prev, ...newItems]);
+      if (all.length !== lastLenRef.current) {
+        lastLenRef.current = all.length;
+        setEntries(all.slice());
       }
-    };
-
-    // Poll every 250ms — always
-    const poll = setInterval(sync, 250);
-    // Also sync immediately
-    sync();
+    }, 250);
 
     return () => clearInterval(poll);
   }, []);
@@ -228,7 +222,7 @@ export const DemoLog: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-1">
                   <button
-                    onClick={() => { demoLog.clear(); cursorRef.current = 0; setEntries([]); }}
+                    onClick={() => { demoLog.clear(); lastLenRef.current = 0; setEntries([]); }}
                     className="text-[9px] px-1.5 py-0.5 rounded text-white/25 hover:text-white/50 hover:bg-white/5 transition-colors"
                     title="Clear log"
                   >
