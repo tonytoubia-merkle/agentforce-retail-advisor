@@ -37,13 +37,24 @@ class DemoEventLog {
   version = 0;
   private listeners = new Set<Listener>();
 
+  private pendingNotify: number | null = null;
+
   log(entry: Omit<LogEntry, 'id' | 'timestamp'>) {
     this.entries = [
       ...(this.entries.length > 500 ? this.entries.slice(-400) : this.entries),
       { ...entry, id: String(++nextId), timestamp: Date.now() - SESSION_START },
     ];
     this.version++;
+    // Notify current subscribers synchronously
     this.listeners.forEach(fn => fn());
+    // ALSO schedule a deferred notification — catches subscribers that
+    // attach after this call (e.g. DemoLog mounting after App logs UTM).
+    if (this.pendingNotify === null) {
+      this.pendingNotify = window.setTimeout(() => {
+        this.pendingNotify = null;
+        this.listeners.forEach(fn => fn());
+      }, 0);
+    }
   }
 
   subscribe = (listener: Listener) => {
