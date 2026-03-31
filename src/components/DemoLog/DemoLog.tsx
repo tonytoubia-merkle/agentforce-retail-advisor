@@ -148,12 +148,22 @@ export const DemoLog: React.FC = () => {
 
     const poll = setInterval(() => {
       const all = demoLog.entries;
+      // Update entry count for auto-open (even when panel is closed)
+      if (all.length > 0 && all.length !== renderedCountRef.current) {
+        setEntryCount(all.length);
+      }
+      // Only render when the container is in the DOM (panel is open)
+      const container = listRef.current;
+      if (!container) {
+        // Panel is closed — DON'T advance renderedCountRef!
+        // Entries will be rendered when the panel opens.
+        return;
+      }
       if (all.length > renderedCountRef.current) {
         for (let i = renderedCountRef.current; i < all.length; i++) {
           renderEntry(all[i]);
         }
         renderedCountRef.current = all.length;
-        setEntryCount(all.length);
 
         // Auto-scroll
         if (scrollRef.current) {
