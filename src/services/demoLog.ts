@@ -34,13 +34,12 @@ class DemoEventLog {
   private listeners = new Set<Listener>();
 
   log(entry: Omit<LogEntry, 'id' | 'timestamp'>) {
-    this.entries.push({
-      ...entry,
-      id: String(++nextId),
-      timestamp: Date.now() - SESSION_START,
-    });
-    // Cap at 500 entries
-    if (this.entries.length > 500) this.entries = this.entries.slice(-400);
+    // Create a NEW array reference on every mutation so useSyncExternalStore
+    // detects the change (it compares snapshots via Object.is).
+    this.entries = [
+      ...(this.entries.length > 500 ? this.entries.slice(-400) : this.entries),
+      { ...entry, id: String(++nextId), timestamp: Date.now() - SESSION_START },
+    ];
     this.listeners.forEach(fn => fn());
   }
 
