@@ -1,9 +1,8 @@
 /**
  * Global demo event log.
  *
- * Architecture: append-only array + cursor-based consumption.
- * Entries are NEVER removed — consumers track their own read cursor.
- * This avoids the "splice then setState gets dropped" race condition.
+ * Uses window.__demoLogEntries as the single source of truth to avoid
+ * Vite chunk splitting creating duplicate module instances.
  */
 
 export type EventCategory =
@@ -25,24 +24,39 @@ export interface LogEntry {
   details?: Record<string, unknown>;
 }
 
-let nextId = 0;
-const SESSION_START = Date.now();
-
-class DemoEventLog {
-  entries: LogEntry[] = [];
-
-  log(entry: Omit<LogEntry, 'id' | 'timestamp'>) {
-    this.entries.push({
-      ...entry,
-      id: String(++nextId),
-      timestamp: Date.now() - SESSION_START,
-    });
-    if (this.entries.length > 500) this.entries.splice(0, this.entries.length - 400);
-  }
-
-  clear() {
-    this.entries.length = 0;
+declare global {
+  interface Window {
+    __demoLogEntries: LogEntry[];
+    __demoLogStart: number;
+    __demoLogNextId: number;
   }
 }
 
-export const demoLog = new DemoEventLog();
+// Initialize on window — guaranteed single instance across all chunks
+if (!window.__demoLogEntries) {
+  window.__demoLogEntries = [];
+  window.__demoLogStart = Date.now();
+  window.__demoLogNextId = 0;
+}
+
+function getEntries(): LogEntry[] {
+  return window.__demoLogEntries;
+}
+
+export const demoLog = {
+  get entries() { return getEntries(); },
+
+  log(entry: Omit<LogEntry, 'id' | 'timestamp'>) {
+    const entries = getEntries();
+    entries.push({
+      ...entry,
+      id: String(++window.__demoLogNextId),
+      timestamp: Date.now() - window.__demoLogStart,
+    });
+    if (entries.length > 500) entries.splice(0, entries.length - 400);
+  },
+
+  clear() {
+    window.__demoLogEntries = [];
+  },
+};

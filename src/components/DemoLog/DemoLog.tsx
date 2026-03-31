@@ -228,7 +228,7 @@ export const DemoLog: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-1">
                   <button
-                    onClick={() => demoLog.clear()}
+                    onClick={() => { demoLog.clear(); cursorRef.current = 0; setEntries([]); }}
                     className="text-[9px] px-1.5 py-0.5 rounded text-white/25 hover:text-white/50 hover:bg-white/5 transition-colors"
                     title="Clear log"
                   >
