@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useReducer } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { demoLog, type LogEntry, type EventCategory } from '@/services/demoLog';
 
@@ -112,22 +112,24 @@ function LogEntryRow({ entry }: { entry: LogEntry }) {
 // ─── Main DemoLog panel ──────────────────────────────────────────────────────
 
 export const DemoLog: React.FC = () => {
-  // Use useState + subscribe instead of useSyncExternalStore.
-  // This guarantees we pick up entries logged before this component mounted
-  // (e.g. UTM params logged in App's useState initializer).
-  const [entries, setEntries] = useState<LogEntry[]>(() => demoLog.getSnapshot());
+  // Force re-render via a monotonic counter that increments on every demoLog mutation.
+  // This sidesteps all React deduplication / batching issues — a new number is always
+  // !== the previous one, so React always re-renders.
+  const [, bump] = useReducer((c: number) => c + 1, 0);
   const [open, setOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Set<EventCategory>>(new Set(ALL_CATEGORIES));
   const scrollRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
 
   useEffect(() => {
-    // Sync immediately — catches entries logged between initial render and this effect
-    setEntries(demoLog.getSnapshot());
-    // Subscribe for all future updates
-    return demoLog.subscribe(() => setEntries(demoLog.getSnapshot()));
+    // Catch entries logged before this component mounted
+    if (demoLog.entries.length > 0) bump();
+    // Subscribe: every future log() triggers a re-render via bump()
+    return demoLog.subscribe(bump);
   }, []);
 
+  // Read entries directly from the singleton on every render — no stale state
+  const entries = demoLog.entries;
   const filtered = entries.filter(e => activeFilters.has(e.category));
 
   // Auto-open the panel when entries exist

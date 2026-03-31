@@ -2,7 +2,7 @@
  * Global demo event log — singleton pub/sub for real-time explainability.
  *
  * Any service or context can `demoLog.log(...)` and the DemoLog panel
- * auto-renders new entries via `useSyncExternalStore`.
+ * re-renders via a monotonic version counter (avoids React deduplication).
  */
 
 export type EventCategory =
@@ -30,20 +30,21 @@ let nextId = 0;
 const SESSION_START = Date.now();
 
 class DemoEventLog {
-  private entries: LogEntry[] = [];
+  entries: LogEntry[] = [];
+  /** Monotonic counter — increments on every mutation. Components can
+   *  track this in state to guarantee re-renders even when React
+   *  batches or deduplicates setState calls. */
+  version = 0;
   private listeners = new Set<Listener>();
 
   log(entry: Omit<LogEntry, 'id' | 'timestamp'>) {
-    // Create a NEW array reference on every mutation so useSyncExternalStore
-    // detects the change (it compares snapshots via Object.is).
     this.entries = [
       ...(this.entries.length > 500 ? this.entries.slice(-400) : this.entries),
       { ...entry, id: String(++nextId), timestamp: Date.now() - SESSION_START },
     ];
+    this.version++;
     this.listeners.forEach(fn => fn());
   }
-
-  getSnapshot = () => this.entries;
 
   subscribe = (listener: Listener) => {
     this.listeners.add(listener);
@@ -52,6 +53,7 @@ class DemoEventLog {
 
   clear() {
     this.entries = [];
+    this.version++;
     this.listeners.forEach(fn => fn());
   }
 }
