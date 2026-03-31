@@ -112,51 +112,74 @@ function LogEntryRow({ entry }: { entry: LogEntry }) {
 // ─── Main DemoLog panel ──────────────────────────────────────────────────────
 
 export const DemoLog: React.FC = () => {
-  // Poll window.__demoLogEntries every 250ms.
-  // Always copies the FULL array — no cursor, no chance of skipping entries
-  // if React defers a setState call.
-  const [entries, setEntries] = useState<LogEntry[]>([]);
   const [open, setOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Set<EventCategory>>(new Set(ALL_CATEGORIES));
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [autoScroll, setAutoScroll] = useState(true);
-  const lastLenRef = useRef(0);
+  const listRef = useRef<HTMLDivElement>(null);
+  const renderedCountRef = useRef(0);
+  // Counter just for filter chip counts + auto-open — not for rendering entries
+  const [entryCount, setEntryCount] = useState(0);
 
+  // Render entries via direct DOM manipulation — completely bypasses React
   useEffect(() => {
+    const activeSet = activeFilters;
+
+    const renderEntry = (entry: LogEntry) => {
+      const container = listRef.current;
+      if (!container) return;
+      if (!activeSet.has(entry.category)) return;
+
+      const cfg = CATEGORY_CONFIG[entry.category];
+      const div = document.createElement('div');
+      div.className = 'demolog-entry';
+      div.style.cssText = 'position:relative;padding-left:20px;padding-bottom:12px;animation:fadeInRight 0.2s ease';
+      div.innerHTML = `
+        <div style="position:absolute;left:0;top:7px;width:8px;height:8px;border-radius:50%;box-shadow:0 0 0 2px #0c0a09" class="${cfg.dotColor}"></div>
+        <div style="position:absolute;left:3px;top:15px;bottom:0;width:1px;background:rgba(255,255,255,0.05)"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">
+          <span style="font-size:10px;font-family:monospace;color:rgba(255,255,255,0.25);width:32px;flex-shrink:0">${formatTime(entry.timestamp)}</span>
+          <span style="font-size:9px;padding:2px 6px;border-radius:9999px;background:rgba(255,255,255,0.05);font-weight:500" class="${cfg.color}">${cfg.icon} ${cfg.label}</span>
+        </div>
+        <div style="font-size:11px;font-weight:500;color:rgba(255,255,255,0.8);line-height:1.3">${entry.title}</div>
+        ${entry.subtitle ? `<div style="font-size:10px;color:rgba(255,255,255,0.35);line-height:1.3;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${entry.subtitle}</div>` : ''}
+      `;
+      container.appendChild(div);
+    };
+
     const poll = setInterval(() => {
       const all = demoLog.entries;
-      if (all.length !== lastLenRef.current) {
-        lastLenRef.current = all.length;
-        setEntries(all.slice());
+      if (all.length > renderedCountRef.current) {
+        for (let i = renderedCountRef.current; i < all.length; i++) {
+          renderEntry(all[i]);
+        }
+        renderedCountRef.current = all.length;
+        setEntryCount(all.length);
+
+        // Auto-scroll
+        if (scrollRef.current) {
+          const el = scrollRef.current;
+          const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+          if (nearBottom) el.scrollTop = el.scrollHeight;
+        }
       }
-    }, 250);
+    }, 200);
 
     return () => clearInterval(poll);
-  }, []);
-  const filtered = entries.filter(e => activeFilters.has(e.category));
+  }, [activeFilters]);
 
-  // Auto-open the panel when entries exist
+  // Auto-open
   const hasAutoOpenedRef = useRef(false);
   useEffect(() => {
-    if (!hasAutoOpenedRef.current && entries.length > 0) {
+    if (!hasAutoOpenedRef.current && entryCount > 0) {
       hasAutoOpenedRef.current = true;
-      const timer = setTimeout(() => setOpen(true), 600);
-      return () => clearTimeout(timer);
+      setTimeout(() => setOpen(true), 600);
     }
-  }, [entries.length]);
+  }, [entryCount]);
 
-  // Auto-scroll to bottom on new entries
-  useEffect(() => {
-    if (autoScroll && scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [filtered.length, autoScroll]);
+  // For filter counts
+  const entries = demoLog.entries;
 
-  const handleScroll = useCallback(() => {
-    if (!scrollRef.current) return;
-    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
-    setAutoScroll(scrollHeight - scrollTop - clientHeight < 60);
-  }, []);
+  const handleScroll = useCallback(() => {}, []);
 
   const toggleFilter = (cat: EventCategory) => {
     setActiveFilters(prev => {
@@ -222,7 +245,7 @@ export const DemoLog: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-1">
                   <button
-                    onClick={() => { demoLog.clear(); lastLenRef.current = 0; setEntries([]); }}
+                    onClick={() => { demoLog.clear(); renderedCountRef.current = 0; setEntryCount(0); if (listRef.current) listRef.current.innerHTML = ''; }}
                     className="text-[9px] px-1.5 py-0.5 rounded text-white/25 hover:text-white/50 hover:bg-white/5 transition-colors"
                     title="Clear log"
                   >
@@ -271,36 +294,23 @@ export const DemoLog: React.FC = () => {
               </div>
             </div>
 
-            {/* Scrollable log */}
+            {/* Scrollable log — entries rendered via vanilla DOM, not React */}
             <div
               ref={scrollRef}
               onScroll={handleScroll}
-              className="flex-1 overflow-y-auto overscroll-contain p-3 space-y-0"
+              className="flex-1 overflow-y-auto overscroll-contain p-3"
             >
-              {filtered.length === 0 ? (
+              <style>{`@keyframes fadeInRight { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }`}</style>
+              <div ref={listRef} />
+              {entryCount === 0 && (
                 <div className="flex flex-col items-center justify-center h-full text-center px-6">
                   <div className="text-2xl mb-2 opacity-30">📋</div>
                   <p className="text-[11px] text-white/20">
                     Events will appear here as you interact with the storefront
                   </p>
                 </div>
-              ) : (
-                filtered.map(entry => <LogEntryRow key={entry.id} entry={entry} />)
               )}
             </div>
-
-            {/* Auto-scroll indicator */}
-            {!autoScroll && filtered.length > 0 && (
-              <button
-                onClick={() => {
-                  setAutoScroll(true);
-                  if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-                }}
-                className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-full bg-cyan-500/20 text-cyan-400 text-[10px] font-medium border border-cyan-500/30 hover:bg-cyan-500/30 transition-colors shadow-lg"
-              >
-                ↓ New events
-              </button>
-            )}
           </motion.div>
         )}
       </AnimatePresence>
