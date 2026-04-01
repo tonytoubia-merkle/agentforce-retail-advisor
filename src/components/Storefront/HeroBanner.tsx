@@ -33,37 +33,18 @@ interface HeroVariant {
   source: 'campaign' | 'authenticated' | 'appended' | 'default';
 }
 
-// Map campaign themes to hero badge + copy overrides
-const CAMPAIGN_HERO_MAP: Record<string, { badge: string; headlineTop: string; headlineBottom: string; subtitle: string }> = {
-  'summer-glow': { badge: 'Summer Collection', headlineTop: 'Your Summer', headlineBottom: 'Glow Awaits', subtitle: 'Sun-kissed radiance starts with the right serums and SPF.' },
-  'anti-aging': { badge: 'Science of Skin', headlineTop: 'Ageless Beauty,', headlineBottom: 'Backed by Science', subtitle: 'Clinically proven retinol and peptide formulas for radiant, youthful skin.' },
-  'bridal-beauty': { badge: 'Wedding Season', headlineTop: 'Your Perfect', headlineBottom: 'Bridal Look', subtitle: 'Curated beauty for your most beautiful day.' },
-  'luxury-fragrance': { badge: 'Luxury Fragrance', headlineTop: 'Discover', headlineBottom: 'Luxury, Bottled', subtitle: 'An immersive fragrance collection for those who demand the extraordinary.' },
-  'k-beauty': { badge: 'K-Beauty Edit', headlineTop: 'Glass Skin', headlineBottom: 'Essentials', subtitle: 'The Korean skincare routine, simplified for effortless glow.' },
-  'spf-season': { badge: 'SPF Season', headlineTop: 'Protect Your', headlineBottom: 'Glow', subtitle: 'Lightweight, invisible sunscreens that actually feel good.' },
-  'glow-up': { badge: 'Glow Up', headlineTop: 'Your Glow Up', headlineBottom: 'Starts Here', subtitle: 'Join 10K+ creators showing off their BEAUTE transformations.' },
-  'mens-skincare': { badge: "Men's Edit", headlineTop: 'Skincare.', headlineBottom: 'No BS.', subtitle: 'Simple, effective routines built for guys who want great skin.' },
-  'loyalty-engagement': { badge: '2x Points Weekend', headlineTop: 'Double Points', headlineBottom: 'This Weekend', subtitle: 'Earn 2x loyalty points on every purchase. Exclusive for Gold+ members.' },
-};
-
-function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boolean, campaign?: CampaignAttribution | null): HeroVariant {
+/**
+ * Local hero variant — only authenticated greeting + generic default.
+ * All campaign/segment/interest personalization is driven by:
+ *   1. Personalization_Variation__c (API-created, resolved in personalization service)
+ *   2. SF Personalization SDK decisions (Hero_Banner point)
+ * No more hardcoded interest-based or campaign-theme-based variants.
+ */
+function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boolean, _campaign?: CampaignAttribution | null): HeroVariant {
   const tier = customer?.merkuryIdentity?.identityTier;
   const firstName = customer?.name?.split(' ')[0];
 
-  // Campaign-driven variant (when visitor arrived via ad, before identity check)
-  if (campaign && !isAuthenticated) {
-    const themeOverride = CAMPAIGN_HERO_MAP[campaign.adCreative.campaignTheme];
-    if (themeOverride) {
-      return {
-        ...themeOverride,
-        heroImage: HERO_IMAGES.default,
-        imageAlt: `${themeOverride.badge} campaign`,
-        source: 'campaign' as const,
-      };
-    }
-  }
-
-  // Authenticated known customer
+  // Authenticated known customer — personalized greeting
   if (isAuthenticated && tier === 'known' && firstName) {
     const loyaltyLine = customer?.loyalty
       ? `${customer.loyalty.tier.charAt(0).toUpperCase() + customer.loyalty.tier.slice(1)} Member · ${customer.loyalty.pointsBalance?.toLocaleString()} pts`
@@ -81,53 +62,12 @@ function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boo
     };
   }
 
-  // Pseudonymous known customer (not signed in) — fall through to appended/default.
-  // Greeting is subtle, shown in the top promo banner instead of the hero.
-
-  // Appended (3P Merkury data)
-  if (tier === 'appended' && customer?.appendedProfile?.interests) {
-    const interests = customer.appendedProfile.interests.map((i) => i.toLowerCase());
-    if (interests.some((i) => i.includes('clean') || i.includes('natural'))) {
-      return {
-        badge: 'Trending in Clean Beauty',
-        headlineTop: 'Clean Beauty,',
-        headlineBottom: 'Naturally You',
-        subtitle: 'Curated clean and natural beauty essentials for a conscious routine.',
-        heroImage: HERO_IMAGES.cleanBeauty,
-        imageAlt: 'Natural botanical ingredients',
-        source: 'appended' as const,
-      };
-    }
-    if (interests.some((i) => i.includes('luxury') || i.includes('premium'))) {
-      return {
-        badge: 'Luxury Picks',
-        headlineTop: 'Luxury Essentials,',
-        headlineBottom: 'Curated for You',
-        subtitle: 'Premium skincare and beauty from the brands you love.',
-        heroImage: HERO_IMAGES.luxury,
-        imageAlt: 'Luxurious beauty textures',
-        source: 'appended' as const,
-      };
-    }
-    if (interests.some((i) => i.includes('wellness') || i.includes('yoga') || i.includes('fitness'))) {
-      return {
-        badge: 'Beauty Meets Wellness',
-        headlineTop: 'Beauty Meets',
-        headlineBottom: 'Wellness',
-        subtitle: 'Skincare and beauty that complements your active lifestyle.',
-        heroImage: HERO_IMAGES.wellness,
-        imageAlt: 'Wellness and self-care lifestyle',
-        source: 'appended' as const,
-      };
-    }
-  }
-
-  // Anonymous / default
+  // Everyone else: default. SF Personalization + custom variations override this.
   return {
     badge: 'New Season Collection',
     headlineTop: 'Discover Your',
     headlineBottom: 'Perfect Glow',
-    subtitle: 'Curated skincare and beauty essentials, personalized to your unique needs. Experience the future of beauty with our AI-powered recommendations.',
+    subtitle: 'Curated skincare and beauty essentials, personalized to your unique needs.',
     heroImage: HERO_IMAGES.default,
     imageAlt: 'Luxurious spa treatment',
     source: 'default' as const,

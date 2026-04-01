@@ -63,10 +63,20 @@ async function fetchVariations(pointName: string): Promise<VariationRecord[]> {
   const soql = `SELECT Id, Variation_Name__c, Point_Name__c, Segment_Rules__c, Content_JSON__c, Priority__c, Channel__c, Start_Date__c, End_Date__c, Created_By_API__c FROM Personalization_Variation__c WHERE Point_Name__c = '${pointName}' AND Is_Active__c = true ORDER BY Priority__c DESC`;
 
   try {
+    // Get server token first (sf-query requires it)
+    let token: string | undefined;
+    try {
+      const tokenResp = await fetch('/api/sf/token', { method: 'POST' });
+      if (tokenResp.ok) {
+        const tokenData = await tokenResp.json();
+        token = tokenData.access_token;
+      }
+    } catch { /* fall through — proxy will reject without token */ }
+
     const resp = await fetch('/api/sf-query', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ soql }),
+      body: JSON.stringify({ soql, token }),
     });
 
     if (!resp.ok) {
