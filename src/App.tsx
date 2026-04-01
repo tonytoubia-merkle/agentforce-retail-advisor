@@ -130,8 +130,11 @@ function App() {
   return (
     <ErrorBoundary>
       <CustomerProvider>
-        <div className="flex h-screen w-screen overflow-hidden">
-          <div className={`flex-1 min-w-0 overflow-y-auto transition-all duration-300 ${demoLogOpen ? 'mr-[380px]' : ''}`}>
+        <div className="h-screen w-screen overflow-hidden">
+          <div
+            className="h-full overflow-y-auto transition-[width] duration-300 ease-out"
+            style={{ width: demoLogOpen ? 'calc(100% - 380px)' : '100%' }}
+          >
             <AppShell initialCampaign={initialCampaign} />
           </div>
           <DemoLog onOpenChange={setDemoLogOpen} />
