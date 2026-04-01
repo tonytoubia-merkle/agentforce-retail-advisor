@@ -131,10 +131,7 @@ function App() {
     <ErrorBoundary>
       <CustomerProvider>
         <div className="h-screen overflow-hidden flex">
-          <main
-            className="h-full flex-1 min-w-0 overflow-y-auto overflow-x-hidden transition-[margin] duration-300 ease-out"
-            style={{ marginRight: demoLogOpen ? 380 : 0 }}
-          >
+          <main className="h-full flex-1 min-w-0 overflow-y-auto overflow-x-hidden">
             <AppShell initialCampaign={initialCampaign} />
           </main>
           <DemoLog onOpenChange={setDemoLogOpen} />

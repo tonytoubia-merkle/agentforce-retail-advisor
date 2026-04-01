@@ -138,11 +138,13 @@ export const DemoLog: React.FC<{ onOpenChange?: (open: boolean) => void }> = ({ 
         </button>
       )}
 
-      {/* Panel — fixed to right edge, always in DOM */}
+      {/* Panel — flex sibling that takes real space in layout */}
       <div
-        className="fixed right-0 top-0 h-screen w-[380px] z-40 flex flex-col bg-stone-950 border-l border-white/10 shadow-2xl transition-transform duration-300 ease-out"
-        style={{ transform: open ? 'translateX(0)' : 'translateX(100%)' }}
+        className="h-screen flex-shrink-0 bg-stone-950 border-l border-white/10 shadow-2xl transition-[width] duration-300 ease-out overflow-hidden"
+        style={{ width: open ? 380 : 0 }}
       >
+        {/* Inner — fixed 380px so content doesn't squish during width transition */}
+        <div className="w-[380px] h-full flex flex-col">
         {/* Header */}
         <div className="flex-shrink-0 p-3 border-b border-white/5">
           <div className="flex items-center justify-between mb-2">
@@ -196,6 +198,7 @@ export const DemoLog: React.FC<{ onOpenChange?: (open: boolean) => void }> = ({ 
             </div>
           )}
         </div>
+        </div>{/* close inner 380px wrapper */}
       </div>
     </>
   );
