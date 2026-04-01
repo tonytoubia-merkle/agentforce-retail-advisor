@@ -131,7 +131,7 @@ function App() {
     <ErrorBoundary>
       <CustomerProvider>
         <div className="h-screen overflow-hidden flex">
-          <main className={`h-full flex-1 min-w-0 overflow-y-auto overflow-x-hidden ${demoLogOpen ? 'w-[calc(100%-380px)]' : 'w-full'}`}>
+          <main className={`h-full flex-1 min-w-0 overflow-y-scroll overflow-x-hidden ${demoLogOpen ? 'w-[calc(100%-380px)]' : 'w-full'}`}>
             <AppShell initialCampaign={initialCampaign} />
           </main>
           <DemoLog onOpenChange={setDemoLogOpen} />

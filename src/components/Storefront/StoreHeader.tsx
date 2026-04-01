@@ -71,8 +71,8 @@ export const StoreHeader: React.FC = () => {
           </button>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-4 xl:gap-6 flex-shrink min-w-0">
-            {CATEGORIES.slice(0, 5).map((cat) => (
+          <nav className="hidden lg:flex items-center gap-5 flex-shrink-0">
+            {CATEGORIES.slice(0, 4).map((cat) => (
               <button
                 key={cat.value}
                 onClick={() => navigateToCategory(cat.value)}
