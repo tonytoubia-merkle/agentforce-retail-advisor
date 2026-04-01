@@ -84,42 +84,47 @@ global with sharing class AgentCopilotService {
         SessionResult result = new SessionResult();
         result.success = false;
         Boolean isClientelling = (agentType == 'clientelling');
+        Boolean isCampaignPlanner = (agentType == 'campaign-planner');
 
         try {
-            // Build customer context variables
-            Contact c = [
-                SELECT Id, FirstName, LastName, Email, Phone,
-                       Skin_Type__c, Skin_Concerns__c, Allergies__c,
-                       Beauty_Priority__c, Preferred_Brands__c, Price_Range__c,
-                       Sustainability_Preference__c, Climate_Context__c,
-                       Clientelling_Tier__c, Merkury_Id__c, Demo_Profile__c,
-                       Email_Opt_In__c, SMS_Opt_In__c, Push_Opt_In__c
-                FROM Contact WHERE Id = :contactId LIMIT 1
-            ];
-
             String accessToken = getAccessToken();
             String agentId = getAgentId(agentType);
 
             if (String.isBlank(agentId)) {
-                String settingField = isClientelling ? 'Clientelling_Agent_Id__c' : 'Agent_Id__c';
+                String settingField = isCampaignPlanner ? 'Campaign_Planner_Agent_Id__c'
+                    : isClientelling ? 'Clientelling_Agent_Id__c' : 'Agent_Id__c';
                 result.errorMessage = 'Agentforce Agent ID not configured. Set Agentforce_Config__c.' + settingField + '.';
                 return result;
             }
 
-            String customerName = ((c.FirstName != null ? c.FirstName : '') + ' ' + (c.LastName != null ? c.LastName : '')).trim();
-
-            // Identity tier
+            // Campaign planner doesn't need a customer context
+            Contact c = null;
+            String customerName = '';
             String identityTier = 'anonymous';
-            if (c.Demo_Profile__c == 'Merkury') identityTier = 'appended';
-            else if (String.isNotBlank(c.Email)) identityTier = 'known';
+            String contextSummary = '';
 
-            // Build comprehensive customer context summary (injected via first message, not variables)
-            String contextSummary = buildCustomerContextSummary(c, contactId, customerName, identityTier);
+            if (!isCampaignPlanner && contactId != null) {
+                c = [
+                    SELECT Id, FirstName, LastName, Email, Phone,
+                           Skin_Type__c, Skin_Concerns__c, Allergies__c,
+                           Beauty_Priority__c, Preferred_Brands__c, Price_Range__c,
+                           Sustainability_Preference__c, Climate_Context__c,
+                           Clientelling_Tier__c, Merkury_Id__c, Demo_Profile__c,
+                           Email_Opt_In__c, SMS_Opt_In__c, Push_Opt_In__c
+                    FROM Contact WHERE Id = :contactId LIMIT 1
+                ];
+                customerName = ((c.FirstName != null ? c.FirstName : '') + ' ' + (c.LastName != null ? c.LastName : '')).trim();
+                if (c.Demo_Profile__c == 'Merkury') identityTier = 'appended';
+                else if (String.isNotBlank(c.Email)) identityTier = 'known';
+                contextSummary = buildCustomerContextSummary(c, contactId, customerName, identityTier);
+            }
 
-            // Build request body — no session variables to avoid InternalVariableMutationAttemptException.
-            // Customer context is sent as the first message after session creation instead.
+            // Build request body
             Map<String, Object> body = new Map<String, Object>();
-            body.put('externalSessionKey', 'lwc-' + String.valueOf(contactId) + '-' + String.valueOf(Datetime.now().getTime()));
+            String sessionKey = isCampaignPlanner
+                ? 'planner-' + String.valueOf(Datetime.now().getTime())
+                : 'lwc-' + String.valueOf(contactId) + '-' + String.valueOf(Datetime.now().getTime());
+            body.put('externalSessionKey', sessionKey);
             body.put('instanceConfig', new Map<String, Object>{
                 'endpoint' => getInstanceUrl()
             });
@@ -146,34 +151,48 @@ global with sharing class AgentCopilotService {
                 result.sessionId = (String) respBody.get('sessionId');
                 result.success = true;
 
-                // Send automatic context message so the agent sees the customer profile
-                // in the conversation (not just as unused session variables)
-                String contextMsg;
-                if (isClientelling) {
-                    contextMsg = 'I am an in-store beauty rep starting a consultation. '
-                        + 'Here is the customer profile I have on screen — use it to answer my questions:\n\n'
-                        + contextSummary
-                        + '\n\nPlease acknowledge you have this customer context and briefly greet me as a co-pilot ready to help with this consultation.';
+                // Campaign planner: no context injection needed, just a welcome
+                if (isCampaignPlanner) {
+                    String plannerWelcome = 'You are the Campaign Planner assistant. You help marketing teams analyze trends, create personalization campaigns, manage activations, and identify at-risk customers. Greet the user and ask what they would like to do.';
+                    try {
+                        MessageResult contextResp = sendMessageInternal(result.sessionId, plannerWelcome, 1, accessToken);
+                        if (contextResp.success && String.isNotBlank(contextResp.message)) {
+                            result.welcomeMessage = contextResp.message;
+                        } else {
+                            result.welcomeMessage = 'Campaign Planner ready. I can analyze marketing trends, create personalization campaigns, manage activations, and identify at-risk customers. What would you like to do?';
+                        }
+                    } catch (Exception contextErr) {
+                        result.welcomeMessage = 'Campaign Planner ready. How can I help?';
+                    }
                 } else {
-                    contextMsg = 'Here is my customer profile for personalization:\n\n'
-                        + contextSummary
-                        + '\n\nPlease greet me warmly as a beauty concierge and offer to help.';
-                }
-
-                String fallback = isClientelling
-                    ? 'Co-pilot session started for ' + customerName + '. How can I help with this consultation?'
-                    : 'Welcome! I\'m your beauty concierge. How can I help you today?';
-
-                try {
-                    MessageResult contextResp = sendMessageInternal(result.sessionId, contextMsg, 1, accessToken);
-                    if (contextResp.success && String.isNotBlank(contextResp.message)) {
-                        result.welcomeMessage = contextResp.message;
+                    // Customer-facing agents: inject customer context
+                    String contextMsg;
+                    if (isClientelling) {
+                        contextMsg = 'I am an in-store beauty rep starting a consultation. '
+                            + 'Here is the customer profile I have on screen — use it to answer my questions:\n\n'
+                            + contextSummary
+                            + '\n\nPlease acknowledge you have this customer context and briefly greet me as a co-pilot ready to help with this consultation.';
                     } else {
+                        contextMsg = 'Here is my customer profile for personalization:\n\n'
+                            + contextSummary
+                            + '\n\nPlease greet me warmly as a beauty concierge and offer to help.';
+                    }
+
+                    String fallback = isClientelling
+                        ? 'Co-pilot session started for ' + customerName + '. How can I help with this consultation?'
+                        : 'Welcome! I\'m your beauty concierge. How can I help you today?';
+
+                    try {
+                        MessageResult contextResp = sendMessageInternal(result.sessionId, contextMsg, 1, accessToken);
+                        if (contextResp.success && String.isNotBlank(contextResp.message)) {
+                            result.welcomeMessage = contextResp.message;
+                        } else {
+                            result.welcomeMessage = fallback;
+                        }
+                    } catch (Exception contextErr) {
+                        System.debug(LoggingLevel.WARN, 'Context injection failed: ' + contextErr.getMessage());
                         result.welcomeMessage = fallback;
                     }
-                } catch (Exception contextErr) {
-                    System.debug(LoggingLevel.WARN, 'Context injection failed: ' + contextErr.getMessage());
-                    result.welcomeMessage = fallback;
                 }
             } else {
                 result.errorMessage = 'Session creation failed: HTTP ' + resp.getStatusCode()
