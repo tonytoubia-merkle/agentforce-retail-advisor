@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>60.0</apiVersion>
+    <description>Activates or deactivates all personalization variations for a campaign ID.</description>
+    <interviewLabel>Schedule Campaign Activation {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Schedule Campaign Activation</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value><stringValue>LightningFlowBuilder</stringValue></value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <runInMode>SystemModeWithoutSharing</runInMode>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Invoke_Schedule</targetReference>
+        </connector>
+    </start>
+    <status>Active</status>
+
+    <variables>
+        <name>campaignId</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <description>Campaign ID to activate/deactivate</description>
+    </variables>
+    <variables>
+        <name>action</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <description>activate or deactivate</description>
+    </variables>
+    <variables>
+        <name>success</name>
+        <dataType>Boolean</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>true</isOutput>
+    </variables>
+    <variables>
+        <name>variationsUpdated</name>
+        <dataType>Number</dataType>
+        <scale>0</scale>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>true</isOutput>
+    </variables>
+    <variables>
+        <name>errorMessage</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>true</isOutput>
+    </variables>
+
+    <actionCalls>
+        <name>Invoke_Schedule</name>
+        <label>Schedule Campaign Activation</label>
+        <locationX>176</locationX>
+        <locationY>158</locationY>
+        <actionName>ScheduleCampaignActivation</actionName>
+        <actionType>apex</actionType>
+        <inputParameters>
+            <name>campaignId</name>
+            <value><elementReference>campaignId</elementReference></value>
+        </inputParameters>
+        <inputParameters>
+            <name>action</name>
+            <value><elementReference>action</elementReference></value>
+        </inputParameters>
+        <outputParameters>
+            <assignToReference>success</assignToReference>
+            <name>success</name>
+        </outputParameters>
+        <outputParameters>
+            <assignToReference>variationsUpdated</assignToReference>
+            <name>variationsUpdated</name>
+        </outputParameters>
+        <outputParameters>
+            <assignToReference>errorMessage</assignToReference>
+            <name>errorMessage</name>
+        </outputParameters>
+    </actionCalls>
+</Flow>

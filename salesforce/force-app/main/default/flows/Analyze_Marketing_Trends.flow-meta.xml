@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>60.0</apiVersion>
+    <description>Analyzes browse and engagement data to identify traffic trends, category affinity, and segment patterns for campaign planning.</description>
+    <interviewLabel>Analyze Marketing Trends {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Analyze Marketing Trends</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value><stringValue>LightningFlowBuilder</stringValue></value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <runInMode>SystemModeWithoutSharing</runInMode>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Invoke_Analyze</targetReference>
+        </connector>
+    </start>
+    <status>Active</status>
+
+    <!-- Inputs -->
+    <variables>
+        <name>lookbackDays</name>
+        <dataType>Number</dataType>
+        <scale>0</scale>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <description>How many days back to analyze (default: 7)</description>
+    </variables>
+    <variables>
+        <name>focusSource</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <description>Optional: focus on a specific utm_source (e.g., tiktok, instagram)</description>
+    </variables>
+    <variables>
+        <name>focusCategory</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <description>Optional: focus on a specific product category</description>
+    </variables>
+
+    <!-- Outputs -->
+    <variables>
+        <name>success</name>
+        <dataType>Boolean</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>true</isOutput>
+    </variables>
+    <variables>
+        <name>intelligenceReport</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>true</isOutput>
+        <description>Natural language summary of findings</description>
+    </variables>
+    <variables>
+        <name>recommendations</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>true</isOutput>
+        <description>Campaign recommendations based on the data</description>
+    </variables>
+    <variables>
+        <name>errorMessage</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>true</isOutput>
+    </variables>
+
+    <!-- Action: call Apex invocable -->
+    <actionCalls>
+        <name>Invoke_Analyze</name>
+        <label>Invoke Analyze Marketing Trends</label>
+        <locationX>176</locationX>
+        <locationY>158</locationY>
+        <actionName>CampaignPlannerService</actionName>
+        <actionType>apex</actionType>
+        <inputParameters>
+            <name>lookbackDays</name>
+            <value><elementReference>lookbackDays</elementReference></value>
+        </inputParameters>
+        <inputParameters>
+            <name>focusSource</name>
+            <value><elementReference>focusSource</elementReference></value>
+        </inputParameters>
+        <inputParameters>
+            <name>focusCategory</name>
+            <value><elementReference>focusCategory</elementReference></value>
+        </inputParameters>
+        <outputParameters>
+            <assignToReference>success</assignToReference>
+            <name>success</name>
+        </outputParameters>
+        <outputParameters>
+            <assignToReference>intelligenceReport</assignToReference>
+            <name>intelligenceReport</name>
+        </outputParameters>
+        <outputParameters>
+            <assignToReference>recommendations</assignToReference>
+            <name>recommendations</name>
+        </outputParameters>
+        <outputParameters>
+            <assignToReference>errorMessage</assignToReference>
+            <name>errorMessage</name>
+        </outputParameters>
+    </actionCalls>
+</Flow>
