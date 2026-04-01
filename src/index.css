@@ -30,21 +30,40 @@
   }
 }
 
-/* Custom scrollbar — thin, translucent, blends with dark UI */
-* {
+/* Main content scrollbar — always visible, subtle on light backgrounds */
+main {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.05);
+}
+main::-webkit-scrollbar {
+  width: 8px;
+}
+main::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.03);
+}
+main::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+}
+main::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Dark scrollbar for demo log panel + other dark containers */
+.dark-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
 }
-::-webkit-scrollbar {
+.dark-scrollbar::-webkit-scrollbar {
   width: 4px;
 }
-::-webkit-scrollbar-track {
+.dark-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
-::-webkit-scrollbar-thumb {
+.dark-scrollbar::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.15);
   border-radius: 4px;
 }
-::-webkit-scrollbar-thumb:hover {
+.dark-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.25);
 }

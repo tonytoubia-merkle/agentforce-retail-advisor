@@ -189,7 +189,7 @@ export const DemoLog: React.FC<{ onOpenChange?: (open: boolean) => void }> = ({ 
         </div>
 
         {/* Scrollable log — always in DOM, entries rendered via vanilla DOM */}
-        <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto overscroll-contain p-3">
+        <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto overscroll-contain p-3 dark-scrollbar">
           <div ref={listRef} />
           {entryCount === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-center px-6">
