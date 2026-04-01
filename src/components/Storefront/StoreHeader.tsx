@@ -70,9 +70,9 @@ export const StoreHeader: React.FC = () => {
             </span>
           </button>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-8">
-            {CATEGORIES.slice(0, 6).map((cat) => (
+          {/* Desktop Navigation — show fewer items at lg, all at xl */}
+          <nav className="hidden lg:flex items-center gap-6 xl:gap-8">
+            {CATEGORIES.slice(0, 5).map((cat) => (
               <button
                 key={cat.value}
                 onClick={() => navigateToCategory(cat.value)}
@@ -117,15 +117,15 @@ export const StoreHeader: React.FC = () => {
               )}
             </AnimatePresence>
 
-            {/* Beauty Advisor button - desktop */}
+            {/* Beauty Advisor button - desktop; text hidden at lg, shown at xl */}
             <button
               onClick={onBeautyAdvisorClick}
-              className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-rose-500 to-purple-500 text-white text-sm font-medium rounded-full hover:shadow-lg hover:shadow-rose-500/25 transition-all"
+              className="hidden sm:flex items-center gap-2 px-2.5 xl:px-3 py-1.5 bg-gradient-to-r from-rose-500 to-purple-500 text-white text-sm font-medium rounded-full hover:shadow-lg hover:shadow-rose-500/25 transition-all"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
               </svg>
-              <span>Beauty Advisor</span>
+              <span className="hidden xl:inline">Beauty Advisor</span>
             </button>
 
             {/* Cart */}
@@ -167,11 +167,11 @@ export const StoreHeader: React.FC = () => {
               </button>
             )}
 
-            {/* Register - visible only for truly anonymous visitors */}
+            {/* Register - visible only for truly anonymous visitors, hides at tight widths */}
             {showRegisterButton && (
               <button
                 onClick={() => setShowRegister(true)}
-                className="hidden sm:block px-3 py-1.5 text-sm font-medium border border-stone-300 text-stone-700 rounded-full hover:bg-stone-100 transition-colors"
+                className="hidden xl:block px-3 py-1.5 text-sm font-medium border border-stone-300 text-stone-700 rounded-full hover:bg-stone-100 transition-colors"
               >
                 Register
               </button>
