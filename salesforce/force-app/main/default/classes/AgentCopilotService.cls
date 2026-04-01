@@ -21,6 +21,11 @@ global with sharing class AgentCopilotService {
                     && String.isNotBlank(config.Clientelling_Agent_Id__c)) {
                     return config.Clientelling_Agent_Id__c;
                 }
+                // Campaign Planner / Marketing Advisor agent
+                if (agentType == 'campaign-planner'
+                    && String.isNotBlank(config.Campaign_Planner_Agent_Id__c)) {
+                    return config.Campaign_Planner_Agent_Id__c;
+                }
                 // Beauty Concierge agent (default)
                 if (String.isNotBlank(config.Agent_Id__c)) {
                     return config.Agent_Id__c;

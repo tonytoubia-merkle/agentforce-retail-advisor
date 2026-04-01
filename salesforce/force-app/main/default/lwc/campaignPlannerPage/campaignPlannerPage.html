@@ -1,0 +1,170 @@
+<template>
+    <div class="planner-layout">
+        <!-- Left: Agent Chat -->
+        <div class="chat-panel">
+            <div class="panel-header">
+                <lightning-icon icon-name="utility:einstein" size="small" class="slds-m-right_x-small"></lightning-icon>
+                <h2 class="panel-title">Campaign Planner</h2>
+                <template lwc:if={isSessionActive}>
+                    <span class="session-badge">Active</span>
+                </template>
+            </div>
+
+            <!-- Quick Actions -->
+            <template lwc:if={isSessionActive}>
+                <div class="quick-actions">
+                    <template for:each={quickActions} for:item="action">
+                        <button key={action.label} class="action-chip" onclick={handleQuickAction} data-message={action.message}>
+                            {action.label}
+                        </button>
+                    </template>
+                </div>
+            </template>
+
+            <!-- Message Thread -->
+            <div class="message-thread">
+                <template lwc:if={showStartPrompt}>
+                    <div class="start-prompt">
+                        <div class="start-icon">
+                            <lightning-icon icon-name="utility:campaign" size="large"></lightning-icon>
+                        </div>
+                        <h3 class="start-title">AI Campaign Planner</h3>
+                        <p class="start-desc">Analyze trends, create campaigns, manage activations, and identify at-risk customers.</p>
+                        <lightning-button
+                            label="Start Planning Session"
+                            variant="brand"
+                            onclick={handleStartSession}
+                            disabled={isInitializing}
+                        ></lightning-button>
+                    </div>
+                </template>
+
+                <template lwc:if={isInitializing}>
+                    <div class="slds-align_absolute-center slds-p-around_medium">
+                        <lightning-spinner alternative-text="Initializing" size="small"></lightning-spinner>
+                        <span class="init-text slds-m-left_small">Starting campaign planner...</span>
+                    </div>
+                </template>
+
+                <template for:each={messages} for:item="msg">
+                    <div key={msg.id} class={msg.containerClass}>
+                        <div class={msg.bubbleClass}>
+                            <lightning-formatted-rich-text value={msg.htmlText} class="msg-text"></lightning-formatted-rich-text>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Typing indicator -->
+                <template lwc:if={isWaitingForResponse}>
+                    <div class="msg-container msg-agent">
+                        <div class="msg-bubble bubble-agent typing-indicator">
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Input -->
+            <template lwc:if={isSessionActive}>
+                <div class="input-area">
+                    <lightning-input
+                        type="text"
+                        placeholder="Ask the campaign planner..."
+                        value={inputText}
+                        onchange={handleInputChange}
+                        onkeyup={handleKeyUp}
+                        variant="label-hidden"
+                        class="chat-input"
+                        disabled={isWaitingForResponse}
+                    ></lightning-input>
+                    <lightning-button-icon
+                        icon-name="utility:send"
+                        alternative-text="Send"
+                        onclick={handleSend}
+                        disabled={isSendDisabled}
+                        variant="brand"
+                        class="send-btn"
+                    ></lightning-button-icon>
+                </div>
+            </template>
+
+            <!-- Error -->
+            <template lwc:if={error}>
+                <div class="error-bar">
+                    <span>{error}</span>
+                    <lightning-button-icon icon-name="utility:close" alternative-text="Dismiss" onclick={dismissError} size="small"></lightning-button-icon>
+                </div>
+            </template>
+        </div>
+
+        <!-- Right: Results Panel -->
+        <div class="results-panel">
+            <div class="panel-header">
+                <lightning-icon icon-name="utility:dashboard" size="small" class="slds-m-right_x-small"></lightning-icon>
+                <h2 class="panel-title">Campaign Activity</h2>
+                <template lwc:if={hasResults}>
+                    <lightning-button label="Refresh" variant="neutral" onclick={handleRefreshResults} class="slds-m-left_auto" icon-name="utility:refresh"></lightning-button>
+                </template>
+            </div>
+
+            <div class="results-content">
+                <!-- Active Variations -->
+                <template lwc:if={hasVariations}>
+                    <div class="result-section">
+                        <h3 class="section-title">
+                            <lightning-icon icon-name="utility:personalization" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                            Active Personalization Variations ({variationCount})
+                        </h3>
+                        <template for:each={variations} for:item="v">
+                            <div key={v.Id} class="result-card">
+                                <div class="card-header">
+                                    <span class="card-title">{v.Variation_Name__c}</span>
+                                    <span class={v.statusClass}>{v.statusLabel}</span>
+                                </div>
+                                <div class="card-meta">
+                                    <span class="meta-item">Point: {v.Point_Name__c}</span>
+                                    <span class="meta-item">Priority: {v.Priority__c}</span>
+                                </div>
+                                <template lwc:if={v.Segment_Rules__c}>
+                                    <div class="card-rules">Rules: {v.Segment_Rules__c}</div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <!-- Pending Journeys -->
+                <template lwc:if={hasJourneys}>
+                    <div class="result-section">
+                        <h3 class="section-title">
+                            <lightning-icon icon-name="utility:email" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                            Campaign Flows ({journeyCount})
+                        </h3>
+                        <template for:each={journeys} for:item="j">
+                            <div key={j.Id} class="result-card">
+                                <div class="card-header">
+                                    <span class="card-title">{j.Event_Summary__c}</span>
+                                    <span class={j.statusClass}>{j.Status__c}</span>
+                                </div>
+                                <div class="card-meta">
+                                    <span class="meta-item">Step {j.Step_Number__c}/{j.Total_Steps__c}</span>
+                                    <span class="meta-item">{j.Channel__c} — Day {j.Send_Delay_Days__c}</span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <!-- Empty State -->
+                <template lwc:if={showEmptyResults}>
+                    <div class="empty-results">
+                        <lightning-icon icon-name="utility:campaign" size="large" class="empty-icon"></lightning-icon>
+                        <p class="empty-text">Campaign results will appear here as you create campaigns, variations, and flows.</p>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+</template>
