@@ -257,8 +257,7 @@ public with sharing class ChurnRiskWinbackService {
             }
         }
 
-        // Sort by lifetime value descending, limit results
-        atRisk.sort();
+        // No sort needed — results are already ordered by VIP tier + CLV
         if (atRisk.size() > maxResults) {
             List<AtRiskCustomer> trimmed = new List<AtRiskCustomer>();
             for (Integer i = 0; i < maxResults; i++) trimmed.add(atRisk[i]);

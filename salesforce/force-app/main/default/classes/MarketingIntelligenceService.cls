@@ -188,8 +188,6 @@ public with sharing class MarketingIntelligenceService {
             trends.add(t);
         }
 
-        // Sort by change % descending
-        trends.sort();
         return trends;
     }
 
