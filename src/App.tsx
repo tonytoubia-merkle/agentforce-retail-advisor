@@ -125,11 +125,17 @@ function App() {
     return null;
   });
 
+  const [demoLogOpen, setDemoLogOpen] = useState(false);
+
   return (
     <ErrorBoundary>
       <CustomerProvider>
-        <AppShell initialCampaign={initialCampaign} />
-        <DemoLog />
+        <div className="flex h-screen w-screen overflow-hidden">
+          <div className={`flex-1 min-w-0 overflow-y-auto transition-all duration-300 ${demoLogOpen ? 'mr-[380px]' : ''}`}>
+            <AppShell initialCampaign={initialCampaign} />
+          </div>
+          <DemoLog onOpenChange={setDemoLogOpen} />
+        </div>
       </CustomerProvider>
     </ErrorBoundary>
   );

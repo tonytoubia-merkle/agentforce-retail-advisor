@@ -27,8 +27,12 @@ function formatTime(ms: number): string {
 
 // ─── Main DemoLog panel ──────────────────────────────────────────────────────
 
-export const DemoLog: React.FC = () => {
-  const [open, setOpen] = useState(false);
+export const DemoLog: React.FC<{ onOpenChange?: (open: boolean) => void }> = ({ onOpenChange }) => {
+  const [open, setOpenRaw] = useState(false);
+  const setOpen = useCallback((v: boolean) => {
+    setOpenRaw(v);
+    onOpenChange?.(v);
+  }, [onOpenChange]);
   const [activeFilters, setActiveFilters] = useState<Set<EventCategory>>(new Set(ALL_CATEGORIES));
   const scrollRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -134,9 +138,9 @@ export const DemoLog: React.FC = () => {
         </button>
       )}
 
-      {/* Panel — always in DOM, slides via CSS transform */}
+      {/* Panel — fixed to right edge, always in DOM */}
       <div
-        className="fixed right-0 top-0 h-screen w-[380px] z-50 flex flex-col bg-stone-950/95 backdrop-blur-xl border-l border-white/10 shadow-2xl transition-transform duration-300 ease-out"
+        className="fixed right-0 top-0 h-screen w-[380px] z-40 flex flex-col bg-stone-950 border-l border-white/10 shadow-2xl transition-transform duration-300 ease-out"
         style={{ transform: open ? 'translateX(0)' : 'translateX(100%)' }}
       >
         {/* Header */}
