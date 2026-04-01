@@ -4,6 +4,7 @@ import type { CampaignAttribution } from '@/types/campaign';
 interface CampaignContextValue {
   campaign: CampaignAttribution | null;
   setCampaign: (campaign: CampaignAttribution) => void;
+  setCampaignFromUtm: (campaign: CampaignAttribution) => void;
   clearCampaign: () => void;
 }
 
@@ -24,6 +25,10 @@ export const CampaignProvider: React.FC<CampaignProviderProps> = ({
     setCampaignState(attribution);
   }, []);
 
+  const setCampaignFromUtm = useCallback((attribution: CampaignAttribution) => {
+    setCampaignState(attribution);
+  }, []);
+
   const clearCampaign = useCallback(() => {
     setCampaignState(null);
   }, []);
@@ -33,6 +38,7 @@ export const CampaignProvider: React.FC<CampaignProviderProps> = ({
       value={{
         campaign,
         setCampaign,
+        setCampaignFromUtm,
         clearCampaign,
       }}
     >

@@ -17,7 +17,6 @@ import { resolveUTMToCampaign } from '@/mocks/adCreatives';
 import { setPersonalizationCampaign } from '@/services/personalization';
 import { pushUtmToDataLayer } from '@/services/merkury/dataLayer';
 import { DemoLog } from '@/components/DemoLog';
-import { demoLog } from '@/services/demoLog';
 import type { CampaignAttribution } from '@/types/campaign';
 
 
@@ -108,8 +107,8 @@ function AppShell({ initialCampaign }: { initialCampaign: CampaignAttribution | 
  */
 function App() {
   // Parse UTM from URL once on mount (lazy initializer — no re-renders).
-  // demoLog.log() calls here run BEFORE DemoLog mounts, so entries are
-  // already in the snapshot when DemoLog first calls getSnapshot().
+  // UTM demoLog entries are NOT logged here — they fire from useBrowseTracking
+  // (inside StorefrontPage) after DemoLog is mounted and polling.
   const [initialCampaign] = useState<CampaignAttribution | null>(() => {
     const params = new URLSearchParams(window.location.search);
     const utmSource = params.get('utm_source');
@@ -119,23 +118,7 @@ function App() {
       setPersonalizationCampaign(utmCampaign, utmSource, utmMedium);
       pushUtmToDataLayer(utmCampaign, utmSource, utmMedium);
 
-      demoLog.log({
-        category: 'campaign',
-        title: 'UTM Parameters Captured',
-        subtitle: `${utmSource} / ${utmMedium} / ${utmCampaign}`,
-        details: { utm_source: utmSource, utm_medium: utmMedium, utm_campaign: utmCampaign, utm_content: params.get('utm_content'), utm_term: params.get('utm_term') },
-      });
-
       const attribution = resolveUTMToCampaign(params);
-      if (attribution) {
-        demoLog.log({
-          category: 'campaign',
-          title: 'Campaign Attribution Resolved',
-          subtitle: attribution.adCreative.campaignName,
-          details: { platform: attribution.adCreative.platform, audience: attribution.adCreative.audienceSegment.segmentName, strategy: attribution.adCreative.targetingStrategy },
-        });
-      }
-
       window.history.replaceState({}, '', window.location.pathname);
       return attribution;
     }
