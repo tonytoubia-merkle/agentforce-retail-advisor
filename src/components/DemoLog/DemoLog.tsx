@@ -116,19 +116,17 @@ export const DemoLog: React.FC<{ onOpenChange?: (open: boolean) => void }> = ({ 
 
   const allActive = activeFilters.size === ALL_CATEGORIES.length;
 
-  // Panel uses CSS transform instead of AnimatePresence mount/unmount.
-  // This keeps listRef ALWAYS in the DOM so the poll can always render to it.
+  // Panel uses width transition. listRef is ALWAYS in the DOM.
   return (
     <>
       <style>{`@keyframes fadeInRight { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }`}</style>
 
-      {/* Collapsed tab */}
-      {!open && (
-        <button
-          onClick={() => setOpen(true)}
-          className="fixed right-0 top-1/2 -translate-y-1/2 z-50 flex items-center gap-1.5 bg-stone-900/95 border border-white/10 border-r-0 rounded-l-lg px-2 py-3 shadow-xl hover:bg-stone-800 transition-colors"
-          style={{ writingMode: 'vertical-lr' }}
-        >
+      {/* Collapsed tab — fixed position, always clickable when panel is closed */}
+      <button
+        onClick={() => setOpen(true)}
+        className="fixed right-0 top-1/2 -translate-y-1/2 z-[60] flex items-center gap-1.5 bg-stone-900/95 border border-white/10 border-r-0 rounded-l-lg px-2 py-3 shadow-xl hover:bg-stone-800 transition-all"
+        style={{ writingMode: 'vertical-lr', opacity: open ? 0 : 1, pointerEvents: open ? 'none' : 'auto' }}
+      >
           <span className="text-[10px] font-medium text-white/60 tracking-wider uppercase">Demo Log</span>
           {entryCount > 0 && (
             <span className="text-[9px] px-1 py-0.5 rounded bg-cyan-500/20 text-cyan-400 font-mono" style={{ writingMode: 'horizontal-tb' }}>
@@ -136,7 +134,6 @@ export const DemoLog: React.FC<{ onOpenChange?: (open: boolean) => void }> = ({ 
             </span>
           )}
         </button>
-      )}
 
       {/* Panel — flex sibling that takes real space in layout */}
       <div
