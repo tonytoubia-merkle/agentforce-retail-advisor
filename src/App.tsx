@@ -132,7 +132,7 @@ function App() {
       <CustomerProvider>
         <div className="h-screen w-screen overflow-hidden">
           <div
-            className="h-full overflow-y-auto transition-[width] duration-300 ease-out"
+            className="h-full overflow-y-auto overflow-x-hidden transition-[width] duration-300 ease-out"
             style={{ width: demoLogOpen ? 'calc(100% - 380px)' : '100%' }}
           >
             <AppShell initialCampaign={initialCampaign} />
