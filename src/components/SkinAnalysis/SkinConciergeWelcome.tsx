@@ -26,7 +26,7 @@ export const SkinConciergeWelcome: React.FC<SkinConciergeWelcomeProps> = ({ onDi
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.6 }}
-      className="fixed inset-0 z-10 flex flex-col items-center justify-center px-6"
+      className="absolute inset-0 z-10 flex flex-col items-center justify-center px-6"
     >
       {/* Scrim */}
       <div

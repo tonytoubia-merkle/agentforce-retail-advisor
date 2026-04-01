@@ -23,7 +23,7 @@ export const WelcomeScreen: React.FC = () => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.8 }}
-      className="fixed inset-0 z-40 flex items-center justify-center cursor-pointer"
+      className="absolute inset-0 z-40 flex items-center justify-center cursor-pointer"
       onClick={dismissWelcome}
     >
       {/* Radial scrim — strongest behind centered text, fades at edges */}
