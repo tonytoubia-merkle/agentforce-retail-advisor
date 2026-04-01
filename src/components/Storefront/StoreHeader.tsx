@@ -55,8 +55,8 @@ export const StoreHeader: React.FC = () => {
       </div>
 
       {/* Main header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between h-16">
+      <div className="mx-auto px-4 sm:px-6">
+        <div className="flex items-center justify-between h-16 gap-2">
           {/* Logo */}
           <button
             onClick={navigateHome}
@@ -70,8 +70,8 @@ export const StoreHeader: React.FC = () => {
             </span>
           </button>
 
-          {/* Desktop Navigation — show fewer items at lg, all at xl */}
-          <nav className="hidden lg:flex items-center gap-6 xl:gap-8">
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex items-center gap-4 xl:gap-6 flex-shrink min-w-0">
             {CATEGORIES.slice(0, 5).map((cat) => (
               <button
                 key={cat.value}
@@ -84,7 +84,7 @@ export const StoreHeader: React.FC = () => {
           </nav>
 
           {/* Right side actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {/* Search */}
             <AnimatePresence>
               {showSearch ? (
