@@ -110,6 +110,7 @@ console.log('[sfp] Module loaded — env check:', {
 
 let initialized = false;
 let sdkReady: Promise<boolean> | null = null;
+let productRecsLogged = false;
 let navState: NavState = { view: '' };
 let sdkType: 'c360a' | 'interactions' | 'unknown' = 'unknown';
 
@@ -1180,7 +1181,8 @@ export async function getProductRecommendations(): Promise<ProductRecommendation
       experienceId: result.personalizationContentId || result.experienceId,
       raw: result,
     };
-    if (products.length > 0) {
+    if (products.length > 0 && !productRecsLogged) {
+      productRecsLogged = true;
       demoLog.log({
         category: 'personalization',
         title: 'Product Recommendations',
