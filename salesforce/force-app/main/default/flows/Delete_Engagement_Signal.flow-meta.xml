@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>60.0</apiVersion>
+    <interviewLabel>Delete Engagement Signal {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Delete Engagement Signal</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value><stringValue>LightningFlowBuilder</stringValue></value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <runInMode>SystemModeWithoutSharing</runInMode>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Invoke_Action</targetReference>
+        </connector>
+    </start>
+    <status>Active</status>
+
+    <!-- Inputs -->
+    <variables>
+        <name>signalId</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+
+    <!-- Outputs -->
+    <variables>
+        <name>success</name>
+        <dataType>Boolean</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>true</isOutput>
+    </variables>
+    <variables>
+        <name>responseJson</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>true</isOutput>
+        <description>JSON response from the API</description>
+    </variables>
+    <variables>
+        <name>summary</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>true</isOutput>
+    </variables>
+    <variables>
+        <name>errorMessage</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>true</isOutput>
+    </variables>
+
+    <!-- Action: call Apex invocable -->
+    <actionCalls>
+        <name>Invoke_Action</name>
+        <label>Invoke Delete Engagement Signal</label>
+        <locationX>176</locationX>
+        <locationY>158</locationY>
+        <actionName>DeleteEngagementSignal</actionName>
+        <actionType>apex</actionType>
+        <inputParameters>
+            <name>signalId</name>
+            <value><elementReference>signalId</elementReference></value>
+        </inputParameters>
+        <outputParameters>
+            <assignToReference>success</assignToReference>
+            <name>success</name>
+        </outputParameters>
+        <outputParameters>
+            <assignToReference>responseJson</assignToReference>
+            <name>responseJson</name>
+        </outputParameters>
+        <outputParameters>
+            <assignToReference>summary</assignToReference>
+            <name>summary</name>
+        </outputParameters>
+        <outputParameters>
+            <assignToReference>errorMessage</assignToReference>
+            <name>errorMessage</name>
+        </outputParameters>
+    </actionCalls>
+</Flow>
