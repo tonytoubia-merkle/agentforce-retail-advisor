@@ -3,6 +3,9 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "routes": [
+    { "src": "/api/site-scrape", "dest": "/api/site-scrape" },
+    { "src": "/api/demo-deploy", "dest": "/api/demo-deploy" },
+    { "src": "/api/brand-research", "dest": "/api/brand-research" },
     { "src": "/api/generate-journey-image", "dest": "/api/generate-journey-image" },
     { "src": "/api/save-skin-analysis", "dest": "/api/save-skin-analysis" },
     { "src": "/api/delete-skin-analysis", "dest": "/api/delete-skin-analysis" },
@@ -26,6 +29,12 @@
     },
     "api/dc-query.js": {
       "maxDuration": 30
+    },
+    "api/demo-deploy.js": {
+      "maxDuration": 300
+    },
+    "api/brand-research.js": {
+      "maxDuration": 120
     }
   }
 }

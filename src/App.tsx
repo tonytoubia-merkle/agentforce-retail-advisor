@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { lazy, useState, useMemo } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SceneProvider } from '@/contexts/SceneContext';
@@ -7,6 +7,7 @@ import { CustomerProvider } from '@/contexts/CustomerContext';
 import { CampaignProvider } from '@/contexts/CampaignContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { StoreProvider } from '@/contexts/StoreContext';
+import { DemoProvider } from '@/contexts/DemoContext';
 import { ActivityToastProvider } from '@/components/ActivityToast';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AdvisorPage } from '@/components/AdvisorPage';
@@ -18,6 +19,12 @@ import { setPersonalizationCampaign } from '@/services/personalization';
 import { pushUtmToDataLayer } from '@/services/merkury/dataLayer';
 import { DemoLog } from '@/components/DemoLog';
 import type { CampaignAttribution } from '@/types/campaign';
+
+// Lazy-load admin components — they pull in Supabase which isn't needed for the demo path
+const AdminLayout = lazy(() => import('@/components/Admin/AdminLayout').then(m => ({ default: m.AdminLayout })));
+const DemoDashboard = lazy(() => import('@/components/Admin/DemoDashboard').then(m => ({ default: m.DemoDashboard })));
+const NewDemoWizard = lazy(() => import('@/components/Admin/NewDemoWizard').then(m => ({ default: m.NewDemoWizard })));
+const DemoDetail = lazy(() => import('@/components/Admin/DemoDetail').then(m => ({ default: m.DemoDetail })));
 
 
 /**
@@ -127,16 +134,36 @@ function App() {
 
   const [demoLogOpen, setDemoLogOpen] = useState(false);
 
+  const isAdminRoute = window.location.pathname.startsWith('/admin');
+
+  // Admin routes — completely separate UI, no demo providers needed
+  if (isAdminRoute) {
+    return (
+      <ErrorBoundary>
+        <Routes>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<DemoDashboard />} />
+            <Route path="new" element={<NewDemoWizard />} />
+            <Route path="demo/:demoId" element={<DemoDetail />} />
+          </Route>
+        </Routes>
+      </ErrorBoundary>
+    );
+  }
+
+  // Demo routes — original app with DemoProvider wrapper
   return (
     <ErrorBoundary>
-      <CustomerProvider>
-        <div className="h-screen overflow-hidden flex">
-          <main className={`h-full flex-1 min-w-0 overflow-y-scroll overflow-x-hidden ${demoLogOpen ? 'w-[calc(100%-380px)]' : 'w-full'}`}>
-            <AppShell initialCampaign={initialCampaign} />
-          </main>
-          <DemoLog onOpenChange={setDemoLogOpen} />
-        </div>
-      </CustomerProvider>
+      <DemoProvider>
+        <CustomerProvider>
+          <div className="h-screen overflow-hidden flex">
+            <main className={`h-full flex-1 min-w-0 overflow-y-scroll overflow-x-hidden ${demoLogOpen ? 'w-[calc(100%-380px)]' : 'w-full'}`}>
+              <AppShell initialCampaign={initialCampaign} />
+            </main>
+            <DemoLog onOpenChange={setDemoLogOpen} />
+          </div>
+        </CustomerProvider>
+      </DemoProvider>
     </ErrorBoundary>
   );
 }

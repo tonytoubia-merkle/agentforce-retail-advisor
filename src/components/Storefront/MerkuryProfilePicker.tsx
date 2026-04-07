@@ -4,8 +4,7 @@ import { MERKURY_ARCHETYPES, NO_MERKURY_MATCH, getMerkuryArchetypeById } from '@
 import { fetchDemoContacts } from '@/services/demo/contacts';
 import { useCustomer } from '@/contexts/CustomerContext';
 import type { DemoContact } from '@/types/customer';
-
-const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
+import { getDemoConfig } from '@/contexts/DemoContext';
 
 interface MerkuryProfilePickerProps {
   isOpen: boolean;
@@ -27,6 +26,7 @@ export const MerkuryProfilePicker: React.FC<MerkuryProfilePickerProps> = ({
   onClose,
   onComplete,
 }) => {
+  const useMockData = getDemoConfig().featureFlags.useMockData;
   const { createGuestContact, isResolving } = useCustomer();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [profiles, setProfiles] = useState<DisplayProfile[]>([]);

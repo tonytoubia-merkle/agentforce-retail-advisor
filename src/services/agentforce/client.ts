@@ -687,14 +687,17 @@ export class AgentforceClient {
   }
 }
 
+import { getDemoConfig } from '@/contexts/DemoContext';
+
 let agentforceClient: AgentforceClient | null = null;
 
 export const getAgentforceClient = (): AgentforceClient => {
   if (!agentforceClient) {
+    const sf = getDemoConfig().salesforce;
     agentforceClient = new AgentforceClient({
       baseUrl: '/api/agentforce',
-      agentId: import.meta.env.VITE_AGENTFORCE_AGENT_ID || '',
-      instanceUrl: import.meta.env.VITE_AGENTFORCE_INSTANCE_URL || '',
+      agentId: sf.agentId || import.meta.env.VITE_AGENTFORCE_AGENT_ID || '',
+      instanceUrl: sf.instanceUrl || import.meta.env.VITE_AGENTFORCE_INSTANCE_URL || '',
     });
   }
   return agentforceClient;
@@ -702,9 +705,10 @@ export const getAgentforceClient = (): AgentforceClient => {
 
 /** Create a fresh client for a specific agent ID (e.g. Skin Concierge agent). */
 export const createAgentforceClient = (agentId: string): AgentforceClient => {
+  const sf = getDemoConfig().salesforce;
   return new AgentforceClient({
     baseUrl: '/api/agentforce',
     agentId,
-    instanceUrl: import.meta.env.VITE_AGENTFORCE_INSTANCE_URL || '',
+    instanceUrl: sf.instanceUrl || import.meta.env.VITE_AGENTFORCE_INSTANCE_URL || '',
   });
 };

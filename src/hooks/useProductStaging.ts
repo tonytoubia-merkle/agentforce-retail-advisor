@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import type { SceneSetting } from '@/types/scene';
+import { getDemoConfig } from '@/contexts/DemoContext';
 
 type ImageProvider = 'imagen' | 'firefly' | 'cms-only' | 'none';
 
@@ -23,8 +24,9 @@ export function useProductStaging(
   useEffect(() => {
     abortRef.current = false;
 
-    const enabled = import.meta.env.VITE_ENABLE_GENERATIVE_BACKGROUNDS === 'true';
-    const provider = (import.meta.env.VITE_IMAGE_PROVIDER as ImageProvider) || 'none';
+    const { featureFlags, imageProvider } = getDemoConfig();
+    const enabled = featureFlags.enableGenerativeBackgrounds;
+    const provider = imageProvider;
 
     if (!enabled || provider !== 'imagen' || !originalImageUrl) {
       setStagedUrl(null);

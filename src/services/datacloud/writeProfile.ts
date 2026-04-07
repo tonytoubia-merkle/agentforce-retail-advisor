@@ -1,7 +1,12 @@
 import type { BrowseSession, ChatSummary, MeaningfulEvent, CapturedProfileField, ProfilePreferences } from '@/types/customer';
 import type { DataCloudConfig } from './types';
 
-const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
+import { getDemoConfig } from '@/contexts/DemoContext';
+
+/** Reads mock-data flag at call time (not module load) so per-demo config applies. */
+function isMockMode(): boolean {
+  return getDemoConfig().featureFlags.useMockData;
+}
 
 /** User-editable beauty preferences for the preference center */
 export interface BeautyPreferencesUpdate {
@@ -92,7 +97,7 @@ export class DataCloudWriteService {
    * since the Salesforce REST API doesn't support batch delete on sobjects.
    */
   async deleteRecords(sobjectType: string, recordIds: string[]): Promise<{ deleted: string[]; failed: string[] }> {
-    if (useMockData) {
+    if (isMockMode()) {
       console.log(`[mock] Would delete ${recordIds.length} ${sobjectType} records`);
       return { deleted: recordIds, failed: [] };
     }
@@ -130,7 +135,7 @@ export class DataCloudWriteService {
     sessionId: string,
     summary: ChatSummary,
   ): Promise<void> {
-    if (useMockData) {
+    if (isMockMode()) {
       console.log('[mock] Would write chat summary:', summary.summary);
       return;
     }
@@ -152,7 +157,7 @@ export class DataCloudWriteService {
     /** Optional Salesforce Contact ID (003...) to populate the Contact__c lookup field. */
     contactId?: string,
   ): Promise<void> {
-    if (useMockData) {
+    if (isMockMode()) {
       console.log('[mock] Would write meaningful event:', event.description, event.eventDate ? `(${event.eventDate})` : '');
       return;
     }
@@ -191,7 +196,7 @@ export class DataCloudWriteService {
     customerId: string,
     session: BrowseSession,
   ): Promise<void> {
-    if (useMockData) {
+    if (isMockMode()) {
       console.log('[mock] Would write browse session:', {
         categories: session.categoriesBrowsed,
         products: session.productsViewed,
@@ -219,7 +224,7 @@ export class DataCloudWriteService {
     fieldName: string,
     field: CapturedProfileField,
   ): Promise<void> {
-    if (useMockData) {
+    if (isMockMode()) {
       console.log('[mock] Would write profile field:', fieldName, '=', field.value);
       return;
     }
@@ -249,7 +254,7 @@ export class DataCloudWriteService {
     contactId: string,
     preferences: BeautyPreferencesUpdate,
   ): Promise<void> {
-    if (useMockData) {
+    if (isMockMode()) {
       console.log('[mock] Would update beauty preferences for', contactId, ':', preferences);
       return;
     }
@@ -292,7 +297,7 @@ export class DataCloudWriteService {
     contactId: string,
     preferences: CommunicationPreferencesUpdate,
   ): Promise<void> {
-    if (useMockData) {
+    if (isMockMode()) {
       console.log('[mock] Would update communication preferences for', contactId, ':', preferences);
       return;
     }

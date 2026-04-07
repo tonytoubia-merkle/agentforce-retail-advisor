@@ -2,10 +2,54 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Demo Builder: CSS custom properties (injected by DemoContext) ── */
+:root {
+  --demo-primary: #1a1a2e;
+  --demo-accent: #e94560;
+  --demo-bg: #0f0f23;
+  --demo-text: #ffffff;
+  --demo-font: 'Inter', system-ui, sans-serif;
+}
+
 @layer base {
   body {
     @apply antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+}
+
+@layer components {
+  /* Admin UI shared form styles */
+  .input {
+    @apply w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200;
+  }
+  .input::placeholder {
+    @apply text-gray-500;
+  }
+  .input:focus {
+    @apply outline-none ring-2 ring-indigo-500 border-transparent;
+  }
+  .btn-primary {
+    @apply px-4 py-2 bg-indigo-600 rounded-lg text-sm font-medium transition-colors;
+  }
+  .btn-primary:hover {
+    @apply bg-indigo-500;
+  }
+  .btn-primary:disabled {
+    @apply bg-indigo-800 text-indigo-400;
+  }
+  .btn-secondary {
+    @apply px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm font-medium text-gray-300 transition-colors;
+  }
+  .btn-secondary:hover {
+    @apply bg-gray-700;
+  }
+  .btn-danger {
+    @apply px-4 py-2 border border-red-800 rounded-lg text-sm font-medium text-red-300 transition-colors;
+    background: rgba(127, 29, 29, 0.5);
+  }
+  .btn-danger:hover {
+    @apply bg-red-800;
   }
 }
 

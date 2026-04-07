@@ -22,10 +22,12 @@ export function getFallbackGradient(setting: SceneSetting): string {
 /** @deprecated Use getFallbackGradient instead */
 export const FALLBACK_GRADIENTS = KNOWN_GRADIENTS as Record<string, string>;
 
+import { getDemoConfig } from '@/contexts/DemoContext';
+
 type ImageProvider = 'imagen' | 'firefly' | 'cms-only' | 'none';
 
 function getProvider(): ImageProvider {
-  return (import.meta.env.VITE_IMAGE_PROVIDER as ImageProvider) || 'none';
+  return getDemoConfig().imageProvider;
 }
 
 // Known scene settings — prompts matching these are "standard" and don't need generation
@@ -85,7 +87,7 @@ export function useGenerativeBackground() {
 
   const generateBackground = useCallback(
     async (setting: SceneSetting, products: Product[], options?: BackgroundOptions): Promise<string> => {
-      const enabled = import.meta.env.VITE_ENABLE_GENERATIVE_BACKGROUNDS === 'true';
+      const enabled = getDemoConfig().featureFlags.enableGenerativeBackgrounds;
 
       // Build cache key — backgroundPrompt is the primary key when present
       const prompt = options?.backgroundPrompt || options?.editPrompt;

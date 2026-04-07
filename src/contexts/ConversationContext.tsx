@@ -15,8 +15,7 @@ import { getDataCloudWriteService } from '@/services/datacloud';
 import type { SceneSnapshot } from './SceneContext';
 import { demoLog } from '@/services/demoLog';
 import { useActivityToast } from '@/components/ActivityToast';
-
-const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
+import { getDemoConfig } from '@/contexts/DemoContext';
 
 /** Snapshot of a persona's full session state for instant restore. */
 interface SessionSnapshot {
@@ -321,7 +320,7 @@ async function getAgentResponse(
   client: AgentforceClient,
   sessionRef: { current: boolean },
 ): Promise<AgentResponse> {
-  if (useMockData) {
+  if (getDemoConfig().featureFlags.useMockData) {
     return generateMockResponse(content);
   }
   if (!sessionRef.current) {
@@ -342,7 +341,7 @@ async function getAgentResponseStreaming(
   client: AgentforceClient,
   sessionRef: { current: boolean },
 ): Promise<AgentResponse> {
-  if (useMockData) {
+  if (getDemoConfig().featureFlags.useMockData) {
     return generateMockResponse(content);
   }
   if (!sessionRef.current) {
@@ -398,6 +397,7 @@ interface ConversationContextValue {
 const ConversationContext = createContext<ConversationContextValue | null>(null);
 
 export const ConversationProvider: React.FC<{ children: React.ReactNode; agentId?: string }> = ({ children, agentId }) => {
+  const useMockData = getDemoConfig().featureFlags.useMockData;
   const [messages, setMessages] = useState<AgentMessage[]>([]);
   const [isAgentTyping, setIsAgentTyping] = useState(false);
   const [isLoadingWelcome, setIsLoadingWelcome] = useState(false);

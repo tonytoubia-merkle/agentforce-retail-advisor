@@ -1,8 +1,9 @@
 import http from 'node:http';
 import https from 'node:https';
-import { readFileSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
+import { readFileSync, existsSync } from 'node:fs';
+import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { spawn } from 'node:child_process';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -79,6 +80,671 @@ const server = http.createServer((req, res) => {
   if (req.url === '/api/health') {
     res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
     res.end(JSON.stringify({ status: 'ok' }));
+    return;
+  }
+
+  // ─── Demo Builder: Site Capture (Puppeteer headless snapshot) ───────────────
+  // POST /api/site-capture  { url, slug, maxPages? }  → triggers Puppeteer capture
+  // GET  /api/site-capture/status/:slug              → check if capture exists
+  if (req.url === '/api/site-capture' && req.method === 'POST') {
+    const chunks = [];
+    req.on('data', (c) => chunks.push(c));
+    req.on('end', async () => {
+      try {
+        const body = JSON.parse(Buffer.concat(chunks).toString());
+        const { url: siteUrl, slug, maxPages = 8 } = body;
+        if (!siteUrl || !slug) {
+          res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ error: 'url and slug are required' }));
+          return;
+        }
+
+        console.log('[site-capture] Starting capture:', siteUrl, '→', slug);
+
+        const scriptPath = resolve(__dirname, '..', 'scripts', 'capture-site.js');
+
+        // Fire-and-forget: spawn the capture in the background, respond immediately.
+        // Client polls GET /api/site-capture/status/:slug to know when it's done.
+        try {
+          const captureProc = spawn('node', [
+            scriptPath,
+            '--url', siteUrl,
+            '--slug', slug,
+            '--pages', String(maxPages),
+          ], { stdio: ['ignore', 'pipe', 'pipe'], detached: false });
+
+          captureProc.stdout.on('data', (d) => process.stdout.write(d));
+          captureProc.stderr.on('data', (d) => process.stderr.write(d));
+          captureProc.on('close', (code) => {
+            console.log(`[site-capture] Capture of ${slug} finished (exit ${code})`);
+          });
+          captureProc.unref();
+
+          // Respond immediately — client will poll status
+          res.writeHead(202, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({
+            status: 'started',
+            slug,
+            statusUrl: `/api/site-capture/status/${slug}`,
+            previewUrl: `/captured/${slug}/`,
+          }));
+        } catch (spawnErr) {
+          console.error('[site-capture] Spawn error:', spawnErr);
+          res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ error: 'Failed to launch capture: ' + spawnErr.message }));
+        }
+      } catch (e) {
+        console.error('[site-capture] Handler error:', e);
+        if (!res.headersSent) {
+          res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ error: e.message }));
+        }
+      }
+    });
+    return;
+  }
+
+  // GET /api/site-capture/status/:slug — check if capture exists + return manifest
+  if (req.url?.startsWith('/api/site-capture/status/') && req.method === 'GET') {
+    const slug = req.url.split('/').pop();
+    const manifestPath = resolve(__dirname, '..', '.captures', slug, 'manifest.json');
+    try {
+      const manifest = JSON.parse(readFileSync(manifestPath, 'utf-8'));
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ exists: true, manifest }));
+    } catch {
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ exists: false }));
+    }
+    return;
+  }
+
+  // ─── Serve captured site snapshots ────────────────────────────────────────
+  // GET /captured/:slug/*  → serve static files from .captures/:slug/
+  if (req.url?.startsWith('/captured/')) {
+    const urlPath = req.url.replace(/\?.*$/, ''); // strip query params
+    const parts = urlPath.replace('/captured/', '').split('/');
+    const slug = parts[0];
+    let filePath = parts.slice(1).join('/') || 'index.html';
+
+    const capturesRoot = resolve(__dirname, '..', '.captures', slug);
+    const fullPath = resolve(capturesRoot, filePath);
+
+    // Security: ensure we're not escaping the captures directory
+    if (!fullPath.startsWith(capturesRoot)) {
+      res.writeHead(403);
+      res.end('Forbidden');
+      return;
+    }
+
+    try {
+      if (!existsSync(fullPath)) {
+        // Try with .html extension
+        const withExt = fullPath + '.html';
+        if (existsSync(withExt)) {
+          filePath = filePath + '.html';
+        } else {
+          res.writeHead(404, { 'Access-Control-Allow-Origin': '*' });
+          res.end('Not found');
+          return;
+        }
+      }
+      const content = readFileSync(resolve(capturesRoot, filePath));
+      const ext = filePath.split('.').pop()?.toLowerCase();
+      const mimeTypes = {
+        html: 'text/html', mhtml: 'multipart/related', css: 'text/css', js: 'application/javascript',
+        json: 'application/json', png: 'image/png', jpg: 'image/jpeg',
+        jpeg: 'image/jpeg', gif: 'image/gif', svg: 'image/svg+xml',
+        webp: 'image/webp', avif: 'image/avif', woff: 'font/woff', woff2: 'font/woff2',
+        ttf: 'font/ttf', eot: 'application/vnd.ms-fontobject', ico: 'image/x-icon',
+      };
+      const mime = mimeTypes[ext] || 'application/octet-stream';
+      res.writeHead(200, {
+        'Content-Type': mime,
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'public, max-age=3600',
+      });
+      res.end(content);
+    } catch (e) {
+      console.error('[captured] Serve error:', e.message);
+      res.writeHead(500, { 'Access-Control-Allow-Origin': '*' });
+      res.end('Server error: ' + e.message);
+    }
+    return;
+  }
+
+  // ─── Demo Builder: Site Scraper ─────────────────────────────────────────────
+  // Crawls a brand website and extracts products, theme, images.
+  // POST /api/site-scrape  { url: "https://gucci.com/us/en", maxPages?: 10 }
+  if (req.url === '/api/site-scrape' && req.method === 'POST') {
+    const ANTHROPIC_KEY = env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY;
+    const chunks = [];
+    req.on('data', (c) => chunks.push(c));
+    req.on('end', async () => {
+      try {
+        const body = JSON.parse(Buffer.concat(chunks).toString());
+        const { url: siteUrl, maxPages = 8 } = body;
+        if (!siteUrl) {
+          res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ error: 'url is required' }));
+          return;
+        }
+
+        console.log('[site-scrape] Starting scrape of:', siteUrl, 'maxPages:', maxPages);
+
+        // Dynamic import cheerio (ESM)
+        const { load: cheerioLoad } = await import('cheerio');
+
+        // ── Helper: fetch a page with browser-like headers ──────────
+        async function fetchPage(pageUrl) {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 15000);
+          try {
+            const resp = await fetch(pageUrl, {
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+              },
+              signal: controller.signal,
+              redirect: 'follow',
+            });
+            if (!resp.ok) return null;
+            return await resp.text();
+          } catch { return null; }
+          finally { clearTimeout(timeout); }
+        }
+
+        // ── Step 1: Fetch the main page ─────────────────────────────
+        const mainHtml = await fetchPage(siteUrl);
+        if (!mainHtml) {
+          res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ error: `Failed to fetch ${siteUrl}` }));
+          return;
+        }
+
+        const $ = cheerioLoad(mainHtml);
+        const baseUrl = new URL(siteUrl);
+
+        // ── Step 2: Extract structured data (JSON-LD) ───────────────
+        const jsonLdBlocks = [];
+        $('script[type="application/ld+json"]').each((_, el) => {
+          try { jsonLdBlocks.push(JSON.parse($(el).html())); } catch {}
+        });
+
+        // ── Step 3: Extract Open Graph + meta data ──────────────────
+        const ogData = {};
+        $('meta[property^="og:"]').each((_, el) => {
+          ogData[$(el).attr('property')] = $(el).attr('content');
+        });
+        $('meta[name^="description"], meta[name^="theme-color"]').each((_, el) => {
+          ogData[$(el).attr('name')] = $(el).attr('content');
+        });
+
+        // ── Step 4: Extract brand colors from CSS / inline styles ───
+        const colors = new Set();
+        // Theme color meta
+        const themeColor = $('meta[name="theme-color"]').attr('content');
+        if (themeColor) colors.add(themeColor);
+        // Inline styles with hex colors
+        $('[style]').each((_, el) => {
+          const style = $(el).attr('style') || '';
+          const hexMatches = style.match(/#[0-9a-fA-F]{3,8}/g);
+          if (hexMatches) hexMatches.forEach(c => colors.add(c));
+        });
+        // CSS custom properties in style tags
+        $('style').each((_, el) => {
+          const css = $(el).html() || '';
+          const hexMatches = css.match(/#[0-9a-fA-F]{3,8}/g);
+          if (hexMatches) hexMatches.slice(0, 20).forEach(c => colors.add(c));
+        });
+
+        // ── Step 5: Extract logo ────────────────────────────────────
+        let logoUrl = '';
+        // Try JSON-LD organization logo
+        for (const ld of jsonLdBlocks) {
+          const org = ld['@type'] === 'Organization' ? ld : ld['@graph']?.find?.(n => n['@type'] === 'Organization');
+          if (org?.logo) {
+            logoUrl = typeof org.logo === 'string' ? org.logo : org.logo.url || '';
+            break;
+          }
+        }
+        // Fallback: look for common logo selectors
+        if (!logoUrl) {
+          const logoEl = $('a[class*="logo"] img, [class*="logo"] img, header img, [aria-label*="logo"] img, img[alt*="logo" i]').first();
+          if (logoEl.length) {
+            logoUrl = logoEl.attr('src') || '';
+            if (logoUrl && !logoUrl.startsWith('http')) logoUrl = new URL(logoUrl, baseUrl).href;
+          }
+        }
+
+        // ── Step 6: Extract hero images ─────────────────────────────
+        const heroImages = [];
+        $('img').each((_, el) => {
+          const src = $(el).attr('src') || $(el).attr('data-src') || '';
+          if (!src) return;
+          const fullSrc = src.startsWith('http') ? src : new URL(src, baseUrl).href;
+          // Heuristic: hero images are usually large or in hero/banner sections
+          const alt = $(el).attr('alt') || '';
+          const parent = $(el).parent().attr('class') || '';
+          if (parent.match(/hero|banner|slider|carousel|featured/i) || alt.match(/hero|banner|campaign/i)) {
+            heroImages.push({ url: fullSrc, alt });
+          }
+        });
+        // Also grab large background images
+        $('[style*="background-image"]').each((_, el) => {
+          const style = $(el).attr('style') || '';
+          const match = style.match(/url\(['"]?([^'")\s]+)['"]?\)/);
+          if (match) {
+            const url = match[1].startsWith('http') ? match[1] : new URL(match[1], baseUrl).href;
+            heroImages.push({ url, alt: 'background' });
+          }
+        });
+
+        // ── Step 7: Find product listing pages ──────────────────────
+        const productLinks = new Set();
+
+        // 7a. Check sitemap.xml for product URLs
+        console.log('[site-scrape] Checking sitemap...');
+        const sitemapUrls = [
+          new URL('/sitemap.xml', baseUrl).href,
+          new URL('/sitemap_index.xml', baseUrl).href,
+          new URL('/sitemap-products.xml', baseUrl).href,
+        ];
+        for (const smUrl of sitemapUrls) {
+          const smHtml = await fetchPage(smUrl);
+          if (!smHtml) continue;
+          // Extract URLs from sitemap — look for product-like paths
+          const urlMatches = smHtml.match(/<loc>([^<]+)<\/loc>/gi) || [];
+          for (const m of urlMatches) {
+            const url = m.replace(/<\/?loc>/gi, '');
+            if (url.match(/\/(product|shop|item|p\/|products\/|catalog\/|c\/)/i) && !url.match(/\.(xml|gz)$/)) {
+              productLinks.add(url);
+            }
+          }
+          if (productLinks.size > 0) {
+            console.log('[site-scrape] Found', productLinks.size, 'product URLs from sitemap:', smUrl);
+            break;
+          }
+          // If it's a sitemap index, try to find product sub-sitemaps
+          const subSitemaps = urlMatches
+            .map(m => m.replace(/<\/?loc>/gi, ''))
+            .filter(u => u.match(/product|shop|catalog/i) && u.match(/\.xml/));
+          for (const subUrl of subSitemaps.slice(0, 3)) {
+            const subHtml = await fetchPage(subUrl);
+            if (!subHtml) continue;
+            const subUrls = subHtml.match(/<loc>([^<]+)<\/loc>/gi) || [];
+            for (const m of subUrls) {
+              const url = m.replace(/<\/?loc>/gi, '');
+              if (!url.match(/\.xml$/)) productLinks.add(url);
+            }
+            if (productLinks.size > 0) {
+              console.log('[site-scrape] Found', productLinks.size, 'product URLs from sub-sitemap:', subUrl);
+              break;
+            }
+          }
+          if (productLinks.size > 0) break;
+        }
+
+        // 7b. Fall back to links found in HTML
+        if (productLinks.size === 0) {
+          $('a[href]').each((_, el) => {
+            const href = $(el).attr('href') || '';
+            if (href.match(/\/(product|shop|item|p\/|products\/|catalog\/|collection)/i)) {
+              try {
+                const full = href.startsWith('http') ? href : new URL(href, baseUrl).href;
+                if (full.startsWith(baseUrl.origin)) productLinks.add(full);
+              } catch {}
+            }
+          });
+        }
+
+        // 7c. If still nothing, try fetching a few common category/shop pages
+        if (productLinks.size === 0) {
+          console.log('[site-scrape] No product links found, trying common category paths...');
+          const categoryPaths = ['/shop', '/products', '/collections', '/catalog', '/en/shop', '/us/en/shop', '/us/en/shopping'];
+          for (const cp of categoryPaths) {
+            const catUrl = new URL(cp, baseUrl).href;
+            const catHtml = await fetchPage(catUrl);
+            if (!catHtml) continue;
+            const cat$ = cheerioLoad(catHtml);
+            cat$('a[href]').each((_, el) => {
+              const href = cat$(el).attr('href') || '';
+              if (href.match(/\/(product|item|p\/)/i) || (href.includes('/') && href.match(/[A-Z0-9]{5,}/))) {
+                try {
+                  const full = href.startsWith('http') ? href : new URL(href, baseUrl).href;
+                  if (full.startsWith(baseUrl.origin)) productLinks.add(full);
+                } catch {}
+              }
+            });
+            if (productLinks.size > 0) {
+              console.log('[site-scrape] Found', productLinks.size, 'product links from', catUrl);
+              break;
+            }
+          }
+        }
+
+        // ── Step 8: Crawl product pages (limited) ───────────────────
+        const productUrls = [...productLinks].slice(0, maxPages);
+        console.log('[site-scrape] Found', productLinks.size, 'product links, crawling', productUrls.length);
+
+        const scrapedProducts = [];
+        const allJsonLd = [...jsonLdBlocks];
+
+        for (const pUrl of productUrls) {
+          console.log('[site-scrape]   Fetching:', pUrl);
+          const pHtml = await fetchPage(pUrl);
+          if (!pHtml) continue;
+
+          const p$ = cheerioLoad(pHtml);
+
+          // Extract JSON-LD from product page
+          p$('script[type="application/ld+json"]').each((_, el) => {
+            try {
+              const ld = JSON.parse(p$(el).html());
+              allJsonLd.push(ld);
+
+              // Look for Product schema
+              const products = [];
+              if (ld['@type'] === 'Product') products.push(ld);
+              if (ld['@graph']) ld['@graph'].filter(n => n['@type'] === 'Product').forEach(p => products.push(p));
+              if (Array.isArray(ld)) ld.filter(n => n['@type'] === 'Product').forEach(p => products.push(p));
+
+              for (const prod of products) {
+                const offer = prod.offers || prod.offer || {};
+                const price = offer.price || offer.lowPrice || (Array.isArray(offer) ? offer[0]?.price : null);
+                scrapedProducts.push({
+                  name: prod.name || '',
+                  description: prod.description || '',
+                  price: parseFloat(price) || 0,
+                  currency: offer.priceCurrency || (Array.isArray(offer) ? offer[0]?.priceCurrency : '') || 'USD',
+                  imageUrl: typeof prod.image === 'string' ? prod.image : (Array.isArray(prod.image) ? prod.image[0] : prod.image?.url || ''),
+                  url: pUrl,
+                  brand: prod.brand?.name || '',
+                  sku: prod.sku || '',
+                  category: prod.category || '',
+                  inStock: offer.availability ? offer.availability.includes('InStock') : true,
+                  rating: prod.aggregateRating?.ratingValue ? parseFloat(prod.aggregateRating.ratingValue) : null,
+                  reviewCount: prod.aggregateRating?.reviewCount ? parseInt(prod.aggregateRating.reviewCount) : 0,
+                });
+              }
+            } catch {}
+          });
+
+          // Fallback: extract from OG tags on product page
+          if (scrapedProducts.length === 0 || !scrapedProducts.find(p => p.url === pUrl)) {
+            const ogTitle = p$('meta[property="og:title"]').attr('content');
+            const ogImage = p$('meta[property="og:image"]').attr('content');
+            const priceEl = p$('[class*="price"], [data-price], .product-price').first().text().trim();
+            const priceMatch = priceEl.match(/[\d,.]+/);
+            if (ogTitle) {
+              scrapedProducts.push({
+                name: ogTitle,
+                description: p$('meta[property="og:description"]').attr('content') || '',
+                price: priceMatch ? parseFloat(priceMatch[0].replace(/,/g, '')) : 0,
+                currency: 'USD',
+                imageUrl: ogImage || '',
+                url: pUrl,
+                brand: '',
+                sku: '',
+                category: '',
+                inStock: true,
+                rating: null,
+                reviewCount: 0,
+              });
+            }
+          }
+        }
+
+        console.log('[site-scrape] Scraped', scrapedProducts.length, 'products');
+
+        // ── Step 9: Use Claude to structure + fill gaps ──────────────
+        let aiEnriched = null;
+        if (ANTHROPIC_KEY) {
+          const isFallback = scrapedProducts.length === 0;
+          console.log('[site-scrape]', isFallback ? 'No products scraped — using Claude to generate from brand knowledge...' : 'Enriching scraped data with Claude...');
+
+          try {
+            const enrichPrompt = isFallback
+              ? `I tried to scrape the website ${siteUrl} but it's a JavaScript-rendered SPA so I couldn't extract product data directly. However, I did find this metadata:
+
+COLORS found on site: ${[...colors].join(', ') || 'none'}
+LOGO URL: ${logoUrl || 'not found'}
+OG DATA: ${JSON.stringify(ogData)}
+HERO IMAGES: ${JSON.stringify(heroImages.slice(0, 5))}
+JSON-LD blocks: ${jsonLdBlocks.length > 0 ? JSON.stringify(jsonLdBlocks.slice(0, 3), null, 1) : 'none'}
+
+Based on your knowledge of this brand and its website (${siteUrl}), generate a realistic demo configuration. Use REAL product names, REAL price points, and REAL product categories that this brand actually sells. Include actual product image URLs from their CDN if you know the patterns (e.g., media.gucci.com).
+
+Return a JSON object with:
+1. "suggestedTheme" — the brand's actual color palette: { "primaryColor", "accentColor", "backgroundColor", "textColor", "fontFamily" }
+2. "suggestedTagline" — a tagline that matches this brand
+3. "products" — 15-20 REAL products this brand sells: [{ "name", "brand", "category", "price", "currency", "description", "shortDescription", "imageUrl" (real if possible, empty string if not), "rating", "reviewCount", "inStock", "attributes": {} }]
+4. "brandVoiceNotes" — describe the brand's actual communication style
+5. "heroImages" — any image URLs from the scraped data above
+
+Return ONLY valid JSON, no markdown.`
+              : `I scraped a retail website (${siteUrl}). Here is the raw data:
+
+PRODUCTS (${scrapedProducts.length} found):
+${JSON.stringify(scrapedProducts.slice(0, 25), null, 1)}
+
+COLORS found on site: ${[...colors].join(', ')}
+LOGO URL: ${logoUrl}
+OG DATA: ${JSON.stringify(ogData)}
+HERO IMAGES: ${JSON.stringify(heroImages.slice(0, 5))}
+
+Based on this real scraped data, return a JSON object with:
+1. "suggestedTheme" — infer the brand's color palette from the scraped colors and site aesthetic: { "primaryColor", "accentColor", "backgroundColor", "textColor", "fontFamily" }
+2. "suggestedTagline" — a short tagline appropriate for this brand
+3. "products" — clean up the scraped products into this format (keep ALL of them, fill in missing fields): [{ "name", "brand", "category" (one of: moisturizer|cleanser|serum|sunscreen|foundation|lipstick|mascara|fragrance|shampoo|handbag|sneaker|jacket|dress|accessory|watch), "price", "currency", "description", "shortDescription", "imageUrl", "rating", "reviewCount", "inStock", "attributes": {} }]
+4. "brandVoiceNotes" — describe the brand's tone and style based on the site content
+5. "heroImages" — the best hero/campaign images from the scraped data
+
+Return ONLY valid JSON, no markdown.`;
+
+            const enrichBody = JSON.stringify({
+              model: 'claude-sonnet-4-6',
+              max_tokens: 16000,
+              system: isFallback
+                ? 'You are a retail brand expert. When website scraping fails (JS-rendered SPAs), you generate accurate demo data based on your knowledge of the brand. Use REAL product names and realistic prices. Output ONLY valid JSON.'
+                : 'You are a data structuring AI. Clean up and enrich scraped website data into structured JSON. Preserve all real data — do not invent products that were not scraped. Output ONLY valid JSON.',
+              messages: [{ role: 'user', content: enrichPrompt }],
+            });
+
+            const enrichResult = await new Promise((resolve, reject) => {
+              const enrichReq = https.request({
+                hostname: 'api.anthropic.com',
+                path: '/v1/messages',
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'x-api-key': ANTHROPIC_KEY,
+                  'anthropic-version': '2023-06-01',
+                  'Content-Length': Buffer.byteLength(enrichBody),
+                },
+              }, (enrichRes) => {
+                const rChunks = [];
+                enrichRes.on('data', (c) => rChunks.push(c));
+                enrichRes.on('end', () => {
+                  try {
+                    const raw = JSON.parse(Buffer.concat(rChunks).toString());
+                    if (raw.error) { reject(new Error(raw.error.message)); return; }
+                    const text = raw.content?.[0]?.text || '';
+                    const cleaned = text.replace(/^```json?\s*/m, '').replace(/\s*```\s*$/m, '').trim();
+                    resolve(JSON.parse(cleaned));
+                  } catch (e) { reject(e); }
+                });
+              });
+              enrichReq.on('error', reject);
+              enrichReq.write(enrichBody);
+              enrichReq.end();
+            });
+
+            aiEnriched = enrichResult;
+            console.log('[site-scrape] Claude enrichment complete');
+          } catch (e) {
+            console.warn('[site-scrape] Claude enrichment failed:', e.message, '— returning raw data');
+          }
+        }
+
+        // ── Build response ──────────────────────────────────────────
+        const result = {
+          sourceUrl: siteUrl,
+          pagesScraped: productUrls.length + 1,
+          suggestedTheme: aiEnriched?.suggestedTheme || {
+            primaryColor: [...colors][0] || '#1a1a2e',
+            accentColor: [...colors][1] || '#e94560',
+            backgroundColor: [...colors][2] || '#ffffff',
+            textColor: '#000000',
+            fontFamily: 'Inter, system-ui, sans-serif',
+          },
+          suggestedTagline: aiEnriched?.suggestedTagline || ogData['og:description'] || '',
+          logoUrl,
+          heroImages: aiEnriched?.heroImages || heroImages.slice(0, 10),
+          productSuggestions: (aiEnriched?.products || scrapedProducts).map((p, i) => ({
+            ...p,
+            images: p.imageUrl ? [p.imageUrl] : [],
+            retailers: [],
+            sortOrder: i,
+          })),
+          personaSuggestions: [],  // personas still come from AI research
+          brandVoiceNotes: aiEnriched?.brandVoiceNotes || '',
+          rawMeta: {
+            jsonLdCount: allJsonLd.length,
+            colorsFound: [...colors].slice(0, 20),
+            ogData,
+          },
+        };
+
+        console.log('[site-scrape] Done:', result.productSuggestions.length, 'products, logo:', !!logoUrl);
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify(result));
+      } catch (e) {
+        console.error('[site-scrape] Error:', e);
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  // ─── Demo Builder: Brand Research (proxied to Anthropic) ────────────────────
+  if (req.url === '/api/brand-research' && req.method === 'POST') {
+    const ANTHROPIC_KEY = env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY;
+    if (!ANTHROPIC_KEY) {
+      res.writeHead(503, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ error: 'ANTHROPIC_API_KEY not configured' }));
+      return;
+    }
+    const chunks = [];
+    req.on('data', (c) => chunks.push(c));
+    req.on('end', async () => {
+      try {
+        const body = JSON.parse(Buffer.concat(chunks).toString());
+        const { brandName, brandUrl, vertical, notes } = body;
+        if (!brandName) {
+          res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ error: 'brandName is required' }));
+          return;
+        }
+
+        const verticalDescriptions = {
+          beauty: 'skincare, cosmetics, fragrance, beauty products',
+          fashion: 'apparel, accessories, luxury fashion, footwear',
+          wellness: 'health supplements, wellness products, fitness gear',
+          cpg: 'consumer packaged goods, food & beverage, household products',
+        };
+        const verticalDesc = verticalDescriptions[vertical || 'beauty'] || verticalDescriptions.beauty;
+
+        const userPrompt = `Research the brand "${brandName}" (${verticalDesc}).
+${brandUrl ? `Brand website: ${brandUrl}` : ''}
+${notes ? `Additional context: ${notes}` : ''}
+
+Generate a complete demo configuration as JSON with:
+1. "suggestedTheme": { "primaryColor": "#hex", "accentColor": "#hex", "backgroundColor": "#hex", "textColor": "#hex", "fontFamily": "font stack" }
+2. "suggestedTagline": "short tagline"
+3. "products": array of 15-20 products with name, brand ("${brandName}"), category, price, currency, description, shortDescription, rating, reviewCount, inStock, attributes (skinType array, concerns array, keyIngredients array, isFragranceFree bool, isVegan bool, isCrueltyFree bool)
+4. "personas": array of 5-6 customer personas with personaKey, label, subtitle, traits array, profile object (id, name, email, beautyProfile with skinType/concerns/allergies/preferredBrands/ageRange, orders array, chatSummaries, meaningfulEvents, agentCapturedProfile)
+5. "brandVoiceNotes": description of brand communication style
+
+Return ONLY valid JSON, no markdown fences.`;
+
+        const apiBody = JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 16000,
+          system: 'You are a brand research AI. Output ONLY valid JSON matching the schema requested. No markdown fences, no commentary — just the raw JSON object.',
+          messages: [{ role: 'user', content: userPrompt }],
+        });
+
+        console.log('[brand-research] Calling Anthropic API for:', brandName, '(' + (vertical || 'beauty') + ')');
+
+        const apiReq = https.request({
+          hostname: 'api.anthropic.com',
+          path: '/v1/messages',
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': ANTHROPIC_KEY,
+            'anthropic-version': '2023-06-01',
+            'Content-Length': Buffer.byteLength(apiBody),
+          },
+        }, (apiRes) => {
+          const resChunks = [];
+          apiRes.on('data', (c) => resChunks.push(c));
+          apiRes.on('end', () => {
+            const rawText = Buffer.concat(resChunks).toString();
+            try {
+              const raw = JSON.parse(rawText);
+
+              // Check for API-level errors
+              if (raw.error) {
+                console.error('[brand-research] Anthropic API error:', raw.error);
+                res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+                res.end(JSON.stringify({ error: `Anthropic API: ${raw.error.message || JSON.stringify(raw.error)}` }));
+                return;
+              }
+
+              const text = raw.content?.[0]?.text || '';
+              console.log('[brand-research] Response length:', text.length, 'chars, stop_reason:', raw.stop_reason);
+
+              // If the response was truncated, warn but try to parse what we got
+              if (raw.stop_reason === 'max_tokens') {
+                console.warn('[brand-research] WARNING: Response truncated at max_tokens');
+              }
+
+              const cleaned = text.replace(/^```json?\s*/m, '').replace(/\s*```\s*$/m, '').trim();
+              const parsed = JSON.parse(cleaned);
+              const result = {
+                suggestedTheme: parsed.suggestedTheme,
+                suggestedTagline: parsed.suggestedTagline,
+                productSuggestions: (parsed.products || []).map((p, i) => ({ ...p, images: [], imageUrl: '', retailers: [], sortOrder: i })),
+                personaSuggestions: parsed.personas || [],
+                brandVoiceNotes: parsed.brandVoiceNotes || '',
+              };
+              console.log('[brand-research] Success:', result.productSuggestions.length, 'products,', result.personaSuggestions.length, 'personas');
+              res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+              res.end(JSON.stringify(result));
+            } catch (e) {
+              console.error('[brand-research] Parse error:', e.message);
+              console.error('[brand-research] Raw response (first 500 chars):', rawText.substring(0, 500));
+              res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+              res.end(JSON.stringify({ error: 'Failed to parse AI response: ' + e.message }));
+            }
+          });
+        });
+        apiReq.on('error', (e) => {
+          console.error('[brand-research] Request error:', e.message);
+          res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ error: e.message }));
+        });
+        apiReq.write(apiBody);
+        apiReq.end();
+      } catch (e) {
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
     return;
   }
 

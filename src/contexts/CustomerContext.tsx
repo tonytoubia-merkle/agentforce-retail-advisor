@@ -7,8 +7,7 @@ import { getMerkuryArchetypeByMerkuryId, getMerkuryArchetypeById } from '@/mocks
 import { createContact } from '@/services/demo/contacts';
 import { initPersonalization, isPersonalizationConfigured, syncIdentity, setPersonalizationProfile, clearPersonalizationContext } from '@/services/personalization';
 import { demoLog } from '@/services/demoLog';
-
-const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
+import { getDemoConfig } from '@/contexts/DemoContext';
 
 interface CustomerContextValue {
   customer: CustomerProfile | null;
@@ -34,6 +33,7 @@ interface CustomerContextValue {
 const CustomerContext = createContext<CustomerContextValue | null>(null);
 
 export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const useMockData = getDemoConfig().featureFlags.useMockData;
   const [customer, setCustomer] = useState<CustomerProfile | null>(null);
   const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);

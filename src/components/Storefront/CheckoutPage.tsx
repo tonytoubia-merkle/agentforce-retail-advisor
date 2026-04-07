@@ -7,10 +7,10 @@ import { ProductImage } from './ProductImage';
 import { MerkuryProfilePicker } from './MerkuryProfilePicker';
 import { trackPurchase } from '@/services/personalization';
 import { getCommerceClient } from '@/services/commerce';
-
-const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
+import { getDemoConfig } from '@/contexts/DemoContext';
 
 export const CheckoutPage: React.FC = () => {
+  const useMockData = getDemoConfig().featureFlags.useMockData;
   const { navigateToOrderConfirmation, goBack } = useStore();
   const { items, subtotal, clearCart } = useCart();
   const { customer, isAuthenticated, signIn, createGuestContact } = useCustomer();

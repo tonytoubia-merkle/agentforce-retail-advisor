@@ -8,8 +8,7 @@ import { fetchDemoContacts } from '@/services/demo/contacts';
 import { getDataCloudWriteService } from '@/services/datacloud';
 import type { DemoContact, CustomerProfile } from '@/types/customer';
 import type { CampaignAttribution } from '@/types/campaign';
-
-const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
+import { getDemoConfig } from '@/contexts/DemoContext';
 
 // ─── Profile detail sub-components (dark theme) ─────────────────
 
@@ -432,6 +431,7 @@ function renderCampaignAttribution(campaign: CampaignAttribution, onClear: () =>
 type PanelView = 'list' | 'detail';
 
 export const DemoPanel: React.FC = () => {
+  const useMockData = getDemoConfig().featureFlags.useMockData;
   const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState<PanelView>('list');
   const [crmContacts, setCrmContacts] = useState<DemoContact[]>([]);

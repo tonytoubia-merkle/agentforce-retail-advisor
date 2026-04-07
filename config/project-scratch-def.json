@@ -1,0 +1,19 @@
+{
+  "orgName": "Demo Builder Scratch Org",
+  "edition": "Developer",
+  "features": [
+    "EnableSetPasswordInApi",
+    "PersonAccounts"
+  ],
+  "settings": {
+    "lightningExperienceSettings": {
+      "enableS1DesktopEnabled": true
+    },
+    "mobileSettings": {
+      "enableS1EncryptedStoragePref2": false
+    },
+    "languageSettings": {
+      "enableTranslationWorkbench": true
+    }
+  }
+}

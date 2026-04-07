@@ -7,6 +7,10 @@ dist/
 .env.temp
 .sf/
 
+# Site captures (large, local-only)
+.captures/
+.tmp/
+
 # Local working files
 .claude/settings.local.json
 plan.md

@@ -5,8 +5,7 @@ import type { PersonaStub } from '@/mocks/customerPersonas';
 import type { CustomerProfile, DemoContact } from '@/types/customer';
 import { useCustomer } from '@/contexts/CustomerContext';
 import { fetchDemoContacts } from '@/services/demo/contacts';
-
-const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
+import { getDemoConfig } from '@/contexts/DemoContext';
 
 function buildSubtitle(profile: CustomerProfile): string {
   const tier = profile.merkuryIdentity?.identityTier || 'anonymous';
@@ -65,6 +64,7 @@ function buildTraits(profile: CustomerProfile): string[] {
 }
 
 export const PersonaSelector: React.FC = () => {
+  const useMockData = getDemoConfig().featureFlags.useMockData;
   const [isOpen, setIsOpen] = useState(false);
   const [crmContacts, setCrmContacts] = useState<DemoContact[]>([]);
   const { selectPersona, customer, isResolving, isLoading } = useCustomer();
