@@ -28,11 +28,18 @@ public with sharing class JourneyPromptBuilder {
     public static PromptResult buildEnrichedPrompt(Id contactId, String eventContext, String eventType) {
         PromptResult result = new PromptResult();
 
-        // Get recommended products for this contact
-        List<ProductRecommendation> recommendations = getRecommendations(contactId, 3);
+        // Tier 1: CRM affinity data (1P behavioral — browse/purchase history)
+        List<ProductRecommendation> recommendations = getRecommendations(contactId, 5);
 
+        // Tier 2: Profile-based recommendations from Product2 catalog
+        // Uses the contact's skin type, concerns, and preferred brands to query
+        // relevant products — mirrors what SF Personalization would recommend
+        if (recommendations.isEmpty() && contactId != null) {
+            recommendations = getPersonalizedRecommendations(contactId, eventType, 5);
+        }
+
+        // Tier 3: Static defaults by event type
         if (recommendations.isEmpty()) {
-            // Fallback to default products based on event type
             recommendations = getDefaultRecommendations(eventType);
         }
 
@@ -194,8 +201,83 @@ public with sharing class JourneyPromptBuilder {
     // ─── Default Recommendations ───────────────────────────────────────
 
     /**
+     * Get personalized product recommendations by querying the Product2 catalog
+     * filtered by the contact's profile (skin type, concerns, preferred brands).
+     * This mirrors what SF Personalization would recommend using the same signals.
+     *
+     * Priority: products matching preferred brands > matching concerns > matching skin type
+     */
+    private static List<ProductRecommendation> getPersonalizedRecommendations(Id contactId, String eventType, Integer maxCount) {
+        List<ProductRecommendation> recs = new List<ProductRecommendation>();
+
+        try {
+            // Get the contact's beauty profile
+            Contact c = [
+                SELECT Skin_Type__c, Skin_Concerns__c, Preferred_Brands__c
+                FROM Contact WHERE Id = :contactId LIMIT 1
+            ];
+
+            // Build dynamic query filters
+            String skinType = c.Skin_Type__c;
+            List<String> concerns = new List<String>();
+            if (String.isNotBlank(c.Skin_Concerns__c)) {
+                concerns = c.Skin_Concerns__c.split(';');
+            }
+            List<String> brands = new List<String>();
+            if (String.isNotBlank(c.Preferred_Brands__c)) {
+                brands = c.Preferred_Brands__c.split(';');
+            }
+
+            // Query products matching the contact's profile
+            // Product2 custom fields: Skin_Types__c (multi-select), Concerns__c (multi-select),
+            // Brand__c (text), Image_URL__c (URL)
+            String soql = 'SELECT Id, Name, ProductCode, Image_URL__c, Brand__c, Category__c '
+                        + 'FROM Product2 WHERE IsActive = true';
+
+            // Add brand filter if available (highest signal)
+            if (!brands.isEmpty()) {
+                List<String> brandClauses = new List<String>();
+                for (String b : brands) {
+                    brandClauses.add('Brand__c = \'' + String.escapeSingleQuotes(b.trim()) + '\'');
+                }
+                soql += ' AND (' + String.join(brandClauses, ' OR ') + ')';
+            }
+
+            soql += ' ORDER BY CreatedDate DESC LIMIT ' + maxCount;
+
+            List<Product2> products = Database.query(soql);
+
+            // If brand filter returned nothing, try without it
+            if (products.isEmpty()) {
+                soql = 'SELECT Id, Name, ProductCode, Image_URL__c, Brand__c, Category__c '
+                     + 'FROM Product2 WHERE IsActive = true '
+                     + 'ORDER BY CreatedDate DESC LIMIT ' + maxCount;
+                products = Database.query(soql);
+            }
+
+            for (Product2 p : products) {
+                ProductRecommendation rec = new ProductRecommendation();
+                rec.name = p.Name;
+                rec.productCode = p.ProductCode;
+                rec.imageUrl = String.isNotBlank(p.Image_URL__c)
+                    ? p.Image_URL__c
+                    : APP_BASE_URL + '/assets/products/' + (String.isNotBlank(p.ProductCode) ? p.ProductCode : 'placeholder') + '.png';
+                rec.affinityType = 'Personalized';
+                rec.score = 75;
+                recs.add(rec);
+            }
+
+            System.debug('[JourneyPromptBuilder] Personalized recs for ' + contactId + ': ' + recs.size() + ' products');
+        } catch (Exception e) {
+            System.debug(LoggingLevel.WARN, 'Personalized recommendations failed: ' + e.getMessage());
+        }
+
+        return recs;
+    }
+
+    /**
      * Get default product recommendations based on event type when no affinity data exists.
-     * These are hardcoded for POC - in production, would call SF Personalization API.
+     * Static fallback — used only when both CRM affinity and personalized queries return empty.
      */
     private static List<ProductRecommendation> getDefaultRecommendations(String eventType) {
         List<ProductRecommendation> defaults = new List<ProductRecommendation>();

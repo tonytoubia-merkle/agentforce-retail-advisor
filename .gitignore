@@ -16,6 +16,8 @@ dist/
 plan.md
 scripts/check-sarah-contact.apex
 scripts/current_agentscript.js
+agentscript-as-of-*.md
+*.code-workspace
 
 # One-off probe/diagnostic scripts and data files
 scripts/*.cjs
