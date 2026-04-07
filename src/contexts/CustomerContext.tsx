@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useRef, useEff
 import type { CustomerProfile } from '@/types/customer';
 import { resolveMerkuryIdentity } from '@/services/merkury/mockTag';
 import { getPersonaById, PERSONAS } from '@/mocks/customerPersonas';
+import { loadPersonas, loadPersonaById } from '@/services/supabase/personaLoader';
 import { getDataCloudService } from '@/services/datacloud';
 import { getMerkuryArchetypeByMerkuryId, getMerkuryArchetypeById } from '@/mocks/merkuryProfiles';
 import { createContact } from '@/services/demo/contacts';
@@ -153,8 +154,8 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         demoLog.log({ category: 'identity', title: 'Anonymous Visitor', subtitle: 'No Merkury match — generic experience' });
         setCustomer(null);
       } else if (useMockData) {
-        // MOCK MODE: Load known profiles from mock personas
-        const persona = getPersonaById(personaId);
+        // MOCK MODE: Load known profiles from Supabase personas (custom demo) or mocks
+        const persona = await loadPersonaById(personaId) || getPersonaById(personaId);
         if (persona) {
           setCustomer(persona.profile);
         } else {
@@ -269,8 +270,9 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       let profile: CustomerProfile | null = null;
 
       if (useMockData) {
-        // Search mock personas by email
-        const match = PERSONAS.find(
+        // Search custom demo personas first, then mock personas by email
+        const allPersonas = await loadPersonas();
+        const match = allPersonas.find(
           (p) => p.profile.email.toLowerCase() === email.toLowerCase()
         );
         if (match) {
