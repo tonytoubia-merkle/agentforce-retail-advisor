@@ -42,6 +42,7 @@ const routes = [
   { prefix: '/api/gemini/vision',          target: 'https://generativelanguage.googleapis.com', rewrite: '/v1beta/models/gemini-2.0-flash:generateContent' },
   { prefix: '/api/firefly/token',          target: 'https://ims-na1.adobelogin.com',            rewrite: '/ims/token/v3' },
   { prefix: '/api/firefly/generate',       target: 'https://firefly-api.adobe.io',              rewrite: '/v3/images/generate' },
+  { prefix: '/api/sf/cart',                 target: SF_INSTANCE,                                 rewrite: '/services/apexrest/cart' },
   { prefix: '/api/datacloud',              target: SF_INSTANCE,                                 rewrite: '/services/data/v60.0' },
   // Commerce on Core (B2B/D2C Commerce) — same SF org, Connect API
   ...(WEBSTORE_ID ? [{ prefix: '/api/commerce', target: SF_INSTANCE, rewrite: `/services/data/v60.0/commerce/webstores/${WEBSTORE_ID}` }] : []),

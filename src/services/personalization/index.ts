@@ -34,7 +34,6 @@
  */
 
 import { demoLog } from '@/services/demoLog';
-import { resolveVariation, type VisitorContext } from './variations';
 
 export interface PersonalizationDecision {
   badge: string;
@@ -157,24 +156,6 @@ function resolveCtx(field: keyof PersonalizationContext): string {
     case 'identityTier':    return merkury?.identityTier || 'anonymous';
     default:                return '';
   }
-}
-
-/**
- * Build a VisitorContext from current module state for custom variation resolution.
- */
-function buildVisitorContext(): VisitorContext {
-  const interests = resolveCtx('interests');
-  return {
-    utm_source: resolveCtx('utmSource') || undefined,
-    utm_medium: resolveCtx('utmMedium') || undefined,
-    utm_campaign: resolveCtx('utmCampaign') || undefined,
-    identity_tier: resolveCtx('identityTier') || 'anonymous',
-    interests: interests ? interests.split(',').map(s => s.trim()) : undefined,
-    age_range: resolveCtx('ageRange') || undefined,
-    gender: resolveCtx('gender') || undefined,
-    skin_type: resolveCtx('skinType') || undefined,
-    channel: 'Web',
-  };
 }
 
 // ── Public helpers ───────────────────────────────────────────────────────────
@@ -920,27 +901,6 @@ async function fetchPersonalizationPoint(pointName: string): Promise<any | null>
  * Returns null if not configured or if the campaign decision fails.
  */
 export async function getHeroCampaignDecision(): Promise<PersonalizationDecision | null> {
-  // Try custom Variation__c records first (API-created overrides)
-  try {
-    const variation = await resolveVariation('Hero_Banner', buildVisitorContext());
-    if (variation) {
-      const c = variation.content as Record<string, string>;
-      const headerText = c.header_text || '';
-      const [topLine, ...rest] = headerText.split('\n');
-      return {
-        badge: c.badge || '',
-        headlineTop: topLine || '',
-        headlineBottom: rest.join('\n') || '',
-        subtitle: c.body_text || '',
-        heroImage: c.background_image || '',
-        campaignId: `variation:${variation.id}`,
-      };
-    }
-  } catch (err) {
-    console.warn('[variations] Hero_Banner resolve failed:', err);
-  }
-
-  // Fall back to SF Personalization SDK
   if (!isPersonalizationConfigured() || !initialized) return null;
 
   try {
@@ -981,34 +941,6 @@ export async function getHeroCampaignDecision(): Promise<PersonalizationDecision
  * Returns null if not configured, not initialized, or no decision matches.
  */
 export async function getExitIntentDecision(): Promise<ExitIntentDecision | null> {
-  // Try custom Variation__c records first
-  try {
-    const variation = await resolveVariation('Exit_Intent_Capture', buildVisitorContext());
-    if (variation) {
-      const c = variation.content as Record<string, string>;
-      const decision = {
-        headline: c.header_text || c.headline || '',
-        bodyText: c.body_text || '',
-        discountCode: c.discount_code || '',
-        discountPercent: Number(c.discount_value) || 0,
-        imageUrl: c.background_image || '',
-        ctaText: c.cta || 'Claim Offer',
-        backgroundColor: c.background_color || '',
-        personalizationId: `variation:${variation.id}`,
-      };
-      demoLog.log({
-        category: 'personalization',
-        title: 'Exit Intent Decision (Custom)',
-        subtitle: decision.headline || 'Default capture',
-        details: { variationName: variation.variationName, discount: decision.discountPercent ? `${decision.discountPercent}%` : 'none' },
-      });
-      return decision;
-    }
-  } catch (err) {
-    console.warn('[variations] Exit_Intent resolve failed:', err);
-  }
-
-  // Fall back to SF Personalization SDK
   if (!isPersonalizationConfigured() || !initialized) return null;
 
   try {

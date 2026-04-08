@@ -200,7 +200,7 @@ export const AccountPage: React.FC = () => {
           className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm mb-6"
         >
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-rose-400 to-purple-500 flex items-center justify-center text-white text-2xl font-medium flex-shrink-0">
+            <div className="w-16 h-16 rounded-full bg-stone-900 flex items-center justify-center text-white text-2xl font-medium flex-shrink-0">
               {firstName.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1">

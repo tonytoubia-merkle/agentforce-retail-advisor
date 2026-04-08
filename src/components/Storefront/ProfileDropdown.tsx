@@ -44,7 +44,7 @@ export const ProfileDropdown: React.FC = () => {
         >
           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium ${
             isAuthenticated && isKnown
-              ? 'bg-gradient-to-br from-rose-400 to-purple-500'
+              ? 'bg-stone-900'
               : isAuthenticated && isAppended
                 ? 'bg-gradient-to-br from-amber-400 to-orange-400'
                 : 'bg-stone-400'

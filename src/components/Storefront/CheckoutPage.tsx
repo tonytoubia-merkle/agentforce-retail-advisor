@@ -12,7 +12,7 @@ import { getDemoConfig } from '@/contexts/DemoContext';
 export const CheckoutPage: React.FC = () => {
   const useMockData = getDemoConfig().featureFlags.useMockData;
   const { navigateToOrderConfirmation, goBack } = useStore();
-  const { items, subtotal, clearCart } = useCart();
+  const { items, subtotal, clearCart, markConverted } = useCart();
   const { customer, isAuthenticated, signIn, createGuestContact } = useCustomer();
 
   const [step, setStep] = useState<'info' | 'shipping' | 'payment' | 'processing'>('info');
@@ -71,7 +71,7 @@ export const CheckoutPage: React.FC = () => {
         setTimeout(() => {
           const orderId = `ORD-${Date.now().toString(36).toUpperCase()}`;
           trackPurchase(orderId, total, lineItemsForTracking);
-          clearCart();
+          markConverted();
           navigateToOrderConfirmation(orderId);
         }, 2000);
         return;
@@ -100,7 +100,7 @@ export const CheckoutPage: React.FC = () => {
       })
         .then((result) => {
           trackPurchase(result.orderId, total, lineItemsForTracking);
-          clearCart();
+          markConverted();
           navigateToOrderConfirmation(result.orderId, {
             success: result.status === 'confirmed',
             orderId: result.orderId,

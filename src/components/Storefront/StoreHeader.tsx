@@ -5,7 +5,6 @@ import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
 import { useCustomer } from '@/contexts/CustomerContext';
 import { ProfileDropdown } from './ProfileDropdown';
-import { DemoPanel } from './DemoPanel';
 import { MerkuryProfilePicker } from './MerkuryProfilePicker';
 import type { ProductCategory } from '@/types/product';
 
@@ -62,7 +61,7 @@ export const StoreHeader: React.FC = () => {
             onClick={navigateHome}
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-rose-400 to-purple-500 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-stone-900 flex items-center justify-center">
               <span className="text-white font-bold text-sm">B</span>
             </div>
             <span className="text-xl font-semibold tracking-tight text-stone-900">
@@ -241,8 +240,6 @@ export const StoreHeader: React.FC = () => {
       onClose={() => setShowRegister(false)}
     />
 
-    {/* Demo panel — bottom-right bubble for switching identities */}
-    <DemoPanel />
     </>
   );
 };

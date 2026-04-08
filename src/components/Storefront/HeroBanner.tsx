@@ -114,122 +114,72 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onShopNow, customer, isA
   }, [sfpDecision, customer, isAuthenticated, campaign]);
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-stone-100 via-rose-50 to-purple-50">
-      {/* Background pattern */}
-      <div className="absolute inset-0 opacity-30">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-rose-200 rounded-full blur-3xl" />
-        <div className="absolute bottom-10 right-20 w-96 h-96 bg-purple-200 rounded-full blur-3xl" />
-      </div>
+    <section className="relative overflow-hidden bg-stone-50 min-h-[420px] lg:min-h-[520px]">
+      {/* Full-width layout: image right, text left */}
+      <div className="relative max-w-7xl mx-auto h-full">
+        <div className="grid lg:grid-cols-5 items-stretch min-h-[420px] lg:min-h-[520px]">
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-8">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Text content */}
+          {/* Text content — 3 columns */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.7 }}
+            className="lg:col-span-3 flex flex-col justify-center px-6 sm:px-10 lg:px-16 py-10 lg:py-16 z-10"
           >
-            <span className="inline-block px-3 py-1 bg-rose-100 text-rose-600 text-xs font-medium rounded-full mb-6">
+            <span className="inline-block self-start px-3 py-1 text-[11px] font-semibold tracking-widest uppercase text-stone-500 border border-stone-300 rounded-full mb-5">
               {variant.badge}
             </span>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-light text-stone-900 leading-tight mb-6">
+            <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-extralight text-stone-900 leading-[1.1] tracking-tight mb-2">
               {variant.headlineTop}
-              <span className="block font-medium bg-gradient-to-r from-rose-500 to-purple-500 bg-clip-text text-transparent">
-                {variant.headlineBottom}
-              </span>
             </h1>
-            <p className="text-lg text-stone-600 mb-8 max-w-md">
+            <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-medium text-stone-900 leading-[1.1] tracking-tight mb-6">
+              {variant.headlineBottom}
+            </h1>
+            <p className="text-base text-stone-500 mb-8 max-w-md leading-relaxed">
               {variant.subtitle}
             </p>
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-3">
               <button
                 onClick={onShopNow}
-                className="px-8 py-3 bg-stone-900 text-white font-medium rounded-full hover:bg-stone-800 transition-colors"
+                className="px-7 py-3 bg-stone-900 text-white text-sm font-medium tracking-wide rounded-full hover:bg-stone-800 transition-colors"
               >
                 Shop Collection
               </button>
               <button
                 onClick={onBeautyAdvisor}
-                className="group px-8 py-3 bg-white text-stone-900 font-medium rounded-full border border-stone-200 hover:border-rose-300 hover:bg-rose-50 transition-all flex items-center gap-2"
+                className="group px-7 py-3 text-stone-700 text-sm font-medium tracking-wide rounded-full border border-stone-300 hover:border-stone-900 hover:text-stone-900 transition-all flex items-center gap-2"
               >
-                <svg className="w-5 h-5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                <svg className="w-4 h-4 opacity-60 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                 </svg>
-                Talk to Beauty Advisor
+                Beauty Advisor
               </button>
             </div>
 
-            {/* Trust badges */}
-            <div className="flex items-center gap-6 mt-10 pt-8 border-t border-stone-200/50">
-              <div className="text-center">
-                <div className="text-2xl font-semibold text-stone-900">50K+</div>
-                <div className="text-xs text-stone-500">Happy Customers</div>
-              </div>
-              <div className="w-px h-10 bg-stone-200" />
-              <div className="text-center">
-                <div className="text-2xl font-semibold text-stone-900">4.9</div>
-                <div className="text-xs text-stone-500">Average Rating</div>
-              </div>
-              <div className="w-px h-10 bg-stone-200" />
-              <div className="text-center">
-                <div className="text-2xl font-semibold text-stone-900">100%</div>
-                <div className="text-xs text-stone-500">Clean Beauty</div>
-              </div>
+            {/* Minimal trust strip */}
+            <div className="flex items-center gap-5 mt-10 text-xs text-stone-400 tracking-wide">
+              <span>50K+ Customers</span>
+              <span className="text-stone-300">|</span>
+              <span>4.9 Rating</span>
+              <span className="text-stone-300">|</span>
+              <span>Clean &amp; Cruelty-Free</span>
             </div>
           </motion.div>
 
-          {/* Product showcase */}
+          {/* Hero image — absolutely positioned, breaks out of column to the left */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="relative hidden lg:block"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.15 }}
+            className="absolute top-0 bottom-0 right-0 hidden lg:block"
+            style={{ width: '58%' }}
           >
-            <div className="relative w-full aspect-square max-w-lg mx-auto">
-              {/* Decorative circles */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-80 h-80 rounded-full border border-rose-200/50" />
-                <div className="absolute w-64 h-64 rounded-full border border-purple-200/50" />
-                <div className="absolute w-48 h-48 rounded-full bg-gradient-to-br from-rose-100 to-purple-100" />
-              </div>
-
-              {/* Product images — 5 scattered products with minimal overlap */}
-              <motion.img
-                src="/assets/products/ff-moisturizer-daily.png"
-                alt="Featured moisturizer"
-                className="absolute inset-0 m-auto w-56 h-56 object-contain drop-shadow-2xl z-10"
-                animate={{ y: [0, -8, 0] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              />
-              <motion.img
-                src="/assets/products/serum-brightening.png"
-                alt="Featured serum"
-                className="absolute top-0 right-0 w-48 h-48 object-contain drop-shadow-xl"
-                animate={{ y: [0, 8, 0] }}
-                transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-              />
-              <motion.img
-                src="/assets/products/sunscreen-tinted.png"
-                alt="Featured sunscreen"
-                className="absolute bottom-0 left-0 w-56 h-56 object-contain drop-shadow-xl"
-                animate={{ y: [0, -6, 0] }}
-                transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-              />
-              <motion.img
-                src="/assets/products/lipstick-satin.png"
-                alt="Featured lipstick"
-                className="absolute top-0 left-0 w-40 h-40 object-contain drop-shadow-xl"
-                animate={{ y: [0, 6, 0] }}
-                transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
-              />
-              <motion.img
-                src="/assets/products/eye-cream-brightening.png"
-                alt="Featured eye cream"
-                className="absolute bottom-0 right-0 w-48 h-48 object-contain drop-shadow-xl"
-                animate={{ y: [0, -5, 0] }}
-                transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
-              />
-            </div>
+            <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-stone-50/80 to-transparent z-[5] pointer-events-none" />
+            <img
+              src={variant.heroImage}
+              alt={variant.imageAlt}
+              className="w-full h-full object-cover object-[25%_15%] drop-shadow-md"
+            />
           </motion.div>
         </div>
       </div>

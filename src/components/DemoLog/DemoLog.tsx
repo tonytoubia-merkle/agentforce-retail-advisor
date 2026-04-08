@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { demoLog, type LogEntry, type EventCategory } from '@/services/demoLog';
+import { DemoPanelInline } from '@/components/Storefront/DemoPanel';
+
+type DemoTab = 'log' | 'profile';
 
 // ─── Category visual config ──────────────────────────────────────────────────
 
@@ -33,6 +36,7 @@ export const DemoLog: React.FC<{ onOpenChange?: (open: boolean) => void }> = ({ 
     setOpenRaw(v);
     onOpenChange?.(v);
   }, [onOpenChange]);
+  const [activeTab, setActiveTab] = useState<DemoTab>('log');
   const [activeFilters, setActiveFilters] = useState<Set<EventCategory>>(new Set(ALL_CATEGORIES));
   const scrollRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -127,7 +131,7 @@ export const DemoLog: React.FC<{ onOpenChange?: (open: boolean) => void }> = ({ 
         className="fixed right-0 top-1/2 -translate-y-1/2 z-[60] flex items-center gap-1.5 bg-stone-900/95 border border-white/10 border-r-0 rounded-l-lg px-2 py-3 shadow-xl hover:bg-stone-800 transition-all"
         style={{ writingMode: 'vertical-lr', opacity: open ? 0 : 1, pointerEvents: open ? 'none' : 'auto' }}
       >
-          <span className="text-[10px] font-medium text-white/60 tracking-wider uppercase">Demo Log</span>
+          <span className="text-[10px] font-medium text-white/60 tracking-wider uppercase">Demo</span>
           {entryCount > 0 && (
             <span className="text-[9px] px-1 py-0.5 rounded bg-cyan-500/20 text-cyan-400 font-mono" style={{ writingMode: 'horizontal-tb' }}>
               {entryCount}
@@ -142,29 +146,44 @@ export const DemoLog: React.FC<{ onOpenChange?: (open: boolean) => void }> = ({ 
       >
         {/* Inner — fixed 380px so content doesn't squish during width transition */}
         <div className="w-[380px] h-full flex flex-col">
-        {/* Header */}
-        <div className="flex-shrink-0 p-3 border-b border-white/5">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <h2 className="text-xs font-semibold text-white/80 uppercase tracking-wider">Live Demo Log</h2>
-              <span className="text-[9px] text-white/25 font-mono">{entryCount} events</span>
-            </div>
+        {/* Header with tabs */}
+        <div className="flex-shrink-0 border-b border-white/5">
+          <div className="flex items-center justify-between px-3 pt-2 pb-0">
             <div className="flex items-center gap-1">
-              <button
-                onClick={() => { demoLog.clear(); renderedCountRef.current = 0; setEntryCount(0); if (listRef.current) listRef.current.innerHTML = ''; }}
-                className="text-[9px] px-1.5 py-0.5 rounded text-white/25 hover:text-white/50 hover:bg-white/5 transition-colors"
-              >Clear</button>
-              <button onClick={() => setOpen(false)} className="p-1 rounded text-white/30 hover:text-white/60 hover:bg-white/10 transition-colors">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7" />
-                </svg>
-              </button>
+              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <h2 className="text-[10px] font-semibold text-white/60 uppercase tracking-wider">Demo</h2>
             </div>
+            <button onClick={() => setOpen(false)} className="p-1 rounded text-white/30 hover:text-white/60 hover:bg-white/10 transition-colors">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7" />
+              </svg>
+            </button>
           </div>
+          {/* Tab bar */}
+          <div className="flex px-3 mt-1">
+            <button
+              onClick={() => setActiveTab('log')}
+              className={`px-3 py-1.5 text-[10px] font-medium border-b-2 transition-colors ${
+                activeTab === 'log' ? 'border-emerald-400 text-white/80' : 'border-transparent text-white/30 hover:text-white/50'
+              }`}
+            >
+              Log {entryCount > 0 ? `(${entryCount})` : ''}
+            </button>
+            <button
+              onClick={() => setActiveTab('profile')}
+              className={`px-3 py-1.5 text-[10px] font-medium border-b-2 transition-colors ${
+                activeTab === 'profile' ? 'border-emerald-400 text-white/80' : 'border-transparent text-white/30 hover:text-white/50'
+              }`}
+            >
+              Profile
+            </button>
+          </div>
+        </div>
 
+        {/* Tab: Log */}
+        <div style={{ display: activeTab === 'log' ? 'flex' : 'none', flexDirection: 'column', flex: 1, minHeight: 0 }}>
           {/* Filter chips */}
-          <div className="flex flex-wrap gap-1">
+          <div className="flex-shrink-0 flex flex-wrap gap-1 px-3 py-2 border-b border-white/5">
             <button
               onClick={() => setActiveFilters(new Set(allActive ? [] : ALL_CATEGORIES))}
               className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium transition-colors ${allActive ? 'bg-white/10 text-white/60' : 'bg-white/5 text-white/25 hover:text-white/40'}`}
@@ -182,18 +201,27 @@ export const DemoLog: React.FC<{ onOpenChange?: (open: boolean) => void }> = ({ 
                 </button>
               );
             })}
+            <button
+              onClick={() => { demoLog.clear(); renderedCountRef.current = 0; setEntryCount(0); if (listRef.current) listRef.current.innerHTML = ''; }}
+              className="text-[9px] px-1.5 py-0.5 rounded-full text-white/20 hover:text-white/40 hover:bg-white/5 transition-colors ml-auto"
+            >Clear</button>
+          </div>
+
+          {/* Scrollable log */}
+          <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto overscroll-contain p-3 dark-scrollbar">
+            <div ref={listRef} />
+            {entryCount === 0 && (
+              <div className="flex flex-col items-center justify-center h-full text-center px-6">
+                <div className="text-2xl mb-2 opacity-30">📋</div>
+                <p className="text-[11px] text-white/20">Events will appear here as you interact with the storefront</p>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Scrollable log — always in DOM, entries rendered via vanilla DOM */}
-        <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto overscroll-contain p-3 dark-scrollbar">
-          <div ref={listRef} />
-          {entryCount === 0 && (
-            <div className="flex flex-col items-center justify-center h-full text-center px-6">
-              <div className="text-2xl mb-2 opacity-30">📋</div>
-              <p className="text-[11px] text-white/20">Events will appear here as you interact with the storefront</p>
-            </div>
-          )}
+        {/* Tab: Profile (persona selector + profile detail from DemoPanel) */}
+        <div style={{ display: activeTab === 'profile' ? 'flex' : 'none', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+          <DemoPanelInline />
         </div>
         </div>{/* close inner 380px wrapper */}
       </div>

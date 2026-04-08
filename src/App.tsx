@@ -90,20 +90,18 @@ function AnimatedRoutes() {
 /**
  * AppShell — provider tree + animated routes.
  */
-function AppShell({ initialCampaign }: { initialCampaign: CampaignAttribution | null }) {
+function AppShell() {
   return (
     <ProductProvider>
-      <CampaignProvider initialCampaign={initialCampaign}>
-        <CartProvider>
-          <StoreProvider>
-            <SceneProvider>
-              <ActivityToastProvider>
-                <AnimatedRoutes />
-              </ActivityToastProvider>
-            </SceneProvider>
-          </StoreProvider>
-        </CartProvider>
-      </CampaignProvider>
+      <CartProvider>
+        <StoreProvider>
+          <SceneProvider>
+            <ActivityToastProvider>
+              <AnimatedRoutes />
+            </ActivityToastProvider>
+          </SceneProvider>
+        </StoreProvider>
+      </CartProvider>
     </ProductProvider>
   );
 }
@@ -156,12 +154,14 @@ function App() {
     <ErrorBoundary>
       <DemoProvider>
         <CustomerProvider>
-          <div className="h-screen overflow-hidden flex">
-            <main className={`h-full flex-1 min-w-0 overflow-y-scroll overflow-x-hidden ${demoLogOpen ? 'w-[calc(100%-380px)]' : 'w-full'}`}>
-              <AppShell initialCampaign={initialCampaign} />
-            </main>
-            <DemoLog onOpenChange={setDemoLogOpen} />
-          </div>
+          <CampaignProvider initialCampaign={initialCampaign}>
+            <div className="h-screen overflow-hidden flex">
+              <main className={`h-full flex-1 min-w-0 overflow-y-scroll overflow-x-hidden ${demoLogOpen ? 'w-[calc(100%-380px)]' : 'w-full'}`}>
+                <AppShell />
+              </main>
+              <DemoLog onOpenChange={setDemoLogOpen} />
+            </div>
+          </CampaignProvider>
         </CustomerProvider>
       </DemoProvider>
     </ErrorBoundary>

@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>60.0</apiVersion>
+    <description>Record-Triggered Flow on Meaningful_Event__c. When a browse-abandonment, cart-abandonment, or post-purchase event is created, triggers the AbandonmentJourneyBuilder to create cross-channel journey steps.</description>
+    <interviewLabel>Trigger Abandonment Journey {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Trigger Abandonment Journey</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <runInMode>SystemModeWithoutSharing</runInMode>
+
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Check_Event_Type</targetReference>
+        </connector>
+        <filterLogic>or</filterLogic>
+        <filters>
+            <field>Event_Type__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>browse-abandonment</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Event_Type__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>cart-abandonment</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Event_Type__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>post-purchase</stringValue>
+            </value>
+        </filters>
+        <object>Meaningful_Event__c</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+
+    <!-- Check that we have a Contact and haven't already triggered a journey -->
+    <decisions>
+        <name>Check_Event_Type</name>
+        <label>Has Contact and Not Already Triggered?</label>
+        <locationX>176</locationX>
+        <locationY>78</locationY>
+        <defaultConnectorLabel>Skip</defaultConnectorLabel>
+        <rules>
+            <name>Should_Trigger</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Contact__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Journey_Triggered__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Build_Journey</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+    </decisions>
+
+    <!-- Call the Invocable Apex to build journey steps -->
+    <actionCalls>
+        <name>Build_Journey</name>
+        <label>Build Journey</label>
+        <locationX>176</locationX>
+        <locationY>198</locationY>
+        <connector>
+            <targetReference>Mark_Journey_Triggered</targetReference>
+        </connector>
+        <actionName>AbandonmentJourneyBuilder</actionName>
+        <actionType>apex</actionType>
+        <inputParameters>
+            <name>meaningfulEventId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>contactId</name>
+            <value>
+                <elementReference>$Record.Contact__c</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>eventType</name>
+            <value>
+                <elementReference>$Record.Event_Type__c</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>eventDescription</name>
+            <value>
+                <elementReference>$Record.Relative_Time_Text__c</elementReference>
+            </value>
+        </inputParameters>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
+
+    <!-- Mark the event as journey-triggered to prevent duplicates -->
+    <recordUpdates>
+        <name>Mark_Journey_Triggered</name>
+        <label>Mark Journey Triggered</label>
+        <locationX>176</locationX>
+        <locationY>318</locationY>
+        <inputReference>$Record</inputReference>
+        <inputAssignments>
+            <field>Journey_Triggered__c</field>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </inputAssignments>
+    </recordUpdates>
+</Flow>

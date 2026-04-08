@@ -188,7 +188,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product })
               className="w-full px-6 py-4 bg-gradient-to-r from-rose-50 to-purple-50 border border-rose-200 rounded-2xl hover:border-rose-300 transition-colors text-left group"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-400 to-purple-500 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-stone-900 flex items-center justify-center flex-shrink-0">
                   <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                   </svg>

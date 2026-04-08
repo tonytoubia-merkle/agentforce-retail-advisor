@@ -624,19 +624,6 @@ export const DemoPanel: React.FC = () => {
 
   return (
     <>
-      {/* Floating trigger button — bottom right */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-stone-800/90 backdrop-blur-md border border-white/10 px-3.5 py-2.5 text-white text-sm shadow-lg hover:bg-stone-700/90 transition-colors"
-      >
-        <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-        </svg>
-        <span className="font-medium text-xs">{activeLabel}</span>
-        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-      </button>
-
-      {/* Panel overlay */}
       <AnimatePresence>
         {isOpen && (
           <>
@@ -1004,5 +991,189 @@ export const DemoPanel: React.FC = () => {
         )}
       </AnimatePresence>
     </>
+  );
+};
+
+/**
+ * DemoPanelInline — renders the persona selector + profile detail inline
+ * (no floating button, no overlay). Designed to be embedded in DemoLog as a tab.
+ */
+export const DemoPanelInline: React.FC = () => {
+  const useMockData = getDemoConfig().featureFlags.useMockData;
+  const [view, setView] = useState<'list' | 'detail'>('list');
+  const [crmContacts, setCrmContacts] = useState<DemoContact[]>([]);
+  const [contactsLoading, setContactsLoading] = useState(false);
+  const { customer, selectedPersonaId, selectPersona, isResolving, isLoading, refreshProfile } = useCustomer();
+  const { campaign, clearCampaign } = useCampaign();
+  const navigate = useNavigate();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  useEffect(() => {
+    if (useMockData) return;
+    setContactsLoading(true);
+    fetchDemoContacts()
+      .then(setCrmContacts)
+      .finally(() => setContactsLoading(false));
+  }, []);
+
+  const handleSelect = async (personaId: string) => {
+    await selectPersona(personaId);
+  };
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try { await refreshProfile(); } finally { setIsRefreshing(false); }
+  }, [refreshProfile]);
+
+  const tierLabel = (() => {
+    const tier = customer?.merkuryIdentity?.identityTier;
+    if (!tier || tier === 'anonymous') return 'Anonymous';
+    if (tier === 'appended') return 'Merkury Appended';
+    const loyalty = customer?.loyalty?.tier;
+    if (loyalty) return `Known · ${loyalty.charAt(0).toUpperCase() + loyalty.slice(1)}`;
+    return 'Known · No Loyalty';
+  })();
+
+  const seededContacts = crmContacts.filter((c) => c.demoProfile === 'Seeded');
+  const merkuryContacts = crmContacts.filter((c) => c.demoProfile === 'Merkury');
+  const createdContacts = crmContacts.filter((c) => c.demoProfile === 'Created');
+
+  if (view === 'detail') {
+    return (
+      <div className="flex flex-col h-full">
+        {/* Detail header */}
+        <div className="flex-shrink-0 px-3 py-2 border-b border-white/5">
+          <div className="flex items-center gap-2">
+            <button onClick={() => setView('list')} className="text-white/50 hover:text-white">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+            </button>
+            {customer && (
+              <>
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-medium ${
+                  customer.merkuryIdentity?.identityTier === 'appended' ? 'bg-amber-500' : 'bg-purple-500'
+                }`}>
+                  {(customer.name || 'G').charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs font-medium text-white/80 truncate">{customer.name || 'Guest'}</div>
+                  <div className="text-[9px] text-white/35">{tierLabel}</div>
+                </div>
+                <button onClick={handleRefresh} disabled={isRefreshing} className="p-1 rounded text-white/25 hover:text-white/50 hover:bg-white/5" title="Refresh">
+                  <svg className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+        {/* Profile detail */}
+        <div className="flex-1 overflow-y-auto p-3 dark-scrollbar">
+          {campaign && renderCampaignAttribution(campaign, clearCampaign)}
+          {customer ? renderProfileDetail(customer, { isManageMode: false, selectedIds: new Set(), onToggle: () => {}, onCleared: refreshProfile }) : (
+            !campaign && <p className="text-[10px] text-white/20 text-center py-4">No profile loaded</p>
+          )}
+        </div>
+        <div className="flex-shrink-0 px-3 py-2 border-t border-white/5">
+          <button onClick={() => setView('list')} className="w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/5 text-white/40 text-[10px] transition-all">
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+            Switch Profiles
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // List view
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1 dark-scrollbar">
+        {contactsLoading ? (
+          <div className="flex items-center justify-center py-6">
+            <div className="w-4 h-4 border-2 border-white/20 border-t-emerald-400 rounded-full animate-spin" />
+            <span className="ml-2 text-[10px] text-white/40">Loading from CRM...</span>
+          </div>
+        ) : useMockData || crmContacts.length === 0 ? (
+          PERSONA_STUBS.map((stub) => {
+            const isActive = stub.id === selectedPersonaId;
+            return (
+              <button
+                key={stub.id}
+                onClick={() => handleSelect(stub.id)}
+                disabled={isResolving || isLoading}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${
+                  isActive ? 'bg-white/10 border border-emerald-500/50' : 'hover:bg-white/5 border border-transparent'
+                } ${(isResolving || isLoading) ? 'opacity-50' : ''}`}
+              >
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-medium ${
+                  stub.identityTier === 'anonymous' ? 'bg-gray-600' : stub.identityTier === 'appended' ? 'bg-amber-500' : 'bg-purple-500'
+                }`}>
+                  {stub.identityTier === 'anonymous' ? '?' : stub.defaultLabel.charAt(0)}
+                </div>
+                <div className="flex-1 text-left min-w-0">
+                  <div className="text-[11px] font-medium text-white/80 truncate">{stub.defaultLabel}</div>
+                  <div className={`text-[9px] truncate ${stub.identityTier === 'anonymous' ? 'text-red-400/60' : 'text-white/35'}`}>
+                    {stub.identityTier === 'anonymous' ? 'No identity match' : stub.identityTier === 'appended' ? 'Merkury 3P only' : 'Known · CRM match'}
+                  </div>
+                </div>
+                {isActive && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
+              </button>
+            );
+          })
+        ) : (
+          <>
+            {seededContacts.length > 0 && (
+              <>
+                <div className="text-[9px] font-medium text-white/25 uppercase tracking-wider px-3 pt-1">Seeded ({seededContacts.length})</div>
+                {seededContacts.map((c) => (
+                  <button key={c.id} onClick={() => handleSelect(c.id)} disabled={isResolving || isLoading}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${c.id === selectedPersonaId ? 'bg-white/10 border border-emerald-500/50' : 'hover:bg-white/5 border border-transparent'}`}>
+                    <div className="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center text-white text-[10px] font-medium">{(c.firstName || '?').charAt(0)}</div>
+                    <div className="flex-1 text-left min-w-0">
+                      <div className="text-[11px] font-medium text-white/80 truncate">{c.firstName} {c.lastName}</div>
+                      <div className="text-[9px] text-white/35 truncate">Known · CRM match</div>
+                    </div>
+                    {c.id === selectedPersonaId && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
+                  </button>
+                ))}
+              </>
+            )}
+            {merkuryContacts.length > 0 && (
+              <>
+                <div className="text-[9px] font-medium text-white/25 uppercase tracking-wider px-3 pt-1">Merkury ({merkuryContacts.length})</div>
+                {merkuryContacts.map((c) => (
+                  <button key={c.id} onClick={() => handleSelect(c.id)} disabled={isResolving || isLoading}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${c.id === selectedPersonaId ? 'bg-white/10 border border-emerald-500/50' : 'hover:bg-white/5 border border-transparent'}`}>
+                    <div className="w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center text-white text-[10px] font-medium">{(c.firstName || '?').charAt(0)}</div>
+                    <div className="flex-1 text-left min-w-0">
+                      <div className="text-[11px] font-medium text-white/80 truncate">{c.firstName} {c.lastName}</div>
+                      <div className="text-[9px] text-white/35 truncate">Merkury 3P only</div>
+                    </div>
+                    {c.id === selectedPersonaId && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
+                  </button>
+                ))}
+              </>
+            )}
+            <div className="border-t border-white/5 mt-1 pt-1">
+              <button onClick={() => handleSelect('anonymous')} disabled={isResolving || isLoading}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${selectedPersonaId === 'anonymous' ? 'bg-white/10 border border-emerald-500/50' : 'hover:bg-white/5 border border-transparent'}`}>
+                <div className="w-6 h-6 rounded-full bg-gray-600 flex items-center justify-center text-white text-[10px] font-medium">?</div>
+                <div className="flex-1 text-left min-w-0">
+                  <div className="text-[11px] font-medium text-white/80">Anonymous Visitor</div>
+                  <div className="text-[9px] text-red-400/60">No identity match</div>
+                </div>
+                {selectedPersonaId === 'anonymous' && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+      {/* View profile button */}
+      {customer && selectedPersonaId && selectedPersonaId !== 'anonymous' && (
+        <div className="flex-shrink-0 px-3 py-2 border-t border-white/5">
+          <button onClick={() => setView('detail')} className="w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/50 hover:text-white text-[10px] transition-all">
+            View {customer.name?.split(' ')[0]}'s Profile
+          </button>
+        </div>
+      )}
+    </div>
   );
 };

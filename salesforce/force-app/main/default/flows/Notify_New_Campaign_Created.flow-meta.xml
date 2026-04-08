@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>60.0</apiVersion>
+    <description>Sends a bell notification to the campaign owner whenever a new Campaign record is created.</description>
+    <interviewLabel>Notify New Campaign Created {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Notify New Campaign Created</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <runInMode>SystemModeWithoutSharing</runInMode>
+
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Get_Notification_Type</targetReference>
+        </connector>
+        <object>Campaign</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+
+    <!-- Step 1: Look up the Custom Notification Type -->
+    <recordLookups>
+        <name>Get_Notification_Type</name>
+        <label>Get Notification Type</label>
+        <locationX>176</locationX>
+        <locationY>78</locationY>
+        <connector>
+            <targetReference>Add_Owner_To_Recipients</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Add_Owner_To_Recipients</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>DeveloperName</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Campaign_Alert</stringValue>
+            </value>
+        </filters>
+        <object>CustomNotificationType</object>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+
+    <!-- Step 2: Add the campaign owner to the recipients -->
+    <assignments>
+        <name>Add_Owner_To_Recipients</name>
+        <label>Add Owner to Recipients</label>
+        <locationX>176</locationX>
+        <locationY>198</locationY>
+        <connector>
+            <targetReference>Check_Notification_Type_Found</targetReference>
+        </connector>
+        <assignmentItems>
+            <assignToReference>recipientIds</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>$Record.OwnerId</elementReference>
+            </value>
+        </assignmentItems>
+    </assignments>
+
+    <!-- Step 3: Only send if we found the notification type -->
+    <decisions>
+        <name>Check_Notification_Type_Found</name>
+        <label>Notification Type Found?</label>
+        <locationX>176</locationX>
+        <locationY>318</locationY>
+        <defaultConnectorLabel>Not Found</defaultConnectorLabel>
+        <rules>
+            <name>Type_Found</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Notification_Type</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Send_Notification</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+    </decisions>
+
+    <!-- Step 4: Send custom notification -->
+    <actionCalls>
+        <name>Send_Notification</name>
+        <label>Send Notification</label>
+        <locationX>176</locationX>
+        <locationY>438</locationY>
+        <actionName>customNotificationAction</actionName>
+        <actionType>customNotificationAction</actionType>
+        <inputParameters>
+            <name>customNotifTypeId</name>
+            <value>
+                <elementReference>Get_Notification_Type.Id</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>title</name>
+            <value>
+                <stringValue>New Campaign Created</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>body</name>
+            <value>
+                <elementReference>notificationBodyFormula</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>recipientIds</name>
+            <value>
+                <elementReference>recipientIds</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>targetId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+    </actionCalls>
+
+    <!-- Variables -->
+    <variables>
+        <name>recipientIds</name>
+        <dataType>String</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+
+    <!-- Formula: notification body -->
+    <formulas>
+        <name>notificationBodyFormula</name>
+        <dataType>String</dataType>
+        <expression>"Campaign \"" &amp; {!$Record.Name} &amp; "\" was just created." &amp;
+IF(NOT(ISBLANK(TEXT({!$Record.Type}))), " Type: " &amp; TEXT({!$Record.Type}) &amp; ".", "") &amp;
+IF(NOT(ISBLANK(TEXT({!$Record.Status}))), " Status: " &amp; TEXT({!$Record.Status}) &amp; ".", "")</expression>
+    </formulas>
+</Flow>

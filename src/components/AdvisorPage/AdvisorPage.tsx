@@ -11,7 +11,6 @@ import { SkinAnalysisModal, SkinConciergeWelcome } from '@/components/SkinAnalys
 import { RetailerHandoff } from '@/components/RetailerHandoff';
 import { WelcomeScreen } from '@/components/WelcomeScreen/WelcomeScreen';
 import { WelcomeLoader } from '@/components/WelcomeScreen/WelcomeLoader';
-import { DemoPanel } from '@/components/Storefront/DemoPanel';
 import { ProfileDropdown } from '@/components/Storefront/ProfileDropdown';
 import type { AdvisorMode } from '@/types/scene';
 
@@ -169,7 +168,6 @@ export const AdvisorPage: React.FC<AdvisorPageProps> = ({ mode = 'beauty' }) => 
         </>
       )}
 
-      <DemoPanel />
     </div>
   );
 };

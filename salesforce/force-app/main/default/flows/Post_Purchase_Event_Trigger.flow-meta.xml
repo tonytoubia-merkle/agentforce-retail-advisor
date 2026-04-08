@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>60.0</apiVersion>
+    <description>Record-Triggered Flow on Order. When an Order status changes to Activated or Completed, creates a post-purchase Meaningful_Event__c which triggers the post-purchase journey.</description>
+    <interviewLabel>Post Purchase Event Trigger {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Post Purchase Event Trigger</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <runInMode>SystemModeWithoutSharing</runInMode>
+
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Resolve_Contact</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Status</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Activated</stringValue>
+            </value>
+        </filters>
+        <object>Order</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+
+    <!-- Resolve the Contact from the Account (Person Accounts) -->
+    <recordLookups>
+        <name>Resolve_Contact</name>
+        <label>Resolve Contact</label>
+        <locationX>176</locationX>
+        <locationY>78</locationY>
+        <connector>
+            <targetReference>Has_Contact</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Has_Contact</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>AccountId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.AccountId</elementReference>
+            </value>
+        </filters>
+        <object>Contact</object>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+
+    <!-- Check we have a contact -->
+    <decisions>
+        <name>Has_Contact</name>
+        <label>Contact Found?</label>
+        <locationX>176</locationX>
+        <locationY>198</locationY>
+        <defaultConnectorLabel>No Contact</defaultConnectorLabel>
+        <rules>
+            <name>Contact_Found</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Resolve_Contact</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Create_Post_Purchase_Event</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+    </decisions>
+
+    <!-- Create the Meaningful Event -->
+    <recordCreates>
+        <name>Create_Post_Purchase_Event</name>
+        <label>Create Post-Purchase Event</label>
+        <locationX>176</locationX>
+        <locationY>318</locationY>
+        <inputAssignments>
+            <field>Contact__c</field>
+            <value>
+                <elementReference>Resolve_Contact.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Event_Type__c</field>
+            <value>
+                <stringValue>post-purchase</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Description__c</field>
+            <value>
+                <elementReference>orderDescriptionFormula</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Captured_At__c</field>
+            <value>
+                <elementReference>$Flow.CurrentDateTime</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Event_Date__c</field>
+            <value>
+                <elementReference>$Flow.CurrentDate</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Urgency__c</field>
+            <value>
+                <stringValue>Immediate</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Relative_Time_Text__c</field>
+            <value>
+                <elementReference>orderSummaryFormula</elementReference>
+            </value>
+        </inputAssignments>
+        <object>Meaningful_Event__c</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordCreates>
+
+    <!-- Formulas -->
+    <formulas>
+        <name>orderDescriptionFormula</name>
+        <dataType>String</dataType>
+        <expression>"post-purchase:" &amp; {!$Record.Id}</expression>
+    </formulas>
+    <formulas>
+        <name>orderSummaryFormula</name>
+        <dataType>String</dataType>
+        <expression>"Completed order " &amp; {!$Record.OrderNumber} &amp; " for $" &amp; TEXT({!$Record.TotalAmount})</expression>
+    </formulas>
+</Flow>

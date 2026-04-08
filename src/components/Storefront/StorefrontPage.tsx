@@ -220,7 +220,7 @@ export const StorefrontPage: React.FC = () => {
             {/* Beauty Advisor CTA */}
             <section className="py-16 bg-gradient-to-br from-rose-50 via-purple-50 to-rose-50">
               <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
-                <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-rose-400 to-purple-500 rounded-full flex items-center justify-center">
+                <div className="w-16 h-16 mx-auto mb-6 bg-stone-900 rounded-full flex items-center justify-center">
                   <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                   </svg>
@@ -365,7 +365,7 @@ export const StorefrontPage: React.FC = () => {
                 <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
                   <div>
                     <div className="flex items-center gap-2 mb-4">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-rose-400 to-purple-500 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full bg-stone-900 flex items-center justify-center">
                         <span className="text-white font-bold text-sm">B</span>
                       </div>
                       <span className="text-xl font-semibold">BEAUTÉ</span>
