@@ -17,6 +17,8 @@ export interface DemoFeatureFlags {
   enableGenerativeBackgrounds: boolean;
   enableProductTransparency: boolean;
   enableSkinAdvisor: boolean;
+  /** Adobe-inspired split-pane experience (chat LEFT, editorial canvas RIGHT) */
+  enableImmersiveLayout?: boolean;
 }
 
 export interface DemoSalesforceConfig {

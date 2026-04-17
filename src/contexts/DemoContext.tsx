@@ -52,6 +52,7 @@ const DEFAULT_CONFIG: DemoConfig = {
     enableGenerativeBackgrounds: import.meta.env.VITE_ENABLE_GENERATIVE_BACKGROUNDS === 'true',
     enableProductTransparency: import.meta.env.VITE_ENABLE_PRODUCT_TRANSPARENCY !== 'false',
     enableSkinAdvisor: !!import.meta.env.VITE_SKIN_ADVISOR_AGENT_ID,
+    enableImmersiveLayout: import.meta.env.VITE_ENABLE_IMMERSIVE_LAYOUT === 'true',
   },
   createdAt: '',
   updatedAt: '',

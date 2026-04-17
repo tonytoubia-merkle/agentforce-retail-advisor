@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useScene } from '@/contexts/SceneContext';
 import { useConversation } from '@/contexts/ConversationContext';
 import { useCustomer } from '@/contexts/CustomerContext';
+import { useDemo } from '@/contexts/DemoContext';
 import { GenerativeBackground } from '@/components/GenerativeBackground';
 import { ChatInterface } from '@/components/ChatInterface';
 import { CheckoutOverlay } from '@/components/CheckoutOverlay';
@@ -11,6 +12,7 @@ import { SkinAnalysisModal, SkinConciergeWelcome } from '@/components/SkinAnalys
 import { RetailerHandoff } from '@/components/RetailerHandoff';
 import { WelcomeScreen } from '@/components/WelcomeScreen/WelcomeScreen';
 import { WelcomeLoader } from '@/components/WelcomeScreen/WelcomeLoader';
+import { ImmersiveLayout } from '@/components/ImmersiveLayout';
 import { ProfileDropdown } from '@/components/Storefront/ProfileDropdown';
 import type { AdvisorMode } from '@/types/scene';
 
@@ -24,7 +26,12 @@ export const AdvisorPage: React.FC<AdvisorPageProps> = ({ mode = 'beauty' }) => 
   const navigate = useNavigate();
   const location = useLocation();
   const { customer } = useCustomer();
+  const { config } = useDemo();
   const productContextSent = useRef(false);
+
+  // Adobe-inspired split-pane experience — opt-in per demo. Skin concierge
+  // keeps its bespoke layout; beauty/travel/etc. can flip it on via config.
+  const useImmersive = config.featureFlags.enableImmersiveLayout && mode !== 'skin-concierge';
 
   // Skin concierge has its own landing — show it until the user takes an action
   const [skinWelcomeActive, setSkinWelcomeActive] = useState(mode === 'skin-concierge');
@@ -127,6 +134,16 @@ export const AdvisorPage: React.FC<AdvisorPageProps> = ({ mode = 'beauty' }) => 
           <WelcomeLoader key="loader" />
         ) : scene.welcomeActive ? (
           <WelcomeScreen key="welcome" />
+        ) : useImmersive ? (
+          <motion.div
+            key="immersive"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="relative z-10"
+          >
+            <ImmersiveLayout mode={mode} />
+          </motion.div>
         ) : (
           <motion.div
             key="main-chat"
