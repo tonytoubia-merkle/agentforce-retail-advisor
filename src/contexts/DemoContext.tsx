@@ -52,7 +52,11 @@ const DEFAULT_CONFIG: DemoConfig = {
     enableGenerativeBackgrounds: import.meta.env.VITE_ENABLE_GENERATIVE_BACKGROUNDS === 'true',
     enableProductTransparency: import.meta.env.VITE_ENABLE_PRODUCT_TRANSPARENCY !== 'false',
     enableSkinAdvisor: !!import.meta.env.VITE_SKIN_ADVISOR_AGENT_ID,
-    enableImmersiveLayout: import.meta.env.VITE_ENABLE_IMMERSIVE_LAYOUT === 'true',
+    // Adobe-Concierge-style split-pane UI. Default ON for the golden template
+    // so the legacy site shows it. Custom demos still control their own flag
+    // via Supabase (their featureFlags override DEFAULT_CONFIG entirely), and
+    // any env can opt out with VITE_ENABLE_IMMERSIVE_LAYOUT=false.
+    enableImmersiveLayout: import.meta.env.VITE_ENABLE_IMMERSIVE_LAYOUT !== 'false',
   },
   createdAt: '',
   updatedAt: '',

@@ -10,6 +10,37 @@ interface BundleCanvasProps {
   whyYoullLoveIt?: string;
 }
 
+/** Short per-vertical subtitle (route, colors, benefits). Returns null for beauty. */
+function getVerticalSubtitle(product: Product, vertical: string): string | null {
+  const a = product.attributes || {};
+  if (vertical === 'travel' && a.travel) {
+    const route = [a.travel.origin, a.travel.destination].filter(Boolean).join(' → ');
+    const duration = a.travel.durationMinutes
+      ? `${Math.floor(a.travel.durationMinutes / 60)}h ${a.travel.durationMinutes % 60}m`
+      : '';
+    return [route, duration].filter(Boolean).join(' · ') || null;
+  }
+  if (vertical === 'fashion' && a.fashion?.color?.length) {
+    return a.fashion.color.slice(0, 3).join(' · ');
+  }
+  if (vertical === 'wellness' && a.wellness?.benefits?.length) {
+    return a.wellness.benefits.slice(0, 2).join(' · ');
+  }
+  return null;
+}
+
+/** Eyebrow label above the bundle title — "Curated Bundle" for beauty/fashion,
+ *  "Trip Plan" for travel, "Routine" for wellness, etc. */
+function bundleEyebrow(vertical: string, catalogLabel: string): string {
+  switch (vertical) {
+    case 'travel':   return 'Trip Plan';
+    case 'fashion':  return 'Curated Look';
+    case 'wellness': return 'Routine';
+    case 'cpg':      return 'Bundle';
+    default:         return 'Curated Bundle';
+  }
+}
+
 /**
  * Editorial bundle display — large hero photo composed from individual
  * product images, with numbered hotspots overlaid. Clicking a hotspot
@@ -20,10 +51,19 @@ interface BundleCanvasProps {
 export const BundleCanvas: React.FC<BundleCanvasProps> = ({ products, title, whyYoullLoveIt }) => {
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
   const { addItem, isInCart } = useCart();
-  const { copy } = useDemo();
+  const { config, copy } = useDemo();
 
   const total = products.reduce((s, p) => s + p.price, 0);
   const active = activeIdx !== null ? products[activeIdx] : null;
+  const activeSubtitle = active ? getVerticalSubtitle(active, config.vertical) : null;
+  const eyebrow = bundleEyebrow(config.vertical, copy.catalogLabel);
+  const bundleCta = config.vertical === 'travel'
+    ? 'Hold this itinerary'
+    : config.vertical === 'fashion'
+      ? 'Shop the full look'
+      : config.vertical === 'wellness'
+        ? 'Add full routine'
+        : 'Add bundle to cart';
 
   // Deterministic hotspot positions — evenly spread across the canvas
   // Positions chosen to feel editorial, not rigid grid. Up to 6 products.
@@ -106,6 +146,9 @@ export const BundleCanvas: React.FC<BundleCanvasProps> = ({ products, title, why
                   {active.brand}
                 </div>
                 <div className="font-medium text-sm leading-tight mb-1">{active.name}</div>
+                {activeSubtitle && (
+                  <div className="text-[11px] text-white/60 mb-1">{activeSubtitle}</div>
+                )}
                 <div className="text-xs text-white/60 line-clamp-2 mb-2">
                   {active.shortDescription || active.description}
                 </div>
@@ -136,7 +179,7 @@ export const BundleCanvas: React.FC<BundleCanvasProps> = ({ products, title, why
       <div className="w-80 border-l border-white/10 bg-black/40 backdrop-blur-sm p-8 flex flex-col overflow-y-auto">
         <div className="mb-6">
           <div className="text-[10px] uppercase tracking-widest text-white/40 mb-2">
-            Curated Bundle
+            {eyebrow}
           </div>
           <h2 className="text-white text-xl font-light leading-snug">{title}</h2>
         </div>
@@ -152,40 +195,45 @@ export const BundleCanvas: React.FC<BundleCanvasProps> = ({ products, title, why
 
         <div className="flex-1">
           <div className="text-[10px] uppercase tracking-widest text-white/40 mb-3">
-            In this bundle
+            {config.vertical === 'travel' ? 'Itinerary' : 'In this bundle'}
           </div>
           <ul className="space-y-3">
-            {products.map((p, idx) => (
-              <li
-                key={p.id}
-                className={`flex items-start gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
-                  activeIdx === idx ? 'bg-white/10' : 'hover:bg-white/5'
-                }`}
-                onClick={() => setActiveIdx(activeIdx === idx ? null : idx)}
-              >
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-white/10 text-white text-xs font-semibold flex items-center justify-center mt-0.5">
-                  {idx + 1}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <div className="text-white text-sm truncate">{p.name}</div>
-                  <div className="text-white/50 text-xs truncate">{p.brand}</div>
-                </div>
-                <span className="text-white/80 text-sm">${p.price.toFixed(2)}</span>
-              </li>
-            ))}
+            {products.map((p, idx) => {
+              const sub = getVerticalSubtitle(p, config.vertical);
+              return (
+                <li
+                  key={p.id}
+                  className={`flex items-start gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
+                    activeIdx === idx ? 'bg-white/10' : 'hover:bg-white/5'
+                  }`}
+                  onClick={() => setActiveIdx(activeIdx === idx ? null : idx)}
+                >
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-white/10 text-white text-xs font-semibold flex items-center justify-center mt-0.5">
+                    {idx + 1}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-white text-sm truncate">{p.name}</div>
+                    <div className="text-white/50 text-xs truncate">{sub || p.brand}</div>
+                  </div>
+                  <span className="text-white/80 text-sm">${p.price.toFixed(2)}</span>
+                </li>
+              );
+            })}
           </ul>
         </div>
 
         <div className="mt-6 pt-6 border-t border-white/10">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-white/70 text-sm">Bundle total</span>
+            <span className="text-white/70 text-sm">
+              {config.vertical === 'travel' ? 'Estimated total' : 'Bundle total'}
+            </span>
             <span className="text-white text-lg font-medium">${total.toFixed(2)}</span>
           </div>
           <button
             onClick={() => products.forEach((p) => !isInCart(p.id) && addItem(p))}
             className="w-full py-3 bg-white text-black rounded-full text-sm font-medium hover:bg-white/90 transition-colors"
           >
-            {copy.primaryCTA === 'Shop Now' ? 'Add bundle to cart' : `${copy.primaryCTA} — all items`}
+            {bundleCta}
           </button>
         </div>
       </div>

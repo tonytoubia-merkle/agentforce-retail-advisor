@@ -131,8 +131,9 @@ export const ImmersiveLayout: React.FC<ImmersiveLayoutProps> = ({ mode }) => {
             >
               <div className="text-center px-8 text-white/40 max-w-md">
                 <div className="text-6xl mb-4 opacity-60">{copy.chatIcon}</div>
-                <p className="text-lg">
-                  Chat with your {copy.advisorName.toLowerCase()} to see recommendations come to life here
+                <p className="text-lg font-light">{copy.welcomePrompt}</p>
+                <p className="text-sm mt-2 text-white/30">
+                  Chat with your {copy.advisorName.toLowerCase()} — your recommendations come to life here.
                 </p>
               </div>
             </motion.div>

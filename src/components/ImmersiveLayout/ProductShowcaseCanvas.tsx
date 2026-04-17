@@ -9,6 +9,49 @@ interface ProductShowcaseCanvasProps {
   title?: string;
 }
 
+/** Pick a short, vertical-appropriate badge. Mirrors the logic in ProductCard. */
+function getVerticalBadge(product: Product, vertical: string) {
+  const a = product.attributes || {};
+  if (vertical === 'travel') {
+    if (a.travel?.cabinClass === 'business') return { label: 'Business', cls: 'bg-indigo-600' };
+    if (a.travel?.cabinClass === 'first') return { label: 'First', cls: 'bg-amber-600' };
+    if (a.travel?.cabinClass === 'premium-economy') return { label: 'Premium', cls: 'bg-sky-600' };
+    if (a.travel?.stops === 0) return { label: 'Nonstop', cls: 'bg-emerald-600' };
+    return null;
+  }
+  if (vertical === 'fashion') {
+    const season = a.fashion?.season?.[0];
+    if (season) return { label: season[0].toUpperCase() + season.slice(1), cls: 'bg-stone-700' };
+    return null;
+  }
+  if (vertical === 'wellness') {
+    const benefit = a.wellness?.benefits?.[0];
+    if (benefit) return { label: benefit, cls: 'bg-emerald-600' };
+    return null;
+  }
+  if (a.isTravel) return { label: 'Travel', cls: 'bg-blue-500' };
+  return null;
+}
+
+/** One-line subtitle appropriate for the vertical (route+duration, colors, benefits). */
+function getVerticalSubtitle(product: Product, vertical: string): string | null {
+  const a = product.attributes || {};
+  if (vertical === 'travel' && a.travel) {
+    const route = [a.travel.origin, a.travel.destination].filter(Boolean).join(' → ');
+    const duration = a.travel.durationMinutes
+      ? `${Math.floor(a.travel.durationMinutes / 60)}h ${a.travel.durationMinutes % 60}m`
+      : '';
+    return [route, duration].filter(Boolean).join(' · ') || null;
+  }
+  if (vertical === 'fashion' && a.fashion?.color?.length) {
+    return a.fashion.color.slice(0, 3).join(' · ');
+  }
+  if (vertical === 'wellness' && a.wellness?.benefits?.length) {
+    return a.wellness.benefits.slice(0, 2).join(' · ');
+  }
+  return null;
+}
+
 /**
  * Editorial showcase for single or small multi-product recommendations.
  *
@@ -19,7 +62,7 @@ interface ProductShowcaseCanvasProps {
  */
 export const ProductShowcaseCanvas: React.FC<ProductShowcaseCanvasProps> = ({ products, title }) => {
   const { addItem, isInCart } = useCart();
-  const { copy } = useDemo();
+  const { config, copy } = useDemo();
 
   if (products.length === 1) {
     return <SingleProductHero product={products[0]} title={title} />;
@@ -41,54 +84,61 @@ export const ProductShowcaseCanvas: React.FC<ProductShowcaseCanvasProps> = ({ pr
       )}
 
       <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {products.map((product, idx) => (
-          <motion.div
-            key={product.id}
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.1, duration: 0.4 }}
-            whileHover={{ y: -6 }}
-            className="relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl overflow-hidden group"
-          >
-            <div className="aspect-square relative bg-black/20 flex items-center justify-center p-8">
-              <img
-                src={product.imageUrl}
-                alt={product.name}
-                className="w-full h-full object-contain drop-shadow-2xl product-blend transition-transform duration-300 group-hover:scale-105"
-              />
-              {product.attributes?.isTravel && (
-                <Badge className="absolute top-3 left-3 bg-blue-500/80 text-[10px] px-2">
-                  Travel
-                </Badge>
-              )}
-            </div>
+        {products.map((product, idx) => {
+          const badge = getVerticalBadge(product, config.vertical);
+          const subtitle = getVerticalSubtitle(product, config.vertical);
+          return (
+            <motion.div
+              key={product.id}
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.1, duration: 0.4 }}
+              whileHover={{ y: -6 }}
+              className="relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl overflow-hidden group"
+            >
+              <div className="aspect-square relative bg-black/20 flex items-center justify-center p-8">
+                <img
+                  src={product.imageUrl}
+                  alt={product.name}
+                  className="w-full h-full object-contain drop-shadow-2xl product-blend transition-transform duration-300 group-hover:scale-105"
+                />
+                {badge && (
+                  <Badge className={`absolute top-3 left-3 ${badge.cls} text-[10px] px-2`}>
+                    {badge.label}
+                  </Badge>
+                )}
+              </div>
 
-            <div className="p-5 text-white">
-              <div className="text-[10px] uppercase tracking-widest text-white/40 mb-1">
-                {product.brand}
+              <div className="p-5 text-white">
+                <div className="text-[10px] uppercase tracking-widest text-white/40 mb-1">
+                  {product.brand}
+                </div>
+                <h3 className="font-medium text-base leading-tight mb-1 line-clamp-2">
+                  {product.name}
+                </h3>
+                {subtitle && (
+                  <div className="text-white/50 text-[11px] mb-1 truncate">{subtitle}</div>
+                )}
+                <p className="text-white/60 text-xs leading-relaxed mb-4 line-clamp-2">
+                  {product.shortDescription || product.description}
+                </p>
+                <div className="flex items-center justify-between">
+                  <span className="text-lg font-medium">
+                    ${product.price.toFixed(2)}
+                    {copy.priceUnit && <span className="text-xs text-white/50">{copy.priceUnit}</span>}
+                  </span>
+                  <button
+                    onClick={() => addItem(product)}
+                    disabled={isInCart(product.id)}
+                    className="px-4 py-1.5 text-xs font-medium bg-white text-black rounded-full hover:bg-white/90 disabled:bg-white/20 disabled:text-white/50 transition-colors"
+                  >
+                    {isInCart(product.id) ? 'In cart' : 'Add'}
+                  </button>
+                </div>
               </div>
-              <h3 className="font-medium text-base leading-tight mb-1 line-clamp-2">
-                {product.name}
-              </h3>
-              <p className="text-white/60 text-xs leading-relaxed mb-4 line-clamp-2">
-                {product.shortDescription || product.description}
-              </p>
-              <div className="flex items-center justify-between">
-                <span className="text-lg font-medium">
-                  ${product.price.toFixed(2)}
-                  {copy.priceUnit && <span className="text-xs text-white/50">{copy.priceUnit}</span>}
-                </span>
-                <button
-                  onClick={() => addItem(product)}
-                  disabled={isInCart(product.id)}
-                  className="px-4 py-1.5 text-xs font-medium bg-white text-black rounded-full hover:bg-white/90 disabled:bg-white/20 disabled:text-white/50 transition-colors"
-                >
-                  {isInCart(product.id) ? 'In cart' : 'Add'}
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        ))}
+            </motion.div>
+          );
+        })}
       </div>
     </div>
   );
@@ -98,7 +148,8 @@ export const ProductShowcaseCanvas: React.FC<ProductShowcaseCanvasProps> = ({ pr
 
 const SingleProductHero: React.FC<{ product: Product; title?: string }> = ({ product, title }) => {
   const { addItem, isInCart } = useCart();
-  const { copy } = useDemo();
+  const { config, copy } = useDemo();
+  const subtitle = getVerticalSubtitle(product, config.vertical);
 
   return (
     <div className="w-full h-full flex items-center justify-center px-12">
@@ -138,6 +189,9 @@ const SingleProductHero: React.FC<{ product: Product; title?: string }> = ({ pro
             {product.brand}
           </div>
           <h1 className="text-3xl md:text-4xl font-light leading-tight mb-4">{product.name}</h1>
+          {subtitle && (
+            <div className="text-white/60 text-sm mb-3">{subtitle}</div>
+          )}
           <p className="text-white/70 text-base leading-relaxed mb-6 max-w-md">
             {product.description || product.shortDescription}
           </p>
