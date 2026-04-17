@@ -16,6 +16,13 @@ import type { SceneSnapshot } from './SceneContext';
 import { demoLog } from '@/services/demoLog';
 import { useActivityToast } from '@/components/ActivityToast';
 import { getDemoConfig } from '@/contexts/DemoContext';
+import { getVerticalCopy } from '@/config/verticalCopy';
+
+/** Vertical-aware default suggested actions. Beauty keeps legacy prompts;
+ *  other verticals get vertical-appropriate chips from verticalCopy. */
+function defaultSuggestions(): string[] {
+  return getVerticalCopy(getDemoConfig()).defaultSuggestedActions;
+}
 
 /** Snapshot of a persona's full session state for instant restore. */
 interface SessionSnapshot {
@@ -402,9 +409,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode; agentId
   const [isAgentTyping, setIsAgentTyping] = useState(false);
   const [isLoadingWelcome, setIsLoadingWelcome] = useState(false);
   const [suggestedActions, setSuggestedActions] = useState<string[]>([
-    'Show me moisturizers',
-    'I need travel products',
-    'What do you recommend?',
+    ...defaultSuggestions(),
   ]);
   // Per-instance agent client and session tracking (supports multiple ConversationProviders)
   const agentClientRef = useRef<AgentforceClient>(
@@ -497,11 +502,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode; agentId
       resetScene();
       setBackground({ type: 'image', value: '/assets/backgrounds/default.png' });
       setMessages([]);
-      setSuggestedActions([
-        'Show me moisturizers',
-        'I need travel products',
-        'What do you recommend?',
-      ]);
+      setSuggestedActions(defaultSuggestions());
       setIsLoadingWelcome(false);
 
       // Eagerly create the Agentforce session in the background so the first
@@ -597,11 +598,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode; agentId
         // screen looks identical to anonymous — no personalized greeting.
         if (sessionCtx.identityTier === 'appended') {
           setBackground({ type: 'image', value: '/assets/backgrounds/default.png' });
-          setSuggestedActions([
-            'Show me moisturizers',
-            'I need travel products',
-            'What do you recommend?',
-          ]);
+          setSuggestedActions(defaultSuggestions());
           return;
         }
 
@@ -615,11 +612,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode; agentId
             console.error('[welcome] Background identity resolution failed:', err);
           });
           setBackground({ type: 'image', value: '/assets/backgrounds/default.png' });
-          setSuggestedActions([
-            'Show me moisturizers',
-            'I need travel products',
-            'What do you recommend?',
-          ]);
+          setSuggestedActions(defaultSuggestions());
           return;
         }
 
@@ -673,7 +666,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode; agentId
           if (sessionCtx.identityTier === 'known' && sessionCtx.recentPurchases?.length) {
             actions = ['Restock my favorites', "What's new for me?", 'Show me something different'];
           } else {
-            actions = ['Show me moisturizers', 'I need travel products', 'What do you recommend?'];
+            actions = defaultSuggestions();
           }
         }
         setSuggestedActions(actions);
@@ -933,11 +926,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode; agentId
 
   const clearConversation = useCallback(() => {
     setMessages([]);
-    setSuggestedActions([
-      'Show me moisturizers',
-      'I need travel products',
-      'What do you recommend?',
-    ]);
+    setSuggestedActions(defaultSuggestions());
   }, []);
 
   return (

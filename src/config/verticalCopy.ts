@@ -11,6 +11,30 @@
  * deployment looks identical when `DEFAULT_CONFIG` is used.
  */
 import type { DemoConfig, DemoVertical } from '@/types/demo';
+import type { SceneSetting } from '@/types/scene';
+
+export interface CatalogNavItem {
+  label: string;
+  /** Matches whatever string the demo's products use in `product.category`. */
+  value: string;
+}
+
+export interface SecondaryAdvisorHero {
+  /** Small uppercase eyebrow above the title (e.g. "AI-Powered · Free · No Account Needed"). */
+  eyebrow: string;
+  /** First line of the big headline (e.g. "Know your skin."). */
+  title: string;
+  /** Second line of the headline, styled with gradient accent (e.g. "Build your routine."). */
+  titleAccent: string;
+  /** Paragraph below the title. */
+  description: string;
+  /** Primary CTA button label (e.g. "Analyze My Skin"). */
+  primaryCTA: string;
+  /** Secondary CTA button label. */
+  secondaryCTA: string;
+  /** Four short feature chips shown to the right of the headline. */
+  chips: Array<{ icon: string; title: string; desc: string }>;
+}
 
 export interface VerticalCopy {
   /** Name of the AI advisor for this vertical (e.g. "Beauty Advisor", "Travel Assistant") */
@@ -35,10 +59,26 @@ export interface VerticalCopy {
   advisorDescription: string;
   /** Currency/unit hint — empty for beauty, " one-way" for flights */
   priceUnit: string;
-  /** Which advisor route is available — 'skin' for skin concierge, etc */
+  /** Which secondary advisor experience exists (skin analysis / booking / stylist / none). */
   secondaryAdvisorRoute?: 'skin' | 'booking' | 'stylist' | null;
   /** Emoji/icon for chat button */
   chatIcon: string;
+  /** 3 quick-action suggestions shown as chips when the chat opens. Vertical-aware
+   *  so a travel demo doesn't prompt the visitor with "Show me moisturizers". */
+  defaultSuggestedActions: string[];
+  /** "Powered by X" text shown in the secondary advisor modal header.
+   *  null = hide the attribution line entirely (use when no partnership exists for this vertical). */
+  partnershipText: string | null;
+  /** Category navigation shown in the StoreHeader for this vertical.
+   *  Values must match whatever strings the demo's seeded products use in `product.category`. */
+  catalogNav: CatalogNavItem[];
+  /** Structured hero block promoting the secondary advisor experience on the storefront.
+   *  Renders the skin-analysis hero for beauty; booking concierge for travel; etc.
+   *  null = hide the hero section entirely. */
+  secondaryAdvisorHero: SecondaryAdvisorHero | null;
+  /** Fallback scene setting when the agent doesn't specify one and product categories
+   *  don't match any inference rules. Beauty defaults to 'bathroom'; travel to 'travel' etc. */
+  defaultSceneSetting: SceneSetting;
 }
 
 // ─── Default (beauty) — matches legacy hardcoded copy exactly ───────
@@ -58,6 +98,38 @@ const BEAUTY: VerticalCopy = {
   priceUnit: '',
   secondaryAdvisorRoute: 'skin',
   chatIcon: '💬',
+  defaultSuggestedActions: [
+    'Show me moisturizers',
+    'I need travel products',
+    'What do you recommend?',
+  ],
+  partnershipText: 'Powered by BEAUTÉ in partnership with Perfect Corp',
+  catalogNav: [
+    { label: 'Skincare', value: 'moisturizer' },
+    { label: 'Cleansers', value: 'cleanser' },
+    { label: 'Serums', value: 'serum' },
+    { label: 'Sunscreen', value: 'sunscreen' },
+    { label: 'Makeup', value: 'foundation' },
+    { label: 'Lips', value: 'lipstick' },
+    { label: 'Fragrance', value: 'fragrance' },
+    { label: 'Haircare', value: 'shampoo' },
+  ],
+  secondaryAdvisorHero: {
+    eyebrow: 'AI-Powered · Free · No Account Needed',
+    title: 'Know your skin.',
+    titleAccent: 'Build your routine.',
+    description:
+      "Take a 30-second selfie analysis or answer a few questions. Our Skin Concierge identifies your skin type, flags your top concerns, and recommends a complete routine — then shows you exactly where to buy each product.",
+    primaryCTA: 'Analyze My Skin',
+    secondaryCTA: 'Answer Questions Instead',
+    chips: [
+      { icon: '🔬', title: '15 Skin Concerns', desc: 'Scored and ranked by severity' },
+      { icon: '🧴', title: 'Routine Builder', desc: 'Morning + evening, complete' },
+      { icon: '📍', title: 'Where to Buy', desc: 'In-store & online retailers' },
+      { icon: '🔒', title: '100% Private', desc: 'Photos never leave your device' },
+    ],
+  },
+  defaultSceneSetting: 'bathroom',
 };
 
 // ─── Travel / Hospitality ──────────────────────────────────────────
@@ -77,6 +149,34 @@ const TRAVEL: VerticalCopy = {
   priceUnit: '',
   secondaryAdvisorRoute: 'booking',
   chatIcon: '✈️',
+  defaultSuggestedActions: [
+    'Flights to Tokyo next month',
+    'Compare business-class options',
+    'Plan a beach getaway',
+  ],
+  partnershipText: null,
+  catalogNav: [
+    { label: 'Routes', value: 'route' },
+    { label: 'Cabin Classes', value: 'cabin' },
+    { label: 'Deals', value: 'deal' },
+    { label: 'Packages', value: 'package' },
+  ],
+  secondaryAdvisorHero: {
+    eyebrow: 'AI-Powered · Personalized Trip Planning',
+    title: 'Tell us where.',
+    titleAccent: 'We handle the rest.',
+    description:
+      "Describe the trip you have in mind and our concierge builds a full itinerary — flights, cabin class, dates, seat maps — in seconds. Compare routes, hold seats, and book when you're ready.",
+    primaryCTA: 'Plan My Trip',
+    secondaryCTA: 'Browse Destinations',
+    chips: [
+      { icon: '🌍', title: '200+ Destinations', desc: 'Global route network' },
+      { icon: '✈️', title: 'Cabin Compare', desc: 'Business · Premium · Economy' },
+      { icon: '💺', title: 'Seat Selection', desc: 'Pick before you pay' },
+      { icon: '🎁', title: 'Loyalty Aware', desc: 'Upgrade eligibility built-in' },
+    ],
+  },
+  defaultSceneSetting: 'travel',
 };
 
 // ─── Fashion / Luxury ─────────────────────────────────────────────
@@ -96,6 +196,34 @@ const FASHION: VerticalCopy = {
   priceUnit: '',
   secondaryAdvisorRoute: 'stylist',
   chatIcon: '👗',
+  defaultSuggestedActions: [
+    "What's trending this season?",
+    'Build a capsule wardrobe',
+    'Outfit for a dinner party',
+  ],
+  partnershipText: null,
+  catalogNav: [
+    { label: 'New Arrivals', value: 'new' },
+    { label: 'Dresses', value: 'dress' },
+    { label: 'Outerwear', value: 'outerwear' },
+    { label: 'Accessories', value: 'accessory' },
+  ],
+  secondaryAdvisorHero: {
+    eyebrow: 'Personal Styling · Made For You',
+    title: 'Tell us the occasion.',
+    titleAccent: "We'll style the look.",
+    description:
+      'Share your occasion, fit preferences, and mood. Our stylist curates a full look — outerwear, accessories, shoes — with alternatives at every price point.',
+    primaryCTA: 'Style Me',
+    secondaryCTA: 'Browse the Collection',
+    chips: [
+      { icon: '👗', title: 'Head-to-toe Looks', desc: 'Every piece works together' },
+      { icon: '🎨', title: 'Color & Fit', desc: 'Shaped around your preferences' },
+      { icon: '💎', title: 'Any Budget', desc: 'Alternatives at every tier' },
+      { icon: '🛍️', title: 'One-Click Shop', desc: 'Add the whole look at once' },
+    ],
+  },
+  defaultSceneSetting: 'lifestyle',
 };
 
 // ─── Wellness ─────────────────────────────────────────────────────
@@ -115,6 +243,20 @@ const WELLNESS: VerticalCopy = {
   priceUnit: '',
   secondaryAdvisorRoute: null,
   chatIcon: '🌿',
+  defaultSuggestedActions: [
+    'Help me sleep better',
+    'Boost my energy',
+    'Recommendations for stress',
+  ],
+  partnershipText: null,
+  catalogNav: [
+    { label: 'Supplements', value: 'supplement' },
+    { label: 'Sleep', value: 'sleep' },
+    { label: 'Energy', value: 'energy' },
+    { label: 'Recovery', value: 'recovery' },
+  ],
+  secondaryAdvisorHero: null,
+  defaultSceneSetting: 'lifestyle',
 };
 
 // ─── CPG / Grocery ───────────────────────────────────────────────
@@ -134,6 +276,20 @@ const CPG: VerticalCopy = {
   priceUnit: '',
   secondaryAdvisorRoute: null,
   chatIcon: '🛒',
+  defaultSuggestedActions: [
+    "What's on sale this week?",
+    'Show me bestsellers',
+    'Plan weekly essentials',
+  ],
+  partnershipText: null,
+  catalogNav: [
+    { label: 'Pantry', value: 'pantry' },
+    { label: 'Beverages', value: 'beverage' },
+    { label: 'Snacks', value: 'snack' },
+    { label: 'Household', value: 'household' },
+  ],
+  secondaryAdvisorHero: null,
+  defaultSceneSetting: 'neutral',
 };
 
 const COPY_BY_VERTICAL: Record<DemoVertical, VerticalCopy> = {

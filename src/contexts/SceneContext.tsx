@@ -3,6 +3,8 @@ import type { SceneState, SceneLayout, SceneSetting, SceneBackground, WelcomeDat
 import type { Product } from '@/types/product';
 import type { UIDirective } from '@/types/agent';
 import { useGenerativeBackground, type BackgroundOptions } from '@/hooks/useGenerativeBackground';
+import { getDemoConfig } from '@/contexts/DemoContext';
+import { getVerticalCopy } from '@/config/verticalCopy';
 
 /** Build BackgroundOptions from a UIDirective's sceneContext payload.
  *  The agent may provide a rich `backgroundPrompt`, or it may provide separate
@@ -53,12 +55,22 @@ function inferSettingFromText(text: string): SceneSetting | null {
   return null;
 }
 
-/** Infer a scene setting from product categories when the agent doesn't provide one. */
+/** Infer a scene setting from product categories when the agent doesn't provide one.
+ *  Falls back to the vertical's default setting (beauty → bathroom, travel → travel, etc.)
+ *  so a non-beauty demo never defaults to a shower/sink background. */
 function inferSettingFromProducts(products: Product[]): SceneSetting {
   const categories = products.map((p) => (p.category || '').toLowerCase());
   const names = products.map((p) => (p.name || '').toLowerCase());
   const all = [...categories, ...names].join(' ');
 
+  // Travel-vertical signals (flight/route/cabin products)
+  if (/flight|airline|airfare|route|cabin|boarding|first.class|business.class|economy|layover|itinerary/i.test(all)) return 'travel';
+  if (/hotel|resort|suite|room|spa|beach|villa|cruise/i.test(all)) return 'lifestyle';
+  // Fashion-vertical signals
+  if (/dress|gown|blouse|skirt|suit|coat|jacket|handbag|shoe|heel|boot|accessory/i.test(all)) return 'lifestyle';
+  // Wellness-vertical signals
+  if (/supplement|vitamin|protein|wellness|recovery|sleep|mindful/i.test(all)) return 'lifestyle';
+  // Beauty-vertical signals (original rules)
   if (/foundation|lipstick|blush|mascara|makeup|palette|vanity/i.test(all)) return 'vanity';
   if (/fragrance|perfume|cologne|eau de|scent|parfum/i.test(all)) return 'bedroom';
   if (/shampoo|conditioner|hair/i.test(all)) return 'bathroom';
@@ -68,7 +80,9 @@ function inferSettingFromProducts(products: Product[]): SceneSetting {
   if (/sun|spf|outdoor|beach|hiking|uv/i.test(all)) return 'outdoor';
   if (/moisturiz|serum|cleanser|skincare|face|eye.cream|toner|mask|bathroom|sink/i.test(all)) return 'bathroom';
   if (/lifestyle/i.test(all)) return 'lifestyle';
-  return 'bathroom'; // default for beauty products
+  // Final fallback — read the vertical's preferred default (bathroom for beauty,
+  // travel for travel, lifestyle for fashion/wellness, neutral for cpg).
+  return getVerticalCopy(getDemoConfig()).defaultSceneSetting;
 }
 
 export type SceneSnapshot = SceneState;

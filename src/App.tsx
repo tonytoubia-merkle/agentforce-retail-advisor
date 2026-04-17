@@ -1,5 +1,5 @@
 import { lazy, useState, useMemo } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SceneProvider } from '@/contexts/SceneContext';
 import { ConversationProvider } from '@/contexts/ConversationContext';
@@ -7,7 +7,7 @@ import { CustomerProvider } from '@/contexts/CustomerContext';
 import { CampaignProvider } from '@/contexts/CampaignContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { StoreProvider } from '@/contexts/StoreContext';
-import { DemoProvider } from '@/contexts/DemoContext';
+import { DemoProvider, useDemo } from '@/contexts/DemoContext';
 import { ActivityToastProvider } from '@/components/ActivityToast';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AdvisorPage } from '@/components/AdvisorPage';
@@ -42,8 +42,16 @@ function AdvisorWrapper() {
  * SkinAdvisorWrapper — wraps AdvisorPage in skin-concierge mode.
  * Uses its own ConversationProvider (with skin concierge agent ID) so history
  * and session are fully isolated from the beauty advisor.
+ *
+ * Gated by `copy.secondaryAdvisorRoute === 'skin'` — a non-beauty demo
+ * (e.g. travel) that deep-links to `/skin-advisor` gets redirected to the
+ * main advisor instead of rendering a beauty-only flow.
  */
 function SkinAdvisorWrapper() {
+  const { copy } = useDemo();
+  if (copy.secondaryAdvisorRoute !== 'skin') {
+    return <Navigate to="/advisor" replace />;
+  }
   const skinAgentId = import.meta.env.VITE_SKIN_ADVISOR_AGENT_ID as string | undefined;
   return (
     <ConversationProvider agentId={skinAgentId}>

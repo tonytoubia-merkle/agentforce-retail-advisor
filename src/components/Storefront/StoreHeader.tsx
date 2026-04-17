@@ -7,18 +7,6 @@ import { useCustomer } from '@/contexts/CustomerContext';
 import { useDemo } from '@/contexts/DemoContext';
 import { ProfileDropdown } from './ProfileDropdown';
 import { MerkuryProfilePicker } from './MerkuryProfilePicker';
-import type { ProductCategory } from '@/types/product';
-
-const CATEGORIES: { label: string; value: ProductCategory }[] = [
-  { label: 'Skincare', value: 'moisturizer' },
-  { label: 'Cleansers', value: 'cleanser' },
-  { label: 'Serums', value: 'serum' },
-  { label: 'Sunscreen', value: 'sunscreen' },
-  { label: 'Makeup', value: 'foundation' },
-  { label: 'Lips', value: 'lipstick' },
-  { label: 'Fragrance', value: 'fragrance' },
-  { label: 'Haircare', value: 'shampoo' },
-];
 
 export const StoreHeader: React.FC = () => {
   const { navigateHome, navigateToCategory, navigateToCart, navigateToAccount, searchQuery, setSearchQuery } = useStore();
@@ -71,13 +59,16 @@ export const StoreHeader: React.FC = () => {
               </div>
             )}
             <span className="text-xl font-semibold tracking-tight text-stone-900">
-              {config.brandName === 'SERENE' ? 'BEAUTÉ' : config.brandName}
+              {/* Legacy golden-template site ships as "SERENE → BEAUTÉ" display branding.
+                  For any custom demo (vertical !== beauty OR different brandName), show the
+                  configured brand name as-is — no more beauty bleed-through. */}
+              {config.id === 'default' && config.brandName === 'SERENE' ? 'BEAUTÉ' : config.brandName}
             </span>
           </button>
 
-          {/* Desktop Navigation */}
+          {/* Desktop Navigation — categories are vertical-aware via verticalCopy. */}
           <nav className="hidden lg:flex items-center gap-5 flex-shrink-0">
-            {CATEGORIES.slice(0, 4).map((cat) => (
+            {copy.catalogNav.slice(0, 4).map((cat) => (
               <button
                 key={cat.value}
                 onClick={() => navigateToCategory(cat.value)}
@@ -213,7 +204,7 @@ export const StoreHeader: React.FC = () => {
             className="lg:hidden border-t border-gray-100 overflow-hidden"
           >
             <nav className="max-w-7xl mx-auto px-4 py-4 space-y-2">
-              {CATEGORIES.map((cat) => (
+              {copy.catalogNav.map((cat) => (
                 <button
                   key={cat.value}
                   onClick={() => {
