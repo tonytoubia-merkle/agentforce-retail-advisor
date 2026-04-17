@@ -190,10 +190,18 @@ export const StorefrontPage: React.FC = () => {
               />
             )}
 
-            {/* Beauty Advisor CTA */}
-            <section className="py-16 bg-gradient-to-br from-rose-50 via-purple-50 to-rose-50">
+            {/* Advisor CTA — background + button use demo theme */}
+            <section
+              className="py-16"
+              style={{
+                background: `linear-gradient(135deg, ${config.theme.accentColor}14, ${config.theme.primaryColor}10, ${config.theme.accentColor}14)`,
+              }}
+            >
               <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
-                <div className="w-16 h-16 mx-auto mb-6 bg-stone-900 rounded-full flex items-center justify-center">
+                <div
+                  className="w-16 h-16 mx-auto mb-6 rounded-full flex items-center justify-center"
+                  style={{ backgroundColor: config.theme.primaryColor }}
+                >
                   <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                   </svg>
@@ -206,7 +214,10 @@ export const StorefrontPage: React.FC = () => {
                 </p>
                 <button
                   onClick={() => navigateToAdvisor()}
-                  className="px-8 py-4 bg-gradient-to-r from-rose-500 to-purple-500 text-white font-medium rounded-full hover:shadow-xl hover:shadow-rose-500/30 transition-all text-lg"
+                  className="px-8 py-4 text-white font-medium rounded-full hover:shadow-xl transition-all text-lg"
+                  style={{
+                    backgroundImage: `linear-gradient(to right, ${config.theme.accentColor}, ${config.theme.primaryColor})`,
+                  }}
                 >
                   {copy.talkToCTA}
                 </button>
@@ -340,7 +351,7 @@ export const StorefrontPage: React.FC = () => {
             <EmailSignup />
 
             {/* Footer */}
-            <footer className="bg-stone-900 text-white py-16">
+            <footer className="text-white py-16" style={{ backgroundColor: config.theme.primaryColor }}>
               <div className="max-w-7xl mx-auto px-4 sm:px-6">
                 <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
                   <div>

@@ -79,6 +79,26 @@ export interface VerticalCopy {
   /** Fallback scene setting when the agent doesn't specify one and product categories
    *  don't match any inference rules. Beauty defaults to 'bathroom'; travel to 'travel' etc. */
   defaultSceneSetting: SceneSetting;
+  /** Storefront hero block — headline, subtitle, CTA, and trust strip.
+   *  `heroImage` is optional; empty string means "render a brand-color gradient
+   *  instead" so non-beauty demos don't ship with a woman-in-face-mask photo. */
+  hero: {
+    badge: string;
+    headlineTop: string;
+    headlineBottom: string;
+    subtitle: string;
+    heroImage: string;
+    imageAlt: string;
+    /** The primary CTA label (Shop Collection / Explore Routes / Shop the Look) */
+    primaryCTA: string;
+    /** Three short pills shown under the CTAs — social proof / brand traits */
+    trustPills: [string, string, string];
+    /** Authenticated greeting prefix — "Your Beauty Edit," / "Your Trip Plan," etc.
+     *  Rendered with the customer's first name on the line below. */
+    authenticatedHeadlineTop: string;
+    /** Authenticated-user subtitle (pre-loyalty suffix) */
+    authenticatedSubtitle: string;
+  };
 }
 
 // ─── Default (beauty) — matches legacy hardcoded copy exactly ───────
@@ -130,6 +150,18 @@ const BEAUTY: VerticalCopy = {
     ],
   },
   defaultSceneSetting: 'bathroom',
+  hero: {
+    badge: 'New Season Collection',
+    headlineTop: 'Discover Your',
+    headlineBottom: 'Perfect Glow',
+    subtitle: 'Curated skincare and beauty essentials, personalized to your unique needs.',
+    heroImage: '/assets/hero/hero-spa-mask.png',
+    imageAlt: 'Luxurious spa treatment',
+    primaryCTA: 'Shop Collection',
+    trustPills: ['50K+ Customers', '4.9 Rating', 'Clean & Cruelty-Free'],
+    authenticatedHeadlineTop: 'Your Beauty Edit,',
+    authenticatedSubtitle: 'Curated skincare and beauty essentials, just for you.',
+  },
 };
 
 // ─── Travel / Hospitality ──────────────────────────────────────────
@@ -177,6 +209,19 @@ const TRAVEL: VerticalCopy = {
     ],
   },
   defaultSceneSetting: 'travel',
+  hero: {
+    badge: 'New Destinations · Business Class',
+    headlineTop: 'Fly Further.',
+    headlineBottom: 'Feel at Home.',
+    subtitle: 'Curated routes, cabin comparisons, and seat-level personalization — planned with you, not at you.',
+    // Empty → brand-gradient fallback (demo can override via config.heroImageUrl)
+    heroImage: '',
+    imageAlt: 'Aircraft cabin',
+    primaryCTA: 'Explore Routes',
+    trustPills: ['200+ Destinations', 'Loyalty Aware', 'Concierge Support'],
+    authenticatedHeadlineTop: 'Your Trip Plan,',
+    authenticatedSubtitle: 'Itineraries tailored to how you fly.',
+  },
 };
 
 // ─── Fashion / Luxury ─────────────────────────────────────────────
@@ -224,6 +269,18 @@ const FASHION: VerticalCopy = {
     ],
   },
   defaultSceneSetting: 'lifestyle',
+  hero: {
+    badge: 'The Collection',
+    headlineTop: 'Dress With',
+    headlineBottom: 'Intention.',
+    subtitle: "Curated looks tailored to your style, occasion, and wardrobe — edited by a stylist who knows your closet.",
+    heroImage: '',
+    imageAlt: 'Curated fashion editorial',
+    primaryCTA: 'Shop the Collection',
+    trustPills: ['Head-to-Toe Styling', 'Free Alterations', 'Complimentary Returns'],
+    authenticatedHeadlineTop: 'Your Style Edit,',
+    authenticatedSubtitle: 'Looks curated to your fit and occasions.',
+  },
 };
 
 // ─── Wellness ─────────────────────────────────────────────────────
@@ -257,6 +314,18 @@ const WELLNESS: VerticalCopy = {
   ],
   secondaryAdvisorHero: null,
   defaultSceneSetting: 'lifestyle',
+  hero: {
+    badge: 'Feel Better. Daily.',
+    headlineTop: 'A Routine',
+    headlineBottom: 'That Works.',
+    subtitle: 'Evidence-based supplements and wellness essentials, personalized to your goals.',
+    heroImage: '',
+    imageAlt: 'Wellness routine',
+    primaryCTA: 'Shop Wellness',
+    trustPills: ['Third-Party Tested', 'Transparent Labels', 'Easy Returns'],
+    authenticatedHeadlineTop: 'Your Routine,',
+    authenticatedSubtitle: 'Tailored to how you feel today.',
+  },
 };
 
 // ─── CPG / Grocery ───────────────────────────────────────────────
@@ -290,6 +359,18 @@ const CPG: VerticalCopy = {
   ],
   secondaryAdvisorHero: null,
   defaultSceneSetting: 'neutral',
+  hero: {
+    badge: 'This Week',
+    headlineTop: 'Stocked With',
+    headlineBottom: 'Care.',
+    subtitle: 'Everyday essentials and this-week favorites — smarter suggestions, fewer trips.',
+    heroImage: '',
+    imageAlt: 'Curated everyday essentials',
+    primaryCTA: 'Start Shopping',
+    trustPills: ['Free Pickup', 'Weekly Deals', 'Same-Day Delivery'],
+    authenticatedHeadlineTop: 'Your Basket,',
+    authenticatedSubtitle: 'The usuals, ready when you are.',
+  },
 };
 
 const COPY_BY_VERTICAL: Record<DemoVertical, VerticalCopy> = {

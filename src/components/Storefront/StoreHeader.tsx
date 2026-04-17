@@ -29,8 +29,11 @@ export const StoreHeader: React.FC = () => {
   return (
     <>
     <header className="sticky top-0 z-40 bg-white border-b border-gray-100">
-      {/* Top bar - promo */}
-      <div className="bg-stone-900 text-white text-center py-2 text-xs tracking-wide">
+      {/* Top bar - promo; background = demo primary color */}
+      <div
+        className="text-white text-center py-2 text-xs tracking-wide"
+        style={{ backgroundColor: config.theme.primaryColor }}
+      >
         {isPseudonymous && isKnown && customer?.name && (
           <span className="hidden sm:inline">Welcome back, {customer.name.split(' ')[0]} · </span>
         )}
@@ -113,10 +116,13 @@ export const StoreHeader: React.FC = () => {
               )}
             </AnimatePresence>
 
-            {/* Beauty Advisor button - desktop; text hidden at lg, shown at xl */}
+            {/* Advisor button — gradient uses demo accent → primary for brand awareness */}
             <button
               onClick={onBeautyAdvisorClick}
-              className="hidden sm:flex items-center gap-2 px-2.5 xl:px-3 py-1.5 bg-gradient-to-r from-rose-500 to-purple-500 text-white text-sm font-medium rounded-full hover:shadow-lg hover:shadow-rose-500/25 transition-all"
+              className="hidden sm:flex items-center gap-2 px-2.5 xl:px-3 py-1.5 text-white text-sm font-medium rounded-full hover:shadow-lg transition-all"
+              style={{
+                backgroundImage: `linear-gradient(to right, ${config.theme.accentColor}, ${config.theme.primaryColor})`,
+              }}
             >
               <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -157,7 +163,8 @@ export const StoreHeader: React.FC = () => {
             {showSignInButton && (
               <button
                 onClick={signIn}
-                className="hidden sm:block px-3 py-1.5 text-sm font-medium bg-stone-900 text-white rounded-full hover:bg-stone-800 transition-colors"
+                className="hidden sm:block px-3 py-1.5 text-sm font-medium text-white rounded-full hover:opacity-90 transition-opacity"
+                style={{ backgroundColor: config.theme.primaryColor }}
               >
                 Sign In
               </button>

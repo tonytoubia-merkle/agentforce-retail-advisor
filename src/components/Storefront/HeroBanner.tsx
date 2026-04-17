@@ -5,6 +5,7 @@ import type { CustomerProfile } from '@/types/customer';
 import type { CampaignAttribution } from '@/types/campaign';
 import { useCampaign } from '@/contexts/CampaignContext';
 import { useDemo } from '@/contexts/DemoContext';
+import type { VerticalCopy } from '@/config/verticalCopy';
 import { isPersonalizationConfigured, getHeroCampaignDecision, type PersonalizationDecision } from '@/services/personalization';
 
 interface HeroBannerProps {
@@ -12,16 +13,6 @@ interface HeroBannerProps {
   customer?: CustomerProfile | null;
   isAuthenticated?: boolean;
 }
-
-// Hero image mapping for personalization scenarios
-const HERO_IMAGES = {
-  authenticated: '/assets/hero/hero-glowing-skin.png',      // Known + signed in → radiant glow
-  pseudonymous: '/assets/hero/hero-face-wash.png',          // Known + not signed in → fresh start
-  cleanBeauty: '/assets/hero/hero-clean-botanicals.png',    // 3P clean/natural interests
-  luxury: '/assets/hero/hero-luxury-textures.png',          // 3P luxury/premium interests
-  wellness: '/assets/hero/hero-wellness-lifestyle.png',     // 3P wellness/fitness interests
-  default: '/assets/hero/hero-spa-mask.png',                // Anonymous → aspirational spa
-};
 
 interface HeroVariant {
   badge: string;
@@ -35,13 +26,19 @@ interface HeroVariant {
 }
 
 /**
- * Local hero variant — only authenticated greeting + generic default.
+ * Variant resolution — only authenticated greeting + generic default.
+ * All copy comes from verticalCopy.hero so travel / fashion / wellness /
+ * cpg demos render their own headlines instead of beauty defaults.
  * All campaign/segment/interest personalization is driven by:
  *   1. Personalization_Variation__c (API-created, resolved in personalization service)
  *   2. SF Personalization SDK decisions (Hero_Banner point)
- * No more hardcoded interest-based or campaign-theme-based variants.
  */
-function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boolean, _campaign?: CampaignAttribution | null): HeroVariant {
+function getHeroVariant(
+  copy: VerticalCopy,
+  customer?: CustomerProfile | null,
+  isAuthenticated?: boolean,
+  _campaign?: CampaignAttribution | null,
+): HeroVariant {
   const tier = customer?.merkuryIdentity?.identityTier;
   const firstName = customer?.name?.split(' ')[0];
 
@@ -52,25 +49,25 @@ function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boo
       : null;
     return {
       badge: 'For You',
-      headlineTop: `Your Beauty Edit,`,
+      headlineTop: copy.hero.authenticatedHeadlineTop,
       headlineBottom: firstName,
       subtitle: loyaltyLine
-        ? `Curated picks for you. ${loyaltyLine}.`
-        : 'Curated skincare and beauty essentials, just for you.',
-      heroImage: HERO_IMAGES.authenticated,
-      imageAlt: 'Radiant glowing skin',
+        ? `${copy.hero.authenticatedSubtitle.replace(/\.$/, '')}. ${loyaltyLine}.`
+        : copy.hero.authenticatedSubtitle,
+      heroImage: copy.hero.heroImage,
+      imageAlt: copy.hero.imageAlt,
       source: 'authenticated' as const,
     };
   }
 
-  // Everyone else: default. SF Personalization + custom variations override this.
+  // Everyone else: vertical default. SF Personalization + custom variations override.
   return {
-    badge: 'New Season Collection',
-    headlineTop: 'Discover Your',
-    headlineBottom: 'Perfect Glow',
-    subtitle: 'Curated skincare and beauty essentials, personalized to your unique needs.',
-    heroImage: HERO_IMAGES.default,
-    imageAlt: 'Luxurious spa treatment',
+    badge: copy.hero.badge,
+    headlineTop: copy.hero.headlineTop,
+    headlineBottom: copy.hero.headlineBottom,
+    subtitle: copy.hero.subtitle,
+    heroImage: copy.hero.heroImage,
+    imageAlt: copy.hero.imageAlt,
     source: 'default' as const,
   };
 }
@@ -78,14 +75,11 @@ function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boo
 export const HeroBanner: React.FC<HeroBannerProps> = ({ onShopNow, customer, isAuthenticated }) => {
   const [sfpDecision, setSfpDecision] = useState<PersonalizationDecision | null>(null);
   const { campaign } = useCampaign();
-  const { copy } = useDemo();
+  const { config, copy } = useDemo();
   const navigate = useNavigate();
-  const onBeautyAdvisor = useCallback(() => navigate('/advisor'), [navigate]);
+  const onAdvisor = useCallback(() => navigate('/advisor'), [navigate]);
 
-  // Try SF Personalization campaign decision when customer changes.
-  // Only adopt the decision if it carries at least one meaningful display field —
-  // an empty-but-structurally-valid response (e.g. campaignId set, display fields blank)
-  // should NOT override the local campaign/identity-driven variant.
+  // SF Personalization hero decision — only adopt when it carries meaningful display fields.
   useEffect(() => {
     if (!isPersonalizationConfigured()) return;
     getHeroCampaignDecision().then((d) => {
@@ -95,12 +89,8 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onShopNow, customer, isA
     });
   }, [customer]);
 
-  // Priority: campaign/identity/appended variants (local) > SF Personalization > default.
-  // SF Personalization only overrides when the local logic has no specific context
-  // (i.e. source === 'default'). Campaign-driven and identity-driven variants are
-  // more specific than a generic SF Personalization decision.
   const variant = useMemo(() => {
-    const localVariant = getHeroVariant(customer, isAuthenticated, campaign);
+    const localVariant = getHeroVariant(copy, customer, isAuthenticated, campaign);
     if (sfpDecision && localVariant.source === 'default') {
       return {
         ...localVariant,
@@ -113,15 +103,20 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onShopNow, customer, isA
       };
     }
     return localVariant;
-  }, [sfpDecision, customer, isAuthenticated, campaign]);
+  }, [sfpDecision, copy, customer, isAuthenticated, campaign]);
+
+  // When verticalCopy.hero.heroImage is empty, render a branded gradient using
+  // the demo's theme primary/accent colors instead of a beauty stock photo.
+  const useImageFallback = !variant.heroImage;
+  const primaryColor = config.theme.primaryColor;
+  const accentColor = config.theme.accentColor;
 
   return (
     <section className="relative overflow-hidden bg-stone-50 min-h-[420px] lg:min-h-[520px]">
-      {/* Full-width layout: image right, text left */}
       <div className="relative max-w-7xl mx-auto h-full">
         <div className="grid lg:grid-cols-5 items-stretch min-h-[420px] lg:min-h-[520px]">
 
-          {/* Text content — 3 columns */}
+          {/* Text content */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -143,13 +138,17 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onShopNow, customer, isA
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={onShopNow}
-                className="px-7 py-3 bg-stone-900 text-white text-sm font-medium tracking-wide rounded-full hover:bg-stone-800 transition-colors"
+                className="px-7 py-3 text-white text-sm font-medium tracking-wide rounded-full hover:opacity-90 transition-opacity"
+                style={{ backgroundColor: primaryColor }}
               >
-                Shop Collection
+                {copy.hero.primaryCTA}
               </button>
               <button
-                onClick={onBeautyAdvisor}
-                className="group px-7 py-3 text-stone-700 text-sm font-medium tracking-wide rounded-full border border-stone-300 hover:border-stone-900 hover:text-stone-900 transition-all flex items-center gap-2"
+                onClick={onAdvisor}
+                className="group px-7 py-3 text-stone-700 text-sm font-medium tracking-wide rounded-full border border-stone-300 hover:text-stone-900 transition-all flex items-center gap-2"
+                style={{ borderColor: undefined }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = primaryColor)}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = '')}
               >
                 <svg className="w-4 h-4 opacity-60 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -158,17 +157,17 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onShopNow, customer, isA
               </button>
             </div>
 
-            {/* Minimal trust strip */}
+            {/* Trust strip — vertical-aware */}
             <div className="flex items-center gap-5 mt-10 text-xs text-stone-400 tracking-wide">
-              <span>50K+ Customers</span>
+              <span>{copy.hero.trustPills[0]}</span>
               <span className="text-stone-300">|</span>
-              <span>4.9 Rating</span>
+              <span>{copy.hero.trustPills[1]}</span>
               <span className="text-stone-300">|</span>
-              <span>Clean &amp; Cruelty-Free</span>
+              <span>{copy.hero.trustPills[2]}</span>
             </div>
           </motion.div>
 
-          {/* Hero image — absolutely positioned, breaks out of column to the left */}
+          {/* Hero image or brand-gradient fallback */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -177,11 +176,37 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onShopNow, customer, isA
             style={{ width: '58%' }}
           >
             <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-stone-50/80 to-transparent z-[5] pointer-events-none" />
-            <img
-              src={variant.heroImage}
-              alt={variant.imageAlt}
-              className="w-full h-full object-cover object-[25%_15%] drop-shadow-md"
-            />
+            {useImageFallback ? (
+              <div
+                className="w-full h-full relative overflow-hidden"
+                style={{
+                  background: `linear-gradient(135deg, ${primaryColor} 0%, ${accentColor} 100%)`,
+                }}
+                aria-label={variant.imageAlt}
+              >
+                {/* Soft editorial glow blobs for depth */}
+                <div
+                  className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full opacity-30 blur-3xl"
+                  style={{ background: accentColor }}
+                />
+                <div
+                  className="absolute bottom-1/4 left-1/4 w-72 h-72 rounded-full opacity-20 blur-3xl"
+                  style={{ background: primaryColor }}
+                />
+                {/* Large brand mark watermark */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-white/10 font-extralight tracking-tight text-[10rem] leading-none select-none">
+                    {(config.brandName || '')[0]?.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <img
+                src={variant.heroImage}
+                alt={variant.imageAlt}
+                className="w-full h-full object-cover object-[25%_15%] drop-shadow-md"
+              />
+            )}
           </motion.div>
         </div>
       </div>
