@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import type { CustomerProfile } from '@/types/customer';
 import type { CampaignAttribution } from '@/types/campaign';
 import { useCampaign } from '@/contexts/CampaignContext';
+import { useDemo } from '@/contexts/DemoContext';
 import { isPersonalizationConfigured, getHeroCampaignDecision, type PersonalizationDecision } from '@/services/personalization';
 
 interface HeroBannerProps {
@@ -77,6 +78,7 @@ function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boo
 export const HeroBanner: React.FC<HeroBannerProps> = ({ onShopNow, customer, isAuthenticated }) => {
   const [sfpDecision, setSfpDecision] = useState<PersonalizationDecision | null>(null);
   const { campaign } = useCampaign();
+  const { copy } = useDemo();
   const navigate = useNavigate();
   const onBeautyAdvisor = useCallback(() => navigate('/advisor'), [navigate]);
 
@@ -152,7 +154,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onShopNow, customer, isA
                 <svg className="w-4 h-4 opacity-60 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                 </svg>
-                Beauty Advisor
+                {copy.advisorName}
               </button>
             </div>
 

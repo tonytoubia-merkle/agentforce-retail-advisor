@@ -1,6 +1,6 @@
 // ─── Demo Builder Types ─────────────────────────────────────────────
 
-export type DemoVertical = 'beauty' | 'fashion' | 'wellness' | 'cpg';
+export type DemoVertical = 'beauty' | 'fashion' | 'travel' | 'wellness' | 'cpg';
 export type DemoStatus = 'draft' | 'deploying' | 'live' | 'archived' | 'error';
 export type ImageProvider = 'imagen' | 'firefly' | 'cms-only' | 'none';
 

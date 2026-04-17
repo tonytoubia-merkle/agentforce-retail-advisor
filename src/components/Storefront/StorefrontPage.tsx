@@ -17,12 +17,14 @@ import { useStore } from '@/contexts/StoreContext';
 import { useCustomer } from '@/contexts/CustomerContext';
 import { useBrowseTracking } from '@/hooks/useBrowseTracking';
 import { useProducts } from '@/contexts/ProductContext';
+import { useDemo } from '@/contexts/DemoContext';
 import type { Product, ProductCategory } from '@/types/product';
 
 export const StorefrontPage: React.FC = () => {
   const { products, loading: productsLoading } = useProducts();
   const { view, selectedCategory, selectedProduct, navigateHome, navigateToCategory } = useStore();
   const { customer, isAuthenticated } = useCustomer();
+  const { copy } = useDemo();
   const navigate = useNavigate();
   const navigateToAdvisor = useCallback(() => navigate('/advisor'), [navigate]);
   const navigateToSkinAdvisor = useCallback(() => navigate('/skin-advisor'), [navigate]);
@@ -229,14 +231,13 @@ export const StorefrontPage: React.FC = () => {
                   Not sure what to get?
                 </h2>
                 <p className="text-lg text-stone-600 mb-8 max-w-2xl mx-auto">
-                  Our AI-powered Beauty Advisor provides personalized recommendations based on your unique skin type,
-                  concerns, and preferences.
+                  {copy.advisorDescription}
                 </p>
                 <button
                   onClick={() => navigateToAdvisor()}
                   className="px-8 py-4 bg-gradient-to-r from-rose-500 to-purple-500 text-white font-medium rounded-full hover:shadow-xl hover:shadow-rose-500/30 transition-all text-lg"
                 >
-                  Talk to Beauty Advisor
+                  {copy.talkToCTA}
                 </button>
               </div>
             </section>

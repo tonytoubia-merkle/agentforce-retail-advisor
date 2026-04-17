@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
 import { useCustomer } from '@/contexts/CustomerContext';
+import { useDemo } from '@/contexts/DemoContext';
 import { ProfileDropdown } from './ProfileDropdown';
 import { MerkuryProfilePicker } from './MerkuryProfilePicker';
 import type { ProductCategory } from '@/types/product';
@@ -25,6 +26,7 @@ export const StoreHeader: React.FC = () => {
   const onBeautyAdvisorClick = useCallback(() => navigate('/advisor'), [navigate]);
   const { itemCount } = useCart();
   const { isAuthenticated, customer, signIn } = useCustomer();
+  const { config, copy } = useDemo();
   const [showSearch, setShowSearch] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
@@ -49,7 +51,7 @@ export const StoreHeader: React.FC = () => {
           onClick={onBeautyAdvisorClick}
           className="underline hover:text-rose-300 transition-colors font-medium"
         >
-          Try our AI Beauty Advisor
+          Try our AI {copy.advisorName}
         </button>
       </div>
 
@@ -61,11 +63,15 @@ export const StoreHeader: React.FC = () => {
             onClick={navigateHome}
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
-            <div className="w-8 h-8 rounded-full bg-stone-900 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">B</span>
-            </div>
+            {config.logoUrl ? (
+              <img src={config.logoUrl} alt={config.brandName} className="h-8 w-auto object-contain" />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-stone-900 flex items-center justify-center">
+                <span className="text-white font-bold text-sm">{(config.brandName || 'B')[0].toUpperCase()}</span>
+              </div>
+            )}
             <span className="text-xl font-semibold tracking-tight text-stone-900">
-              BEAUTÉ
+              {config.brandName === 'SERENE' ? 'BEAUTÉ' : config.brandName}
             </span>
           </button>
 
@@ -124,7 +130,7 @@ export const StoreHeader: React.FC = () => {
               <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
               </svg>
-              <span className="hidden xl:inline">Beauty Advisor</span>
+              <span className="hidden xl:inline">{copy.advisorName}</span>
             </button>
 
             {/* Cart */}
@@ -226,7 +232,7 @@ export const StoreHeader: React.FC = () => {
                 }}
                 className="block w-full text-left px-4 py-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors font-medium"
               >
-                Talk to Beauty Advisor
+                {copy.talkToCTA}
               </button>
             </nav>
           </motion.div>
