@@ -213,8 +213,9 @@ const TRAVEL: VerticalCopy = {
     headlineBottom: 'is the right way.',
     subtitle:
       "Itineraries composed by people who've flown the route. Cabins paired with how you actually sleep. Seats mapped before you pay a cent.",
-    heroImage: '',
-    imageAlt: 'Empty aisle of a widebody cabin at golden hour',
+    heroImage:
+      'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1600&q=80',
+    imageAlt: 'Aircraft wing above cloud layer at golden hour',
     primaryCTA: 'Begin the Itinerary',
     trustPills: ['Open in 78 Countries', 'Human Concierge, 24h', 'IATA Member'],
     authenticatedHeadlineTop: 'The next journey,',
@@ -280,8 +281,9 @@ const FASHION: VerticalCopy = {
     headlineBottom: 'that keep their word.',
     subtitle:
       'Made once. Fitted forever. The stylist knows your closet; the rest is rhythm.',
-    heroImage: '',
-    imageAlt: 'Editorial still life of a tailored coat on stone',
+    heroImage:
+      'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1600&q=80',
+    imageAlt: 'Fashion editorial — tailored silhouette, soft studio light',
     primaryCTA: 'Open the Collection',
     trustPills: ['Made to Be Worn Out', 'Altered Free, For Life', 'Thirty-Day Returns'],
     authenticatedHeadlineTop: 'The next wear,',
@@ -333,8 +335,9 @@ const WELLNESS: VerticalCopy = {
     headlineBottom: 'repeatable.',
     subtitle:
       'Evidence-graded formulations and the quiet habits that surround them. No detox. No three-a.m. anxiety emails.',
-    heroImage: '',
-    imageAlt: 'Still life of amber bottles on warm stone',
+    heroImage:
+      'https://images.unsplash.com/photo-1519824145371-296894a0daa9?auto=format&fit=crop&w=1600&q=80',
+    imageAlt: 'Amber apothecary bottles on warm stone',
     primaryCTA: 'Begin the Practice',
     trustPills: ['USP-Verified', 'Third-Party Tested', 'No Affiliate Ingredients'],
     authenticatedHeadlineTop: 'Your practice,',
@@ -386,8 +389,9 @@ const CPG: VerticalCopy = {
     headlineBottom: 'the easy way.',
     subtitle:
       "A short list of pantry staples picked by cooks you'd actually eat dinner with. New favorites weekly, at the door by six.",
-    heroImage: '',
-    imageAlt: 'Still life of olive oil, bread, and citrus on linen',
+    heroImage:
+      'https://images.unsplash.com/photo-1506368249639-73a05d6f6488?auto=format&fit=crop&w=1600&q=80',
+    imageAlt: 'Olive oil, bread, and herbs — weeknight pantry still life',
     primaryCTA: 'Shop the List',
     trustPills: ['Cold-Chain Verified', 'Same-Day by 6 PM', "Beats the Store You're At"],
     authenticatedHeadlineTop: 'Your basket,',
