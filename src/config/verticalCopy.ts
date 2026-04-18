@@ -1,14 +1,17 @@
 /**
  * Vertical-specific copy and labels.
  *
- * The retail-advisor was originally hardcoded for beauty. This module
- * centralizes all brand-domain-specific strings so they can be swapped
- * based on the demo's vertical (beauty, travel, fashion, etc).
+ * Each vertical is written with a distinct voice — beauty leans couture
+ * French, travel leans old-world grand-tour, fashion is Italian/Japanese
+ * restraint, wellness is Scandinavian-reverent, CPG is farmers-market
+ * warmth. Don't blend the voices; each vertical should feel like it came
+ * from a different agency.
  *
- * Components should import `getVerticalCopy(config)` and read labels
- * from it instead of hardcoding strings. The default (beauty) keys
- * match the legacy copy so the existing agentforce-retail-advisor.vercel.app
- * deployment looks identical when `DEFAULT_CONFIG` is used.
+ * Components that render vertical-aware UI should import
+ * `getVerticalCopy(config)` and read labels from it. Default (beauty)
+ * keys preserve exact legacy text so the existing
+ * agentforce-retail-advisor.vercel.app deployment is unchanged when the
+ * DEFAULT_CONFIG golden template is active.
  */
 import type { DemoConfig, DemoVertical } from '@/types/demo';
 import type { SceneSetting } from '@/types/scene';
@@ -20,15 +23,15 @@ export interface CatalogNavItem {
 }
 
 export interface SecondaryAdvisorHero {
-  /** Small uppercase eyebrow above the title (e.g. "AI-Powered · Free · No Account Needed"). */
+  /** Small uppercase eyebrow above the title. */
   eyebrow: string;
-  /** First line of the big headline (e.g. "Know your skin."). */
+  /** First line of the big headline. */
   title: string;
-  /** Second line of the headline, styled with gradient accent (e.g. "Build your routine."). */
+  /** Second line of the headline, styled with gradient accent. */
   titleAccent: string;
   /** Paragraph below the title. */
   description: string;
-  /** Primary CTA button label (e.g. "Analyze My Skin"). */
+  /** Primary CTA button label. */
   primaryCTA: string;
   /** Secondary CTA button label. */
   secondaryCTA: string;
@@ -36,52 +39,34 @@ export interface SecondaryAdvisorHero {
   chips: Array<{ icon: string; title: string; desc: string }>;
 }
 
+/** Which display font the hero headline leans on.
+ *  - `cormorant`: elegant wide-serif, high contrast (beauty, fashion)
+ *  - `fraunces`: warm characterful serif (travel, wellness, cpg)
+ *  - `sans`: Inter fallback (default)
+ *
+ *  The Google Fonts @link lives in index.html; HeroBanner picks the
+ *  CSS family string based on this key. */
+export type HeroDisplayFont = 'cormorant' | 'fraunces' | 'sans';
+
 export interface VerticalCopy {
-  /** Name of the AI advisor for this vertical (e.g. "Beauty Advisor", "Travel Assistant") */
   advisorName: string;
-  /** Short descriptor shown below the advisor name */
   advisorSubtitle: string;
-  /** Verb for main CTA — "Shop Now", "Book Now", "Explore" */
   primaryCTA: string;
-  /** Verb for secondary CTA — "Talk to Beauty Advisor", "Chat with Travel Expert" */
   talkToCTA: string;
-  /** Label for the first nav link — "Products", "Flights" */
   catalogLabel: string;
-  /** Noun for catalog items — "product", "flight", "style" */
   itemNoun: string;
-  /** Plural — "products", "flights" */
   itemNounPlural: string;
-  /** Welcome message hint — "What are you looking for?" / "Where would you like to go?" */
   welcomePrompt: string;
-  /** Hero tagline default if demo.brandTagline is empty */
   heroDefaultTagline: string;
-  /** Intro paragraph for advisor callout */
   advisorDescription: string;
-  /** Currency/unit hint — empty for beauty, " one-way" for flights */
   priceUnit: string;
-  /** Which secondary advisor experience exists (skin analysis / booking / stylist / none). */
   secondaryAdvisorRoute?: 'skin' | 'booking' | 'stylist' | null;
-  /** Emoji/icon for chat button */
   chatIcon: string;
-  /** 3 quick-action suggestions shown as chips when the chat opens. Vertical-aware
-   *  so a travel demo doesn't prompt the visitor with "Show me moisturizers". */
   defaultSuggestedActions: string[];
-  /** "Powered by X" text shown in the secondary advisor modal header.
-   *  null = hide the attribution line entirely (use when no partnership exists for this vertical). */
   partnershipText: string | null;
-  /** Category navigation shown in the StoreHeader for this vertical.
-   *  Values must match whatever strings the demo's seeded products use in `product.category`. */
   catalogNav: CatalogNavItem[];
-  /** Structured hero block promoting the secondary advisor experience on the storefront.
-   *  Renders the skin-analysis hero for beauty; booking concierge for travel; etc.
-   *  null = hide the hero section entirely. */
   secondaryAdvisorHero: SecondaryAdvisorHero | null;
-  /** Fallback scene setting when the agent doesn't specify one and product categories
-   *  don't match any inference rules. Beauty defaults to 'bathroom'; travel to 'travel' etc. */
   defaultSceneSetting: SceneSetting;
-  /** Storefront hero block — headline, subtitle, CTA, and trust strip.
-   *  `heroImage` is optional; empty string means "render a brand-color gradient
-   *  instead" so non-beauty demos don't ship with a woman-in-face-mask photo. */
   hero: {
     badge: string;
     headlineTop: string;
@@ -89,19 +74,24 @@ export interface VerticalCopy {
     subtitle: string;
     heroImage: string;
     imageAlt: string;
-    /** The primary CTA label (Shop Collection / Explore Routes / Shop the Look) */
     primaryCTA: string;
-    /** Three short pills shown under the CTAs — social proof / brand traits */
     trustPills: [string, string, string];
-    /** Authenticated greeting prefix — "Your Beauty Edit," / "Your Trip Plan," etc.
-     *  Rendered with the customer's first name on the line below. */
     authenticatedHeadlineTop: string;
-    /** Authenticated-user subtitle (pre-loyalty suffix) */
     authenticatedSubtitle: string;
+    /** Which editorial font the headline uses. */
+    displayFont: HeroDisplayFont;
+    /** Glyph between trust pills ('·' / '—' / '/' / '|'). */
+    trustSeparator: string;
+    /** Small editorial mark shown in the no-image fallback (e.g. "No. 07 · 2026"). */
+    editorialMark: string;
   };
 }
 
-// ─── Default (beauty) — matches legacy hardcoded copy exactly ───────
+// ─── Default (beauty) — Maison de Beauté voice ────────────────────
+//
+// Reference: Maison Lancôme, Augustinus Bader's restraint, a French
+// beauty editor who rolls her eyes at glow-up language. Whispered,
+// confident, done with a straight face.
 
 const BEAUTY: VerticalCopy = {
   advisorName: 'Beauty Advisor',
@@ -135,241 +125,276 @@ const BEAUTY: VerticalCopy = {
     { label: 'Haircare', value: 'shampoo' },
   ],
   secondaryAdvisorHero: {
-    eyebrow: 'AI-Powered · Free · No Account Needed',
-    title: 'Know your skin.',
-    titleAccent: 'Build your routine.',
+    eyebrow: 'Fifteen years of skin science · Now in conversation',
+    title: 'Your skin,',
+    titleAccent: 'attended to.',
     description:
-      "Take a 30-second selfie analysis or answer a few questions. Our Skin Concierge identifies your skin type, flags your top concerns, and recommends a complete routine — then shows you exactly where to buy each product.",
-    primaryCTA: 'Analyze My Skin',
-    secondaryCTA: 'Answer Questions Instead',
+      'Thirty seconds with our camera — or a few questions if you prefer. Our Concierge reads fifteen concerns, scores them, and composes a routine your skin recognizes. Then shows you where every bottle is sold, in store or online.',
+    primaryCTA: 'Begin the Analysis',
+    secondaryCTA: 'Talk it Through',
     chips: [
-      { icon: '🔬', title: '15 Skin Concerns', desc: 'Scored and ranked by severity' },
-      { icon: '🧴', title: 'Routine Builder', desc: 'Morning + evening, complete' },
-      { icon: '📍', title: 'Where to Buy', desc: 'In-store & online retailers' },
-      { icon: '🔒', title: '100% Private', desc: 'Photos never leave your device' },
+      { icon: '🔬', title: '15 Concerns, Scored', desc: 'Ranked by severity, not marketing' },
+      { icon: '🧴', title: 'A Real Routine', desc: 'Morning + evening, nothing extra' },
+      { icon: '📍', title: 'Sold Everywhere', desc: 'Find each bottle near you' },
+      { icon: '🔒', title: 'Photos Stay Yours', desc: 'Nothing ever leaves your device' },
     ],
   },
   defaultSceneSetting: 'bathroom',
   hero: {
-    badge: 'New Season Collection',
-    headlineTop: 'Discover Your',
-    headlineBottom: 'Perfect Glow',
-    subtitle: 'Curated skincare and beauty essentials, personalized to your unique needs.',
+    badge: 'Maison de Beauté · Autumn 2026',
+    headlineTop: 'Skin,',
+    headlineBottom: 'attended to.',
+    subtitle:
+      'Small-batch skincare edited by dermatologists and worn by no one who needs convincing. Quiet rituals, loud results.',
     heroImage: '/assets/hero/hero-spa-mask.png',
-    imageAlt: 'Luxurious spa treatment',
-    primaryCTA: 'Shop Collection',
-    trustPills: ['50K+ Customers', '4.9 Rating', 'Clean & Cruelty-Free'],
-    authenticatedHeadlineTop: 'Your Beauty Edit,',
-    authenticatedSubtitle: 'Curated skincare and beauty essentials, just for you.',
+    imageAlt: 'Editorial close-up of porcelain skin',
+    primaryCTA: 'Enter the Atelier',
+    trustPills: ['Made in Grasse', 'Vogue Editor 2025', 'Concierge Included'],
+    authenticatedHeadlineTop: 'Your ritual,',
+    authenticatedSubtitle: 'Re-edited as your skin changes.',
+    displayFont: 'cormorant',
+    trustSeparator: '·',
+    editorialMark: 'Nº 07 · 2026',
   },
 };
 
-// ─── Travel / Hospitality ──────────────────────────────────────────
+// ─── Travel / Hospitality — grand-tour voice ──────────────────────
+//
+// Reference: old Pan Am timetables, modern private-aviation decks,
+// Monocle's travel section. Slow cadence, trust in craft, the idea
+// that a journey deserves a little ceremony.
 
 const TRAVEL: VerticalCopy = {
   advisorName: 'Travel Assistant',
   advisorSubtitle: 'Your Personal Travel Concierge',
   primaryCTA: 'Book Now',
   talkToCTA: 'Chat with Travel Assistant',
-  catalogLabel: 'Flights',
+  catalogLabel: 'Journeys',
   itemNoun: 'flight',
   itemNounPlural: 'flights',
   welcomePrompt: 'Where would you like to go?',
-  heroDefaultTagline: 'Elevate Your Journey',
+  heroDefaultTagline: 'Journeys, Composed',
   advisorDescription:
-    'Our AI-powered Travel Assistant helps you find the perfect flights, compare cabin classes, and plan seamless trips tailored to your preferences.',
+    'Our concierge composes an itinerary from the trip you describe. Routes chosen for how you actually fly. Cabins paired with your loyalty tier. Seats mapped before you pay.',
   priceUnit: '',
   secondaryAdvisorRoute: 'booking',
   chatIcon: '✈️',
   defaultSuggestedActions: [
-    'Flights to Tokyo next month',
-    'Compare business-class options',
-    'Plan a beach getaway',
+    'A long weekend in Lisbon',
+    'Compare business-class to Tokyo',
+    'Somewhere warm in February',
   ],
   partnershipText: null,
   catalogNav: [
     { label: 'Routes', value: 'route' },
-    { label: 'Cabin Classes', value: 'cabin' },
+    { label: 'Cabins', value: 'cabin' },
     { label: 'Deals', value: 'deal' },
-    { label: 'Packages', value: 'package' },
+    { label: 'Journeys', value: 'package' },
   ],
   secondaryAdvisorHero: {
-    eyebrow: 'AI-Powered · Personalized Trip Planning',
-    title: 'Tell us where.',
-    titleAccent: 'We handle the rest.',
+    eyebrow: 'Concierge · Never Scripted',
+    title: 'Tell us a story.',
+    titleAccent: 'We book the chapters.',
     description:
-      "Describe the trip you have in mind and our concierge builds a full itinerary — flights, cabin class, dates, seat maps — in seconds. Compare routes, hold seats, and book when you're ready.",
-    primaryCTA: 'Plan My Trip',
-    secondaryCTA: 'Browse Destinations',
+      "Describe the trip you hope for — the weather, the pace, the meal you'd remember. Our concierge returns an itinerary that fits. Routes chosen for your sleep schedule. Cabins paired with your loyalty tier. Seats mapped before you pay.",
+    primaryCTA: 'Begin the Itinerary',
+    secondaryCTA: 'Browse the Atlas',
     chips: [
-      { icon: '🌍', title: '200+ Destinations', desc: 'Global route network' },
-      { icon: '✈️', title: 'Cabin Compare', desc: 'Business · Premium · Economy' },
-      { icon: '💺', title: 'Seat Selection', desc: 'Pick before you pay' },
-      { icon: '🎁', title: 'Loyalty Aware', desc: 'Upgrade eligibility built-in' },
+      { icon: '🌍', title: 'Two Hundred Ports', desc: 'Global partners, one roster' },
+      { icon: '✈️', title: 'Cabin, Compared', desc: 'First, Business, Premium · side-by-side' },
+      { icon: '💺', title: 'Your Seat, Held', desc: 'Mapped and held before payment' },
+      { icon: '🎁', title: 'Upgrade, Aware', desc: 'Loyalty tier understood, always' },
     ],
   },
   defaultSceneSetting: 'travel',
   hero: {
-    badge: 'New Destinations · Business Class',
-    headlineTop: 'Fly Further.',
-    headlineBottom: 'Feel at Home.',
-    subtitle: 'Curated routes, cabin comparisons, and seat-level personalization — planned with you, not at you.',
-    // Empty → brand-gradient fallback (demo can override via config.heroImageUrl)
+    badge: 'Private Aviation · Open in 78 Countries',
+    headlineTop: 'The long way',
+    headlineBottom: 'is the right way.',
+    subtitle:
+      "Itineraries composed by people who've flown the route. Cabins paired with how you actually sleep. Seats mapped before you pay a cent.",
     heroImage: '',
-    imageAlt: 'Aircraft cabin',
-    primaryCTA: 'Explore Routes',
-    trustPills: ['200+ Destinations', 'Loyalty Aware', 'Concierge Support'],
-    authenticatedHeadlineTop: 'Your Trip Plan,',
-    authenticatedSubtitle: 'Itineraries tailored to how you fly.',
+    imageAlt: 'Empty aisle of a widebody cabin at golden hour',
+    primaryCTA: 'Begin the Itinerary',
+    trustPills: ['Open in 78 Countries', 'Human Concierge, 24h', 'IATA Member'],
+    authenticatedHeadlineTop: 'The next journey,',
+    authenticatedSubtitle: 'Held for you.',
+    displayFont: 'fraunces',
+    trustSeparator: '—',
+    editorialMark: 'Voyage 014',
   },
 };
 
-// ─── Fashion / Luxury ─────────────────────────────────────────────
+// ─── Fashion / Luxury — Italian/Japanese restraint ────────────────
+//
+// Reference: The Row, Margiela, Aesop's copywriting. Austere, confident,
+// declarative. No exclamation points. No "curated for you." The clothes
+// are the subject; we speak about them, not at the reader.
 
 const FASHION: VerticalCopy = {
   advisorName: 'Style Advisor',
-  advisorSubtitle: 'Your Personal Stylist',
-  primaryCTA: 'Shop the Collection',
-  talkToCTA: 'Chat with Style Advisor',
+  advisorSubtitle: 'Personal Stylist',
+  primaryCTA: 'Open the Collection',
+  talkToCTA: 'Speak with a Stylist',
   catalogLabel: 'Collection',
-  itemNoun: 'style',
-  itemNounPlural: 'styles',
-  welcomePrompt: 'What style moment are we creating?',
-  heroDefaultTagline: 'Your Personal Style Advisor',
+  itemNoun: 'piece',
+  itemNounPlural: 'pieces',
+  welcomePrompt: 'What are we dressing for?',
+  heroDefaultTagline: 'Clothes That Keep Their Word',
   advisorDescription:
-    'Our AI-powered Style Advisor curates looks tailored to your personal style, occasions, and wardrobe.',
+    'The stylist reads the room — the temperature, the dress code, the mood — and returns a full look. Outerwear to earrings. Alternatives at every price. Alterations included, always.',
   priceUnit: '',
   secondaryAdvisorRoute: 'stylist',
   chatIcon: '👗',
   defaultSuggestedActions: [
-    "What's trending this season?",
-    'Build a capsule wardrobe',
-    'Outfit for a dinner party',
+    'A winter capsule',
+    'What to wear to a spring wedding',
+    'Build a travel wardrobe',
   ],
   partnershipText: null,
   catalogNav: [
     { label: 'New Arrivals', value: 'new' },
-    { label: 'Dresses', value: 'dress' },
+    { label: 'Ready-to-Wear', value: 'dress' },
     { label: 'Outerwear', value: 'outerwear' },
     { label: 'Accessories', value: 'accessory' },
   ],
   secondaryAdvisorHero: {
-    eyebrow: 'Personal Styling · Made For You',
-    title: 'Tell us the occasion.',
-    titleAccent: "We'll style the look.",
+    eyebrow: 'Personal Styling · Included',
+    title: 'Name',
+    titleAccent: 'the occasion.',
     description:
-      'Share your occasion, fit preferences, and mood. Our stylist curates a full look — outerwear, accessories, shoes — with alternatives at every price point.',
-    primaryCTA: 'Style Me',
-    secondaryCTA: 'Browse the Collection',
+      'Your stylist reads the room — the temperature, the dress code, the mood — and returns a full look. Outerwear to earrings. Alternatives at every price. Alterations included, always.',
+    primaryCTA: 'Style the Moment',
+    secondaryCTA: 'Walk the Collection',
     chips: [
-      { icon: '👗', title: 'Head-to-toe Looks', desc: 'Every piece works together' },
-      { icon: '🎨', title: 'Color & Fit', desc: 'Shaped around your preferences' },
-      { icon: '💎', title: 'Any Budget', desc: 'Alternatives at every tier' },
-      { icon: '🛍️', title: 'One-Click Shop', desc: 'Add the whole look at once' },
+      { icon: '👗', title: 'Head-to-Toe Looks', desc: 'Every piece in conversation' },
+      { icon: '🎨', title: 'Shaped to Your Line', desc: 'Fit, drape, rise — all yours' },
+      { icon: '💎', title: 'Price, Your Decision', desc: 'Alternatives at every tier' },
+      { icon: '🛍️', title: 'Add the Whole Look', desc: 'One click, every layer' },
     ],
   },
   defaultSceneSetting: 'lifestyle',
   hero: {
-    badge: 'The Collection',
-    headlineTop: 'Dress With',
-    headlineBottom: 'Intention.',
-    subtitle: "Curated looks tailored to your style, occasion, and wardrobe — edited by a stylist who knows your closet.",
+    badge: 'Collection 07',
+    headlineTop: 'Clothes',
+    headlineBottom: 'that keep their word.',
+    subtitle:
+      'Made once. Fitted forever. The stylist knows your closet; the rest is rhythm.',
     heroImage: '',
-    imageAlt: 'Curated fashion editorial',
-    primaryCTA: 'Shop the Collection',
-    trustPills: ['Head-to-Toe Styling', 'Free Alterations', 'Complimentary Returns'],
-    authenticatedHeadlineTop: 'Your Style Edit,',
-    authenticatedSubtitle: 'Looks curated to your fit and occasions.',
+    imageAlt: 'Editorial still life of a tailored coat on stone',
+    primaryCTA: 'Open the Collection',
+    trustPills: ['Made to Be Worn Out', 'Altered Free, For Life', 'Thirty-Day Returns'],
+    authenticatedHeadlineTop: 'The next wear,',
+    authenticatedSubtitle: 'Cut to your line.',
+    displayFont: 'cormorant',
+    trustSeparator: '/',
+    editorialMark: 'S/S 26',
   },
 };
 
-// ─── Wellness ─────────────────────────────────────────────────────
+// ─── Wellness — Scandinavian-Japanese reverence ───────────────────
+//
+// Reference: Aesop, Ilia, Japanese functional apothecary. No detox
+// language. No miracle words. Evidence-first, quiet, respectful of
+// the reader's time. A practice, not a purchase.
 
 const WELLNESS: VerticalCopy = {
   advisorName: 'Wellness Advisor',
-  advisorSubtitle: 'Your Personal Wellness Partner',
-  primaryCTA: 'Shop Wellness',
-  talkToCTA: 'Talk to Wellness Advisor',
-  catalogLabel: 'Products',
-  itemNoun: 'product',
-  itemNounPlural: 'products',
-  welcomePrompt: 'How can we support your wellness journey?',
-  heroDefaultTagline: 'Your Daily Wellness Partner',
+  advisorSubtitle: 'A Quieter Routine',
+  primaryCTA: 'Begin the Practice',
+  talkToCTA: 'Speak with an Advisor',
+  catalogLabel: 'The Practice',
+  itemNoun: 'formulation',
+  itemNounPlural: 'formulations',
+  welcomePrompt: 'Where would you like to feel different?',
+  heroDefaultTagline: 'Small, Slow, Repeatable',
   advisorDescription:
-    'Our AI-powered Wellness Advisor recommends supplements and products tailored to your goals.',
+    'Evidence-graded formulations chosen for the goal you describe — sleep, energy, focus, recovery. No stack trees. No detox language. Just the habit, built around your day.',
   priceUnit: '',
   secondaryAdvisorRoute: null,
   chatIcon: '🌿',
   defaultSuggestedActions: [
     'Help me sleep better',
-    'Boost my energy',
-    'Recommendations for stress',
+    "I'm tired most afternoons",
+    'Support for a stressful month',
   ],
   partnershipText: null,
   catalogNav: [
-    { label: 'Supplements', value: 'supplement' },
-    { label: 'Sleep', value: 'sleep' },
-    { label: 'Energy', value: 'energy' },
+    { label: 'Foundations', value: 'supplement' },
+    { label: 'Rest', value: 'sleep' },
+    { label: 'Steady Energy', value: 'energy' },
     { label: 'Recovery', value: 'recovery' },
   ],
   secondaryAdvisorHero: null,
   defaultSceneSetting: 'lifestyle',
   hero: {
-    badge: 'Feel Better. Daily.',
-    headlineTop: 'A Routine',
-    headlineBottom: 'That Works.',
-    subtitle: 'Evidence-based supplements and wellness essentials, personalized to your goals.',
+    badge: 'Daily Practice',
+    headlineTop: 'Small, slow,',
+    headlineBottom: 'repeatable.',
+    subtitle:
+      'Evidence-graded formulations and the quiet habits that surround them. No detox. No three-a.m. anxiety emails.',
     heroImage: '',
-    imageAlt: 'Wellness routine',
-    primaryCTA: 'Shop Wellness',
-    trustPills: ['Third-Party Tested', 'Transparent Labels', 'Easy Returns'],
-    authenticatedHeadlineTop: 'Your Routine,',
-    authenticatedSubtitle: 'Tailored to how you feel today.',
+    imageAlt: 'Still life of amber bottles on warm stone',
+    primaryCTA: 'Begin the Practice',
+    trustPills: ['USP-Verified', 'Third-Party Tested', 'No Affiliate Ingredients'],
+    authenticatedHeadlineTop: 'Your practice,',
+    authenticatedSubtitle: 'Returning to shape.',
+    displayFont: 'fraunces',
+    trustSeparator: '·',
+    editorialMark: 'Vol. II',
   },
 };
 
-// ─── CPG / Grocery ───────────────────────────────────────────────
+// ─── CPG / Grocery — farmers-market honesty ───────────────────────
+//
+// Reference: Union Square Greenmarket, a chef's weeknight dinner
+// voice, Bon Appétit copy. Warm, specific, not cute. Speaks like it
+// knows what dinner is on Tuesday.
 
 const CPG: VerticalCopy = {
-  advisorName: 'Product Advisor',
-  advisorSubtitle: 'Your Shopping Assistant',
-  primaryCTA: 'Add to Cart',
-  talkToCTA: 'Chat with Advisor',
-  catalogLabel: 'Products',
-  itemNoun: 'product',
-  itemNounPlural: 'products',
-  welcomePrompt: 'What are you shopping for?',
-  heroDefaultTagline: 'Everyday Essentials, Elevated',
+  advisorName: 'Pantry Advisor',
+  advisorSubtitle: 'Stock the Good Stuff',
+  primaryCTA: 'Shop the List',
+  talkToCTA: 'Ask the Pantry Advisor',
+  catalogLabel: 'The List',
+  itemNoun: 'staple',
+  itemNounPlural: 'staples',
+  welcomePrompt: "What's for dinner this week?",
+  heroDefaultTagline: 'The Good Stuff, The Easy Way',
   advisorDescription:
-    'Our AI-powered Advisor helps you discover products for any occasion.',
+    'A short list of pantry staples selected by cooks you would actually eat dinner with. Replenish the weeknight basics; discover one new favorite a week.',
   priceUnit: '',
   secondaryAdvisorRoute: null,
   chatIcon: '🛒',
   defaultSuggestedActions: [
-    "What's on sale this week?",
-    'Show me bestsellers',
-    'Plan weekly essentials',
+    'Plan three weeknight dinners',
+    'Restock the pantry basics',
+    "What's new in olive oil?",
   ],
   partnershipText: null,
   catalogNav: [
     { label: 'Pantry', value: 'pantry' },
-    { label: 'Beverages', value: 'beverage' },
+    { label: 'Fridge', value: 'beverage' },
     { label: 'Snacks', value: 'snack' },
-    { label: 'Household', value: 'household' },
+    { label: 'Home', value: 'household' },
   ],
   secondaryAdvisorHero: null,
   defaultSceneSetting: 'neutral',
   hero: {
-    badge: 'This Week',
-    headlineTop: 'Stocked With',
-    headlineBottom: 'Care.',
-    subtitle: 'Everyday essentials and this-week favorites — smarter suggestions, fewer trips.',
+    badge: "This Week's List",
+    headlineTop: 'The good stuff,',
+    headlineBottom: 'the easy way.',
+    subtitle:
+      "A short list of pantry staples picked by cooks you'd actually eat dinner with. New favorites weekly, at the door by six.",
     heroImage: '',
-    imageAlt: 'Curated everyday essentials',
-    primaryCTA: 'Start Shopping',
-    trustPills: ['Free Pickup', 'Weekly Deals', 'Same-Day Delivery'],
-    authenticatedHeadlineTop: 'Your Basket,',
-    authenticatedSubtitle: 'The usuals, ready when you are.',
+    imageAlt: 'Still life of olive oil, bread, and citrus on linen',
+    primaryCTA: 'Shop the List',
+    trustPills: ['Cold-Chain Verified', 'Same-Day by 6 PM', "Beats the Store You're At"],
+    authenticatedHeadlineTop: 'Your basket,',
+    authenticatedSubtitle: 'Already thinking of Tuesday.',
+    displayFont: 'fraunces',
+    trustSeparator: '·',
+    editorialMark: 'Wk 47',
   },
 };
 
@@ -387,4 +412,17 @@ const COPY_BY_VERTICAL: Record<DemoVertical, VerticalCopy> = {
  */
 export function getVerticalCopy(config: Pick<DemoConfig, 'vertical'>): VerticalCopy {
   return COPY_BY_VERTICAL[config.vertical] || BEAUTY;
+}
+
+/** Resolve a HeroDisplayFont key to a CSS font-family stack. */
+export function displayFontStack(font: HeroDisplayFont): string {
+  switch (font) {
+    case 'cormorant':
+      return "'Cormorant Garamond', 'Playfair Display', Georgia, serif";
+    case 'fraunces':
+      return "'Fraunces', 'Georgia', serif";
+    case 'sans':
+    default:
+      return "'Inter', system-ui, sans-serif";
+  }
 }
