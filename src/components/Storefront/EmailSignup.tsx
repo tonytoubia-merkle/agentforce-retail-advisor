@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCustomer } from '@/contexts/CustomerContext';
+import { useDemo } from '@/contexts/DemoContext';
 
 export const EmailSignup: React.FC = () => {
   const { createGuestContact } = useCustomer();
+  const { config, copy } = useDemo();
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
@@ -25,13 +27,18 @@ export const EmailSignup: React.FC = () => {
   };
 
   return (
-    <section className="py-16 bg-gradient-to-br from-stone-100 to-rose-50">
+    <section
+      className="py-16"
+      style={{
+        background: `linear-gradient(135deg, ${config.theme.primaryColor}08, ${config.theme.accentColor}0F)`,
+      }}
+    >
       <div className="max-w-xl mx-auto px-4 sm:px-6 text-center">
         <h3 className="text-2xl font-medium text-stone-900 mb-2">
-          Stay in the know
+          {copy.emailSignup.headline}
         </h3>
         <p className="text-stone-500 mb-6">
-          Get beauty tips, new arrivals, and exclusive offers delivered to your inbox.
+          {copy.emailSignup.body}
         </p>
 
         <AnimatePresence mode="wait">
@@ -59,12 +66,16 @@ export const EmailSignup: React.FC = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
                 required
-                className="flex-1 px-4 py-3 border border-stone-200 rounded-full focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent bg-white text-sm"
+                className="flex-1 px-4 py-3 border border-stone-200 rounded-full focus:outline-none focus:border-transparent bg-white text-sm"
+                style={{ boxShadow: 'none' }}
+                onFocus={(e) => (e.currentTarget.style.boxShadow = `0 0 0 2px ${config.theme.accentColor}`)}
+                onBlur={(e) => (e.currentTarget.style.boxShadow = 'none')}
               />
               <button
                 type="submit"
                 disabled={status === 'loading'}
-                className="px-6 py-3 bg-stone-900 text-white text-sm font-medium rounded-full hover:bg-stone-800 transition-colors disabled:opacity-50 whitespace-nowrap"
+                className="px-6 py-3 text-white text-sm font-medium rounded-full hover:opacity-90 transition-opacity disabled:opacity-50 whitespace-nowrap"
+                style={{ backgroundColor: config.theme.primaryColor }}
               >
                 {status === 'loading' ? 'Subscribing...' : 'Subscribe'}
               </button>

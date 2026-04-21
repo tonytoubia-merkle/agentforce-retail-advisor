@@ -85,6 +85,20 @@ export interface VerticalCopy {
     /** Small editorial mark shown in the no-image fallback (e.g. "No. 07 · 2026"). */
     editorialMark: string;
   };
+  /** Copy for the newsletter block that renders on every storefront home.
+   *  Non-beauty demos shouldn't be promising "beauty tips". */
+  emailSignup: {
+    headline: string;
+    body: string;
+  };
+  /** Brand tagline line shown at the bottom of the exit-intent overlay.
+   *  Keep short — appears under the offer in the dismissable modal. */
+  exitIntentBrandLine: string;
+  /** When true, the in-store appointment-booking route is valid for this
+   *  vertical (beauty = Skincare Consultation / Makeup Application / etc.).
+   *  When false, the /appointment view renders a "not available" block so
+   *  a stray link doesn't expose beauty-specific copy. */
+  appointmentsEnabled: boolean;
 }
 
 // ─── Default (beauty) — Maison de Beauté voice ────────────────────
@@ -156,6 +170,12 @@ const BEAUTY: VerticalCopy = {
     trustSeparator: '·',
     editorialMark: 'Nº 07 · 2026',
   },
+  emailSignup: {
+    headline: 'Stay in the know',
+    body: 'Beauty edits, new arrivals, and the occasional exclusive — delivered with care, never daily.',
+  },
+  exitIntentBrandLine: 'BEAUTÉ — Personalized beauty, just for you',
+  appointmentsEnabled: true,
 };
 
 // ─── Travel / Hospitality — grand-tour voice ──────────────────────
@@ -224,6 +244,12 @@ const TRAVEL: VerticalCopy = {
     trustSeparator: '—',
     editorialMark: 'Voyage 014',
   },
+  emailSignup: {
+    headline: 'Where next?',
+    body: "Cabin seats, route openings, and the quieter corners of the atlas — a dispatch every few weeks, no more.",
+  },
+  exitIntentBrandLine: 'Private aviation · human concierge · always',
+  appointmentsEnabled: false,
 };
 
 // ─── Fashion / Luxury — Italian/Japanese restraint ────────────────
@@ -292,6 +318,12 @@ const FASHION: VerticalCopy = {
     trustSeparator: '/',
     editorialMark: 'S/S 26',
   },
+  emailSignup: {
+    headline: 'First Look',
+    body: "New arrivals, waitlist drops, and the occasional tailor's note. Sent when there is something worth saying.",
+  },
+  exitIntentBrandLine: 'Made to be worn out — altered free, for life',
+  appointmentsEnabled: true,
 };
 
 // ─── Wellness — Scandinavian-Japanese reverence ───────────────────
@@ -346,6 +378,12 @@ const WELLNESS: VerticalCopy = {
     trustSeparator: '·',
     editorialMark: 'Vol. II',
   },
+  emailSignup: {
+    headline: 'Small notes, quarterly',
+    body: 'Evidence-graded recommendations and a few habits worth building. Four emails a year. No discount theater.',
+  },
+  exitIntentBrandLine: 'Third-party tested — habits over hype',
+  appointmentsEnabled: false,
 };
 
 // ─── CPG / Grocery — farmers-market honesty ───────────────────────
@@ -400,6 +438,12 @@ const CPG: VerticalCopy = {
     trustSeparator: '·',
     editorialMark: 'Wk 47',
   },
+  emailSignup: {
+    headline: 'The weekly list',
+    body: "What's new, what's on sale, and one good recipe from someone who actually cooks. Wednesday mornings only.",
+  },
+  exitIntentBrandLine: 'Same-day by 6 PM — cold-chain verified',
+  appointmentsEnabled: false,
 };
 
 const COPY_BY_VERTICAL: Record<DemoVertical, VerticalCopy> = {

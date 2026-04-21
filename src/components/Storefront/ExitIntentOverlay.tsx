@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useExitIntent } from '@/hooks/useExitIntent';
 import { useCampaign } from '@/contexts/CampaignContext';
+import { useDemo } from '@/contexts/DemoContext';
 import { getUtmFromDataLayer } from '@/services/merkury/dataLayer';
 import {
   isPersonalizationConfigured,
@@ -12,60 +13,63 @@ import type { ExitIntentDecision } from '@/services/personalization';
 import type { CampaignAttribution } from '@/types/campaign';
 
 const FALLBACK_DECISION: ExitIntentDecision = {
-  headline: "Wait! Here's a special offer",
-  bodyText: "Get 10% off your first order when you shop today.",
-  discountCode: 'BEAUTE10',
+  headline: "Wait — here's a small something",
+  bodyText: "Take 10% off your first order when you buy today.",
+  discountCode: 'WELCOME10',
   discountPercent: 10,
   ctaText: 'Claim My Discount',
 };
 
-/** UTM source → exit intent decision map — mirrors what SF Personalization targeting rules would return. */
+/** UTM source → exit intent decision map. Kept vertical-neutral so travel /
+ *  fashion / wellness / CPG demos don't see "beauty inspo" copy. The CTA
+ *  button label uses generic action verbs ("Complete the Purchase") so it
+ *  reads right regardless of what's being sold. */
 const SOURCE_DECISIONS: Record<string, ExitIntentDecision> = {
   instagram: {
-    headline: "Loved what you saw on Instagram?",
-    bodyText: "Get 15% off the looks from our Instagram collection \u2014 today only.",
+    headline: "Saw us on Instagram?",
+    bodyText: "15% off what you came here to see — today only.",
     discountCode: 'INSTA15',
     discountPercent: 15,
-    ctaText: 'Shop the Insta Edit',
+    ctaText: 'Use My Discount',
   },
   tiktok: {
-    headline: "Going viral for a reason",
-    bodyText: "The products TikTok can\u2019t stop talking about \u2014 now 15% off.",
+    headline: "The one TikTok sent you to.",
+    bodyText: "15% off the arrival that earned the algorithm's attention.",
     discountCode: 'TIKTOK15',
     discountPercent: 15,
-    ctaText: 'Get the TikTok Faves',
+    ctaText: 'Use My Discount',
   },
   google: {
-    headline: "Found exactly what you need?",
-    bodyText: "Complete your search with 10% off your first order today.",
+    headline: "Found what you were looking for?",
+    bodyText: "Finish the search with 10% off your first order.",
     discountCode: 'SEARCH10',
     discountPercent: 10,
-    ctaText: 'Claim Your Discount',
+    ctaText: 'Claim My Discount',
   },
   youtube: {
-    headline: "Seen it on YouTube?",
-    bodyText: "Get the products your favorite creators swear by \u2014 15% off.",
+    headline: "Seen us on YouTube?",
+    bodyText: "15% off the pick your favorite creator recommended.",
     discountCode: 'YOUTUBE15',
     discountPercent: 15,
-    ctaText: 'Shop Creator Picks',
+    ctaText: 'Claim the Offer',
   },
   pinterest: {
-    headline: "From your Pinterest board to your door",
-    bodyText: "The beauty inspo you pinned is 10% off right now.",
+    headline: "From your board, to your door.",
+    bodyText: "What you pinned is 10% off right now.",
     discountCode: 'PIN10',
     discountPercent: 10,
-    ctaText: 'Shop Your Pins',
+    ctaText: 'Redeem 10% Off',
   },
   hulu: {
     headline: "Back from the break?",
-    bodyText: "The beauty essentials from our Hulu spot \u2014 15% off today.",
+    bodyText: "15% off what our Hulu spot was pointing you toward.",
     discountCode: 'STREAM15',
     discountPercent: 15,
-    ctaText: 'Shop the Collection',
+    ctaText: 'Claim 15% Off',
   },
   email: {
-    headline: "Welcome back, VIP",
-    bodyText: "As a subscriber, enjoy an exclusive 20% off your next order.",
+    headline: "Welcome back.",
+    bodyText: "As a subscriber, 20% off your next order — just this once.",
     discountCode: 'VIP20',
     discountPercent: 20,
     ctaText: 'Redeem My Offer',
@@ -86,6 +90,7 @@ function getUtmSourceDecision(campaign: CampaignAttribution | null): ExitIntentD
 export const ExitIntentOverlay: React.FC = () => {
   const { triggered, dismiss } = useExitIntent();
   const { campaign } = useCampaign();
+  const { copy } = useDemo();
   const [decision, setDecision] = useState<ExitIntentDecision | null>(null);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -246,10 +251,10 @@ export const ExitIntentOverlay: React.FC = () => {
               </button>
             </div>
 
-            {/* Bottom brand line */}
+            {/* Bottom brand line — vertical-aware */}
             <div className="px-8 py-3 bg-stone-50 border-t border-stone-100 text-center">
               <p className="text-xs text-stone-400">
-                BEAUT&Eacute; &mdash; Personalized beauty, just for you
+                {copy.exitIntentBrandLine}
               </p>
             </div>
           </motion.div>
