@@ -13,6 +13,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AdvisorPage } from '@/components/AdvisorPage';
 import { StorefrontPage } from '@/components/Storefront';
 import { MediaWallPage } from '@/components/MediaWall';
+import { LeadScoreBadge } from '@/components/MerkuryLeadScore/LeadScoreBadge';
 import { ProductProvider } from '@/contexts/ProductContext';
 import { resolveUTMToCampaign } from '@/mocks/adCreatives';
 import { setPersonalizationCampaign } from '@/services/personalization';
@@ -106,6 +107,9 @@ function AppShell() {
           <SceneProvider>
             <ActivityToastProvider>
               <AnimatedRoutes />
+              {/* Floating Merkury lead-score badge — self-gates on
+                  featureFlags.leadScoreCard, renders null otherwise. */}
+              <LeadScoreBadge />
             </ActivityToastProvider>
           </SceneProvider>
         </StoreProvider>

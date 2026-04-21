@@ -25,6 +25,10 @@ interface CustomerContextValue {
   createGuestContact: (data: { email: string; firstName?: string; lastName?: string; merkuryId?: string }) => Promise<{ contactId: string; accountId: string } | null>;
   refreshProfile: () => Promise<void>;
   resetPersonaSession: (personaId: string) => void;
+  /** Demo-legible loyalty enrollment — flips the current customer's loyalty
+   *  state on client-side (Bronze tier, 500-point welcome bonus). Consumed
+   *  by the cart's Loyalty Enroll prompt. No CRM write; purely for demo flow. */
+  enrollInLoyalty: () => void;
   /** @internal Used by ConversationContext to detect refresh vs switch. */
   _isRefreshRef: React.MutableRefObject<boolean>;
   /** @internal Register callback for session reset notifications. */
@@ -502,11 +506,35 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return result;
   }, [selectPersona]);
 
+  /** Demo-legible loyalty enrollment — flips the current customer's loyalty
+   *  state on the client. Marks refreshRef so ConversationContext doesn't
+   *  treat this as a persona switch and blow away the conversation. */
+  const enrollInLoyalty = useCallback(() => {
+    setCustomer((prev) => {
+      if (!prev) return prev;
+      if (prev.loyalty) return prev;
+      isRefreshRef.current = true;
+      return {
+        ...prev,
+        loyalty: {
+          tier: 'bronze',
+          pointsBalance: 500,
+          lifetimePoints: 500,
+          memberSince: new Date().toISOString().split('T')[0],
+          rewardsAvailable: [],
+        },
+      };
+    });
+    // Clear the refresh flag on the next tick so legitimate persona changes
+    // still fire conversation resets.
+    setTimeout(() => { isRefreshRef.current = false; }, 0);
+  }, []);
+
   return (
     <CustomerContext.Provider value={{
       customer, selectedPersonaId, isAuthenticated, isLoading, isResolving, error,
       selectPersona, signIn, signOut, identifyByEmail, registerContact, createGuestContact,
-      refreshProfile, resetPersonaSession,
+      refreshProfile, resetPersonaSession, enrollInLoyalty,
       _isRefreshRef: isRefreshRef, _onSessionReset: onSessionReset,
     }}>
       {children}

@@ -88,6 +88,33 @@ export interface ProductAttributes extends BeautyAttributes {
   travel?: TravelAttributes;
   fashion?: FashionAttributes;
   wellness?: WellnessAttributes;
+
+  /** Optional "optimize my cart" upgrade path. When the cart contains this
+   *  product at a quantity >= replacesQuantity, the Cart Optimizer widget
+   *  surfaces a single-click swap to the larger pack for +priceDelta more.
+   *  Seeded at the demo-product level; reusable across verticals (variety
+   *  pack for CPG snacks, multi-pack for beauty, bundle of lessons, etc.) */
+  bundleUpgrade?: {
+    /** Display label for the upgrade target (e.g. "15-pack · Variety Bag"). */
+    label: string;
+    /** Additional cost vs. the individual items already in the cart. */
+    priceDelta: number;
+    /** Minimum quantity of this line item that triggers the optimizer. */
+    replacesQuantity: number;
+    /** Short reason surfaced under the label (e.g. "Save $4.50 per unit"). */
+    rationale?: string;
+  };
+
+  /** Dietary / preference flags — reusable across verticals. Populated by
+   *  seeds (CPG snacks: vegan/glutenFree/nutFree; wellness: sugarFree). */
+  dietary?: {
+    vegan?: boolean;
+    glutenFree?: boolean;
+    sugarFree?: boolean;
+    nutFree?: boolean;
+    dairyFree?: boolean;
+    organic?: boolean;
+  };
 }
 
 export interface ProductRetailer {

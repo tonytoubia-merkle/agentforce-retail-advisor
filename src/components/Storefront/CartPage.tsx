@@ -2,6 +2,9 @@ import { motion } from 'framer-motion';
 import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
 import { ProductImage } from './ProductImage';
+import { FrequentlyBoughtCard } from './CartEnhancements/FrequentlyBoughtCard';
+import { BundleOptimizerCard } from './CartEnhancements/BundleOptimizerCard';
+import { LoyaltyEnrollCard } from './CartEnhancements/LoyaltyEnrollCard';
 
 export const CartPage: React.FC = () => {
   const { navigateToCheckout, navigateToProduct, navigateHome } = useStore();
@@ -37,8 +40,16 @@ export const CartPage: React.FC = () => {
             </div>
           ) : (
             <div className="grid lg:grid-cols-3 gap-8">
-              {/* Cart items */}
-              <div className="lg:col-span-2 space-y-4">
+              {/* Cart items + enhancement widgets */}
+              <div className="lg:col-span-2">
+                {/* Vertical-neutral reusable widgets — each self-gates on
+                    its own feature flag + data availability, so verticals
+                    that don't enable them render no extra markup. */}
+                <FrequentlyBoughtCard />
+                <BundleOptimizerCard />
+                <LoyaltyEnrollCard />
+
+                <div className="space-y-4">
                 {items.map((item, index) => (
                   <motion.div
                     key={item.product.id}
@@ -128,6 +139,7 @@ export const CartPage: React.FC = () => {
                   </svg>
                   Continue Shopping
                 </button>
+                </div>
               </div>
 
               {/* Order summary */}
