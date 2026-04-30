@@ -554,11 +554,11 @@ export const CheckoutPage: React.FC = () => {
                 <div className="space-y-4 mb-6">
                   {items.map((item) => (
                     <div key={item.product.id} className="flex gap-3">
-                      <div className="w-16 h-16 bg-stone-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <div className="w-12 h-12 bg-stone-50 rounded-lg flex items-center justify-center flex-shrink-0">
                         <ProductImage
                           src={item.product.imageUrl}
                           alt={item.product.name}
-                          className="max-w-full max-h-full object-contain p-1"
+                          className="max-w-full max-h-full object-contain p-2"
                         />
                       </div>
                       <div className="flex-1 min-w-0">

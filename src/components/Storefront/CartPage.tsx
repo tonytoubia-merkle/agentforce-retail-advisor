@@ -62,12 +62,12 @@ export const CartPage: React.FC = () => {
                       {/* Product image */}
                       <button
                         onClick={() => navigateToProduct(item.product)}
-                        className="w-24 h-24 sm:w-32 sm:h-32 bg-stone-50 rounded-xl flex-shrink-0 flex items-center justify-center hover:bg-stone-100 transition-colors"
+                        className="w-20 h-20 sm:w-24 sm:h-24 bg-stone-50 rounded-xl flex-shrink-0 flex items-center justify-center hover:bg-stone-100 transition-colors"
                       >
                         <ProductImage
                           src={item.product.imageUrl}
                           alt={item.product.name}
-                          className="max-w-full max-h-full object-contain p-2"
+                          className="max-w-full max-h-full object-contain p-3"
                         />
                       </button>
 

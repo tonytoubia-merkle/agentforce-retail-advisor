@@ -27,7 +27,7 @@ export const ProductHero: React.FC<ProductHeroProps> = ({ product }) => {
           <img
             src={product.imageUrl}
             alt={product.name}
-            className="w-full h-full relative z-10 object-contain product-blend"
+            className="w-full h-full relative z-10 object-contain product-blend p-6"
           />
         </div>
         {product.personalizationScore && product.personalizationScore > 0.8 && (

@@ -57,7 +57,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <img
           src={product.imageUrl}
           alt={product.name}
-          className="w-full h-full object-contain product-blend p-2"
+          className="w-full h-full object-contain product-blend p-4"
         />
         {badge && (
           <Badge className={`absolute top-1.5 left-1.5 ${badge.cls} text-[9px] px-1.5 py-0.5`}>

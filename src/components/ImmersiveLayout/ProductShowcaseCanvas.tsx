@@ -114,7 +114,7 @@ export const ProductShowcaseCanvas: React.FC<ProductShowcaseCanvasProps> = ({ pr
                   : 'bg-white/5 border-white/10 hover:border-white/20'
               }`}
             >
-              <div className="aspect-square relative bg-black/20 flex items-center justify-center p-8">
+              <div className="aspect-square relative bg-black/20 flex items-center justify-center p-12">
                 <img
                   src={product.imageUrl}
                   alt={product.name}
@@ -188,7 +188,7 @@ const SingleProductHero: React.FC<{ product: Product; title?: string }> = ({ pro
           <img
             src={product.imageUrl}
             alt={product.name}
-            className="relative w-full h-full object-contain drop-shadow-2xl product-blend"
+            className="relative w-full h-full object-contain drop-shadow-2xl product-blend p-12"
           />
         </motion.div>
 

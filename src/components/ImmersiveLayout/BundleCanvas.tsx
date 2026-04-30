@@ -93,7 +93,7 @@ export const BundleCanvas: React.FC<BundleCanvasProps> = ({ products }) => {
                 <img
                   src={product.imageUrl}
                   alt={product.name}
-                  className="w-28 h-28 md:w-36 md:h-36 object-contain drop-shadow-2xl product-blend"
+                  className="w-20 h-20 md:w-24 md:h-24 object-contain drop-shadow-2xl product-blend"
                 />
                 {/* Pulsing hotspot marker */}
                 <div className="absolute -top-2 -right-2 flex items-center justify-center">

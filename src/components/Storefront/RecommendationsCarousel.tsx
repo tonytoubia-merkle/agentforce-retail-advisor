@@ -139,7 +139,7 @@ export const RecommendationsCarousel: React.FC<Props> = ({ products: catalog }) 
                     <img
                       src={imgSrc}
                       alt={product.name || 'Product'}
-                      className="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform"
+                      className="w-full h-full object-contain p-6 group-hover:scale-105 transition-transform"
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = 'none';
                       }}

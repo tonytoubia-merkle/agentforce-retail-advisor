@@ -57,7 +57,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product })
             animate={{ opacity: 1, x: 0 }}
             className="relative"
           >
-            <div className="sticky top-24 bg-gradient-to-br from-stone-50 to-rose-50/50 rounded-3xl p-8 aspect-square flex items-center justify-center">
+            <div className="sticky top-24 bg-gradient-to-br from-stone-50 to-rose-50/50 rounded-3xl p-16 aspect-square flex items-center justify-center">
               <ProductImage
                 src={product.imageUrl}
                 alt={product.name}

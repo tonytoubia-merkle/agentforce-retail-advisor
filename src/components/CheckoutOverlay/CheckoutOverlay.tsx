@@ -83,7 +83,7 @@ export const CheckoutOverlay: React.FC = () => {
                   <img
                     src={product.imageUrl}
                     alt={product.name}
-                    className="w-16 h-16 rounded-lg object-cover"
+                    className="w-12 h-12 rounded-lg object-cover"
                   />
                   <div className="flex-1">
                     <p className="font-medium text-gray-900">{product.name}</p>

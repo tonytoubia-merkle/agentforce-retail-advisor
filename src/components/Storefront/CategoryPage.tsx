@@ -90,7 +90,7 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({ category, products }
                   <ProductImage
                     src={product.imageUrl}
                     alt={product.name}
-                    className="w-full h-full object-contain p-6 group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-contain p-10 group-hover:scale-105 transition-transform duration-300"
                   />
 
                   {product.attributes?.isTravel && (
