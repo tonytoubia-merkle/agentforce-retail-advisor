@@ -131,7 +131,7 @@ export const RecommendationsCarousel: React.FC<Props> = ({ products: catalog }) 
             return (
               <div
                 key={product.productId || i}
-                className={`flex-shrink-0 w-40 sm:w-48 snap-start group ${clickable ? 'cursor-pointer' : ''}`}
+                className={`flex-shrink-0 w-32 sm:w-40 snap-start group ${clickable ? 'cursor-pointer' : ''}`}
                 onClick={() => product.catalogProduct && navigateToProduct(product.catalogProduct)}
               >
                 <div className="aspect-square bg-stone-50 rounded-xl overflow-hidden mb-2 relative">
@@ -139,7 +139,7 @@ export const RecommendationsCarousel: React.FC<Props> = ({ products: catalog }) 
                     <img
                       src={imgSrc}
                       alt={product.name || 'Product'}
-                      className="w-full h-full object-contain p-6 group-hover:scale-105 transition-transform"
+                      className="w-full h-full object-contain p-8 group-hover:scale-105 transition-transform"
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = 'none';
                       }}
