@@ -22,6 +22,7 @@ import {
 } from 'react';
 import type { DemoConfig, DemoTheme } from '@/types/demo';
 import { getDemo } from '@/services/supabase/demoService';
+import { getVerticalCopy, type VerticalCopy } from '@/config/verticalCopy';
 
 // ─── Default config (golden template — original beauty demo) ────────
 const DEFAULT_CONFIG: DemoConfig = {
@@ -51,6 +52,11 @@ const DEFAULT_CONFIG: DemoConfig = {
     enableGenerativeBackgrounds: import.meta.env.VITE_ENABLE_GENERATIVE_BACKGROUNDS === 'true',
     enableProductTransparency: import.meta.env.VITE_ENABLE_PRODUCT_TRANSPARENCY !== 'false',
     enableSkinAdvisor: !!import.meta.env.VITE_SKIN_ADVISOR_AGENT_ID,
+    // Adobe-Concierge-style split-pane UI. Default ON for the golden template
+    // so the legacy site shows it. Custom demos still control their own flag
+    // via Supabase (their featureFlags override DEFAULT_CONFIG entirely), and
+    // any env can opt out with VITE_ENABLE_IMMERSIVE_LAYOUT=false.
+    enableImmersiveLayout: import.meta.env.VITE_ENABLE_IMMERSIVE_LAYOUT !== 'false',
   },
   createdAt: '',
   updatedAt: '',
@@ -60,6 +66,7 @@ const DEFAULT_CONFIG: DemoConfig = {
 
 interface DemoContextValue {
   config: DemoConfig;
+  copy: VerticalCopy;       // vertical-specific copy (advisor name, CTAs, etc.)
   isLoading: boolean;
   isAdmin: boolean;         // true when on admin.* subdomain or /admin route
   isDefault: boolean;       // true when using golden template (no custom demo)
@@ -68,6 +75,7 @@ interface DemoContextValue {
 
 const DemoCtx = createContext<DemoContextValue>({
   config: DEFAULT_CONFIG,
+  copy: getVerticalCopy(DEFAULT_CONFIG),
   isLoading: false,
   isAdmin: false,
   isDefault: true,
@@ -120,6 +128,22 @@ function applyTheme(theme: DemoTheme) {
   root.style.setProperty('--demo-font', theme.fontFamily);
 }
 
+function applyBrandDocumentMeta(config: DemoConfig, copy: VerticalCopy) {
+  // Page title
+  document.title = `${config.brandName} — ${config.brandTagline || copy.advisorSubtitle}`;
+
+  // Favicon
+  if (config.faviconUrl) {
+    let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      document.head.appendChild(link);
+    }
+    link.href = config.faviconUrl;
+  }
+}
+
 // ─── Provider ───────────────────────────────────────────────────────
 
 export function DemoProvider({ children }: { children: ReactNode }) {
@@ -130,9 +154,10 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   const { slug, isAdmin } = useMemo(resolveSlug, []);
 
   useEffect(() => {
-    // If no slug (default or admin), skip fetch
+    // If no slug (default or admin), use DEFAULT_CONFIG — legacy beauty demo behavior
     if (!slug) {
       applyTheme(DEFAULT_CONFIG.theme);
+      applyBrandDocumentMeta(DEFAULT_CONFIG, getVerticalCopy(DEFAULT_CONFIG));
       setIsLoading(false);
       return;
     }
@@ -145,6 +170,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
         if (demo) {
           setConfig(demo);
           applyTheme(demo.theme);
+          applyBrandDocumentMeta(demo, getVerticalCopy(demo));
         } else {
           setError(`Demo "${slug}" not found`);
         }
@@ -165,6 +191,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<DemoContextValue>(() => ({
     config,
+    copy: getVerticalCopy(config),
     isLoading,
     isAdmin,
     isDefault: config.id === 'default',

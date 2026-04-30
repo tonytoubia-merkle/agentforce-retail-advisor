@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
+import { useDemo } from '@/contexts/DemoContext';
 import { ProductImage } from './ProductImage';
 import { isPersonalizationConfigured, trackAddToCart } from '@/services/personalization';
 import type { Product } from '@/types/product';
@@ -18,6 +19,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product })
   }), [navigate, product]);
   const { goBack, navigateToCart } = useStore();
   const { addItem, isInCart, items } = useCart();
+  const { copy } = useDemo();
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<'details' | 'ingredients' | 'reviews'>('details');
 
@@ -195,7 +197,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product })
                 </div>
                 <div className="flex-1">
                   <p className="font-medium text-stone-900 group-hover:text-rose-600 transition-colors">
-                    Ask our Beauty Advisor
+                    Ask our {copy.advisorName}
                   </p>
                   <p className="text-sm text-stone-500">
                     Get personalized advice about this product

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useCustomer } from '@/contexts/CustomerContext';
 import { useStore } from '@/contexts/StoreContext';
+import { useDemo } from '@/contexts/DemoContext';
 
 const STORE_LOCATIONS = [
   { value: 'Flagship Store', label: 'Flagship Store — 5th Avenue' },
@@ -43,7 +44,10 @@ function getAvailableSlots(): { date: string; label: string; slots: string[] }[]
 export const AppointmentBooking: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
   const { customer } = useCustomer();
   const { goBack } = useStore();
+  const { copy } = useDemo();
 
+  // All hooks MUST be declared before any early return to satisfy React's
+  // rules-of-hooks. Only after hooks run do we gate rendering on vertical.
   const [storeLocation, setStoreLocation] = useState(STORE_LOCATIONS[0].value);
   const [consultationType, setConsultationType] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
@@ -52,6 +56,28 @@ export const AppointmentBooking: React.FC<{ onClose?: () => void }> = ({ onClose
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmation, setConfirmation] = useState<{ appointmentId: string; dateTime: string } | null>(null);
+
+  // Not all verticals offer in-store appointments. Render a graceful "not
+  // available" card instead of the beauty-specific booking flow when the
+  // current vertical doesn't support them (travel / wellness / cpg).
+  if (!copy.appointmentsEnabled) {
+    return (
+      <div className="max-w-xl mx-auto px-4 sm:px-6 py-20 text-center">
+        <h2 className="text-2xl font-medium text-stone-900 mb-3">
+          In-person appointments aren't offered here
+        </h2>
+        <p className="text-stone-500 mb-8 leading-relaxed">
+          This demo doesn't include an in-store appointment flow. Use the {copy.advisorName.toLowerCase()} for personalized guidance instead.
+        </p>
+        <button
+          onClick={onClose ?? goBack}
+          className="px-6 py-3 bg-stone-900 text-white text-sm font-medium rounded-full hover:bg-stone-800 transition-colors"
+        >
+          Back to the storefront
+        </button>
+      </div>
+    );
+  }
 
   const availableDays = getAvailableSlots();
   const selectedDaySlots = availableDays.find(d => d.date === selectedDate)?.slots || [];

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/utils/cn';
 import { ProductShowcase } from '@/components/ProductShowcase';
 import { CollapsedProductCard } from '@/components/ProductShowcase/CollapsedProductCard';
+import { ChatProductList } from './ChatProductList';
 import type { AgentMessage } from '@/types/agent';
 import type { AdvisorMode, SceneLayout } from '@/types/scene';
 
@@ -112,9 +113,15 @@ interface ChatMessagesProps {
   messages: AgentMessage[];
   sceneLayout: SceneLayout;
   advisorMode?: AdvisorMode;
+  /**
+   * When true, products in agent messages render as a compact numbered list
+   * (ChatProductList) instead of large cards. Used in the immersive layout
+   * where products are visually shown in the right canvas pane.
+   */
+  compactProducts?: boolean;
 }
 
-export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, sceneLayout, advisorMode }) => {
+export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, sceneLayout, advisorMode, compactProducts }) => {
   const bottomRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   // Use URL as the authoritative source for skin-advisor mode
@@ -199,10 +206,13 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, sceneLayou
                 )}
               </div>
             )}
-            {hasProducts && isLatestDirective && (
+            {hasProducts && compactProducts && isLatestDirective && (
+              <ChatProductList products={products!} />
+            )}
+            {hasProducts && !compactProducts && isLatestDirective && (
               <ProductShowcase products={products} layout={sceneLayout} />
             )}
-            {hasProducts && !isLatestDirective && (
+            {hasProducts && !compactProducts && !isLatestDirective && (
               <CollapsedProductCard products={products} layout={sceneLayout} />
             )}
           </div>

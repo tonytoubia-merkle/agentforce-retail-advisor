@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useScene } from '@/contexts/SceneContext';
 import { useConversation } from '@/contexts/ConversationContext';
 import { useCustomer } from '@/contexts/CustomerContext';
+import { useDemo } from '@/contexts/DemoContext';
 import { getPerfectCorpClient } from '@/services/perfectcorp/client';
 import { buildAnalysisSummary } from '@/types/skinanalysis';
 import type { SkinAnalysisResult, SkinConcernScore } from '@/types/skinanalysis';
@@ -28,6 +29,7 @@ export const SkinAnalysisModal: React.FC = () => {
   const { closeSkinAnalysis, setSkinEmail } = useScene();
   const { sendSilentMessage } = useConversation();
   const { customer, isAuthenticated } = useCustomer();
+  const { copy } = useDemo();
 
   const [step, setStep] = useState<ModalStep>('capture');
   const [captureMode, setCaptureMode] = useState<'camera' | 'upload'>('camera');
@@ -194,7 +196,9 @@ export const SkinAnalysisModal: React.FC = () => {
         <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100 flex-shrink-0">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">AI Skin Analysis</h2>
-            <p className="text-xs text-gray-500 mt-0.5">Powered by BEAUTÉ in partnership with Perfect Corp</p>
+            {copy.partnershipText && (
+              <p className="text-xs text-gray-500 mt-0.5">{copy.partnershipText}</p>
+            )}
           </div>
           {step !== 'analyzing' && (
             <button

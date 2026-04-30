@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import { useScene } from '@/contexts/SceneContext';
+import { useDemo } from '@/contexts/DemoContext';
 import { Badge } from '@/components/ui/Badge';
 import type { Product } from '@/types/product';
 
@@ -8,10 +9,42 @@ interface ProductCardProps {
   product: Product;
 }
 
+/** Pick a short, vertical-appropriate badge for a product. Returns null if none applies. */
+function getVerticalBadge(product: Product, vertical: string) {
+  const a = product.attributes || {};
+
+  if (vertical === 'travel') {
+    const cabin = a.travel?.cabinClass;
+    if (cabin === 'business') return { label: 'Business', cls: 'bg-indigo-600' };
+    if (cabin === 'first') return { label: 'First', cls: 'bg-amber-600' };
+    if (cabin === 'premium-economy') return { label: 'Premium', cls: 'bg-sky-600' };
+    if (a.travel?.stops === 0) return { label: 'Nonstop', cls: 'bg-emerald-600' };
+    return null;
+  }
+
+  if (vertical === 'fashion') {
+    const season = a.fashion?.season?.[0];
+    if (season) return { label: season[0].toUpperCase() + season.slice(1), cls: 'bg-stone-700' };
+    return null;
+  }
+
+  if (vertical === 'wellness') {
+    const benefit = a.wellness?.benefits?.[0];
+    if (benefit) return { label: benefit, cls: 'bg-emerald-600' };
+    return null;
+  }
+
+  // Beauty (default) — keep legacy Travel badge
+  if (a.isTravel) return { label: 'Travel', cls: 'bg-blue-500' };
+  return null;
+}
+
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { openCheckout, openRetailerHandoff } = useScene();
+  const { config } = useDemo();
   const location = useLocation();
   const isSkinConcierge = location.pathname.includes('skin-advisor');
+  const badge = getVerticalBadge(product, config.vertical);
 
   return (
     <motion.div
@@ -26,9 +59,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           alt={product.name}
           className="w-full h-full object-contain product-blend p-2"
         />
-        {product.attributes?.isTravel && (
-          <Badge className="absolute top-1.5 left-1.5 bg-blue-500 text-[9px] px-1.5 py-0.5">
-            Travel
+        {badge && (
+          <Badge className={`absolute top-1.5 left-1.5 ${badge.cls} text-[9px] px-1.5 py-0.5`}>
+            {badge.label}
           </Badge>
         )}
       </div>
@@ -40,6 +73,26 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <h3 className="font-medium text-[11px] mt-0.5 line-clamp-2 leading-tight min-h-[2.25rem]">
           {product.name}
         </h3>
+
+        {/* Vertical-specific subtitle row — one short fact, not a laundry list */}
+        {config.vertical === 'travel' && product.attributes?.travel && (
+          <div className="text-[9px] text-white/50 truncate">
+            {[product.attributes.travel.origin, product.attributes.travel.destination].filter(Boolean).join(' → ')}
+            {product.attributes.travel.durationMinutes
+              ? ` · ${Math.floor(product.attributes.travel.durationMinutes / 60)}h ${product.attributes.travel.durationMinutes % 60}m`
+              : ''}
+          </div>
+        )}
+        {config.vertical === 'fashion' && product.attributes?.fashion?.color?.length && (
+          <div className="text-[9px] text-white/50 truncate">
+            {product.attributes.fashion.color.slice(0, 3).join(' · ')}
+          </div>
+        )}
+        {config.vertical === 'wellness' && product.attributes?.wellness?.benefits?.length && (
+          <div className="text-[9px] text-white/50 truncate">
+            {product.attributes.wellness.benefits.slice(0, 2).join(' · ')}
+          </div>
+        )}
 
         <div className="flex items-center justify-between mt-1.5">
           <span className="text-xs font-medium">

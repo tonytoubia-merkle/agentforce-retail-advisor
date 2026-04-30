@@ -4,20 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
 import { useCustomer } from '@/contexts/CustomerContext';
+import { useDemo } from '@/contexts/DemoContext';
 import { ProfileDropdown } from './ProfileDropdown';
 import { MerkuryProfilePicker } from './MerkuryProfilePicker';
-import type { ProductCategory } from '@/types/product';
-
-const CATEGORIES: { label: string; value: ProductCategory }[] = [
-  { label: 'Skincare', value: 'moisturizer' },
-  { label: 'Cleansers', value: 'cleanser' },
-  { label: 'Serums', value: 'serum' },
-  { label: 'Sunscreen', value: 'sunscreen' },
-  { label: 'Makeup', value: 'foundation' },
-  { label: 'Lips', value: 'lipstick' },
-  { label: 'Fragrance', value: 'fragrance' },
-  { label: 'Haircare', value: 'shampoo' },
-];
 
 export const StoreHeader: React.FC = () => {
   const { navigateHome, navigateToCategory, navigateToCart, navigateToAccount, searchQuery, setSearchQuery } = useStore();
@@ -25,6 +14,7 @@ export const StoreHeader: React.FC = () => {
   const onBeautyAdvisorClick = useCallback(() => navigate('/advisor'), [navigate]);
   const { itemCount } = useCart();
   const { isAuthenticated, customer, signIn } = useCustomer();
+  const { config, copy } = useDemo();
   const [showSearch, setShowSearch] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
@@ -39,8 +29,11 @@ export const StoreHeader: React.FC = () => {
   return (
     <>
     <header className="sticky top-0 z-40 bg-white border-b border-gray-100">
-      {/* Top bar - promo */}
-      <div className="bg-stone-900 text-white text-center py-2 text-xs tracking-wide">
+      {/* Top bar - promo; background = demo primary color */}
+      <div
+        className="text-white text-center py-2 text-xs tracking-wide"
+        style={{ backgroundColor: config.theme.primaryColor }}
+      >
         {isPseudonymous && isKnown && customer?.name && (
           <span className="hidden sm:inline">Welcome back, {customer.name.split(' ')[0]} · </span>
         )}
@@ -49,7 +42,7 @@ export const StoreHeader: React.FC = () => {
           onClick={onBeautyAdvisorClick}
           className="underline hover:text-rose-300 transition-colors font-medium"
         >
-          Try our AI Beauty Advisor
+          Try our AI {copy.advisorName}
         </button>
       </div>
 
@@ -61,17 +54,24 @@ export const StoreHeader: React.FC = () => {
             onClick={navigateHome}
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
-            <div className="w-8 h-8 rounded-full bg-stone-900 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">B</span>
-            </div>
+            {config.logoUrl ? (
+              <img src={config.logoUrl} alt={config.brandName} className="h-8 w-auto object-contain" />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-stone-900 flex items-center justify-center">
+                <span className="text-white font-bold text-sm">{(config.brandName || 'B')[0].toUpperCase()}</span>
+              </div>
+            )}
             <span className="text-xl font-semibold tracking-tight text-stone-900">
-              BEAUTÉ
+              {/* Legacy golden-template site ships as "SERENE → BEAUTÉ" display branding.
+                  For any custom demo (vertical !== beauty OR different brandName), show the
+                  configured brand name as-is — no more beauty bleed-through. */}
+              {config.id === 'default' && config.brandName === 'SERENE' ? 'BEAUTÉ' : config.brandName}
             </span>
           </button>
 
-          {/* Desktop Navigation */}
+          {/* Desktop Navigation — categories are vertical-aware via verticalCopy. */}
           <nav className="hidden lg:flex items-center gap-5 flex-shrink-0">
-            {CATEGORIES.slice(0, 4).map((cat) => (
+            {copy.catalogNav.slice(0, 4).map((cat) => (
               <button
                 key={cat.value}
                 onClick={() => navigateToCategory(cat.value)}
@@ -116,15 +116,18 @@ export const StoreHeader: React.FC = () => {
               )}
             </AnimatePresence>
 
-            {/* Beauty Advisor button - desktop; text hidden at lg, shown at xl */}
+            {/* Advisor button — gradient uses demo accent → primary for brand awareness */}
             <button
               onClick={onBeautyAdvisorClick}
-              className="hidden sm:flex items-center gap-2 px-2.5 xl:px-3 py-1.5 bg-gradient-to-r from-rose-500 to-purple-500 text-white text-sm font-medium rounded-full hover:shadow-lg hover:shadow-rose-500/25 transition-all"
+              className="hidden sm:flex items-center gap-2 px-2.5 xl:px-3 py-1.5 text-white text-sm font-medium rounded-full hover:shadow-lg transition-all"
+              style={{
+                backgroundImage: `linear-gradient(to right, ${config.theme.accentColor}, ${config.theme.primaryColor})`,
+              }}
             >
               <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
               </svg>
-              <span className="hidden xl:inline">Beauty Advisor</span>
+              <span className="hidden xl:inline">{copy.advisorName}</span>
             </button>
 
             {/* Cart */}
@@ -160,7 +163,8 @@ export const StoreHeader: React.FC = () => {
             {showSignInButton && (
               <button
                 onClick={signIn}
-                className="hidden sm:block px-3 py-1.5 text-sm font-medium bg-stone-900 text-white rounded-full hover:bg-stone-800 transition-colors"
+                className="hidden sm:block px-3 py-1.5 text-sm font-medium text-white rounded-full hover:opacity-90 transition-opacity"
+                style={{ backgroundColor: config.theme.primaryColor }}
               >
                 Sign In
               </button>
@@ -207,7 +211,7 @@ export const StoreHeader: React.FC = () => {
             className="lg:hidden border-t border-gray-100 overflow-hidden"
           >
             <nav className="max-w-7xl mx-auto px-4 py-4 space-y-2">
-              {CATEGORIES.map((cat) => (
+              {copy.catalogNav.map((cat) => (
                 <button
                   key={cat.value}
                   onClick={() => {
@@ -226,7 +230,7 @@ export const StoreHeader: React.FC = () => {
                 }}
                 className="block w-full text-left px-4 py-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors font-medium"
               >
-                Talk to Beauty Advisor
+                {copy.talkToCTA}
               </button>
             </nav>
           </motion.div>

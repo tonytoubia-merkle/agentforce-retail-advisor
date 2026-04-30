@@ -1,6 +1,6 @@
 // ─── Demo Builder Types ─────────────────────────────────────────────
 
-export type DemoVertical = 'beauty' | 'fashion' | 'wellness' | 'cpg';
+export type DemoVertical = 'beauty' | 'fashion' | 'travel' | 'wellness' | 'cpg';
 export type DemoStatus = 'draft' | 'deploying' | 'live' | 'archived' | 'error';
 export type ImageProvider = 'imagen' | 'firefly' | 'cms-only' | 'none';
 
@@ -17,6 +17,27 @@ export interface DemoFeatureFlags {
   enableGenerativeBackgrounds: boolean;
   enableProductTransparency: boolean;
   enableSkinAdvisor: boolean;
+  /** Adobe-inspired split-pane experience (chat LEFT, editorial canvas RIGHT) */
+  enableImmersiveLayout?: boolean;
+
+  // ─── Reusable custom-demo primitives ─────────────────────────────
+  // These are opt-in per demo (from Supabase). They ship off by default,
+  // so legacy beauty site and anyone who hasn't explicitly turned them
+  // on renders identically to before.
+
+  /** Cart: "You usually buy X — add?" card for items in the customer's
+   *  recent purchases that aren't already in the cart. */
+  frequentlyBoughtReminder?: boolean;
+  /** Cart: "Swap 11 individual → 15-pack for +$2.50" upgrade card, driven
+   *  by per-product `attributes.bundleUpgrade` seed data. */
+  cartOptimizer?: boolean;
+  /** Cart: "Unlock member pricing — join the loyalty program" prompt for
+   *  authenticated customers not yet enrolled. */
+  loyaltyEnrollPrompt?: boolean;
+  /** Floating sidebar card on the storefront + advisor: "Merkury Lead
+   *  Score · 80 · high-intent" derived from identity tier, loyalty,
+   *  recent purchases, cart value, and appended signals. */
+  leadScoreCard?: boolean;
 }
 
 export interface DemoSalesforceConfig {

@@ -291,5 +291,12 @@ function defaultFlags() {
     enableGenerativeBackgrounds: false,
     enableProductTransparency: true,
     enableSkinAdvisor: false,
+    // Reusable primitives default off — each demo opts in explicitly
+    // from the admin Custom Features section.
+    enableImmersiveLayout: false,
+    leadScoreCard: false,
+    frequentlyBoughtReminder: false,
+    cartOptimizer: false,
+    loyaltyEnrollPrompt: false,
   };
 }

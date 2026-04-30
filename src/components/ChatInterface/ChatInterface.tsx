@@ -26,6 +26,8 @@ interface ChatInterfaceProps {
   suggestedActions?: string[];
   sceneLayout: SceneLayout;
   advisorMode?: AdvisorMode;
+  /** When true, products in messages render as compact numbered list (immersive layout). */
+  compactProducts?: boolean;
 }
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({
@@ -37,6 +39,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   suggestedActions = [],
   sceneLayout,
   advisorMode,
+  compactProducts,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [typingLabelIdx, setTypingLabelIdx] = useState(0);
@@ -136,7 +139,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       <div className="flex-1 overflow-y-auto min-h-0 pb-2 scrollbar-hide">
         <div className="min-h-full flex flex-col">
           <div className="flex-1" />
-          <ChatMessages messages={messages} sceneLayout={sceneLayout} advisorMode={advisorMode} />
+          <ChatMessages messages={messages} sceneLayout={sceneLayout} advisorMode={advisorMode} compactProducts={compactProducts} />
 
           {isAgentTyping && <TypingIndicator label={typingLabel} />}
 
