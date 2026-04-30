@@ -140,7 +140,7 @@ export const AdvisorPage: React.FC<AdvisorPageProps> = ({ mode = 'beauty' }) => 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="relative z-10"
+            className="relative z-10 h-screen w-full"
           >
             <ImmersiveLayout mode={mode} />
           </motion.div>
