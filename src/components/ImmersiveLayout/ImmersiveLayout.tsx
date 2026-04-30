@@ -1,11 +1,13 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useScene } from '@/contexts/SceneContext';
 import { useConversation } from '@/contexts/ConversationContext';
 import { useCart } from '@/contexts/CartContext';
 import { useDemo } from '@/contexts/DemoContext';
+import { SelectionProvider, useSelection } from '@/contexts/SelectionContext';
 import { ChatInterface } from '@/components/ChatInterface';
 import { BundleCanvas } from './BundleCanvas';
+import { BundleSummaryBar } from './BundleSummaryBar';
 import { ProductShowcaseCanvas } from './ProductShowcaseCanvas';
 import { InlineCart } from './InlineCart';
 import { GenerativeBackground } from '@/components/GenerativeBackground';
@@ -29,11 +31,20 @@ interface ImmersiveLayoutProps {
  * Activated by config.featureFlags.enableImmersiveLayout — falls back to
  * the legacy full-screen chat experience for demos that opt out.
  */
-export const ImmersiveLayout: React.FC<ImmersiveLayoutProps> = ({ mode }) => {
+export const ImmersiveLayout: React.FC<ImmersiveLayoutProps> = (props) => {
+  return (
+    <SelectionProvider>
+      <ImmersiveLayoutInner {...props} />
+    </SelectionProvider>
+  );
+};
+
+const ImmersiveLayoutInner: React.FC<ImmersiveLayoutProps> = ({ mode }) => {
   const { scene } = useScene();
   const { messages, sendMessage, isAgentTyping, suggestedActions } = useConversation();
   const { items: cartItems } = useCart();
   const { copy } = useDemo();
+  const { setActiveProductId } = useSelection();
 
   // Find the latest agent message that carried products — drives the canvas
   const latest = useMemo(() => {
@@ -48,7 +59,15 @@ export const ImmersiveLayout: React.FC<ImmersiveLayoutProps> = ({ mode }) => {
     return null;
   }, [messages]);
 
-  const isBundle = (latest?.products?.length ?? 0) >= 2;
+  // Reset active product selection whenever a new message brings in different products
+  useEffect(() => {
+    setActiveProductId(null);
+  }, [latest?.id, setActiveProductId]);
+
+  // Bundle = 2-4 curated products. Listing = 5+ (from "show me X" intents).
+  const productCount = latest?.products?.length ?? 0;
+  const isBundle = productCount >= 2 && productCount <= 4;
+  const isListing = productCount >= 5;
 
   // Derive a short title from the agent's first sentence — used above bundles
   const bundleTitle = useMemo(() => {
@@ -58,9 +77,9 @@ export const ImmersiveLayout: React.FC<ImmersiveLayoutProps> = ({ mode }) => {
   }, [latest]);
 
   return (
-    <div className="fixed inset-0 flex overflow-hidden bg-black">
+    <div className="absolute inset-0 flex overflow-hidden bg-black">
       {/* ── LEFT PANE: Chat + Cart ─────────────────────────────────────── */}
-      <div className="flex flex-col w-[420px] min-w-[380px] max-w-[480px] h-full bg-gradient-to-b from-stone-900 via-stone-950 to-black border-r border-white/5 relative">
+      <div className="flex-shrink-0 flex flex-col w-[420px] min-w-[380px] max-w-[480px] h-full bg-gradient-to-b from-stone-900 via-stone-950 to-black border-r border-white/5 relative">
         {/* Chat fills available space */}
         <div className="flex-1 min-h-0 overflow-hidden relative">
           <ChatInterface
@@ -71,8 +90,27 @@ export const ImmersiveLayout: React.FC<ImmersiveLayoutProps> = ({ mode }) => {
             suggestedActions={suggestedActions}
             sceneLayout={scene.layout}
             advisorMode={mode}
+            compactProducts
           />
         </div>
+
+        {/* Bundle summary bar — anchored above the cart, shown when there's an active bundle */}
+        <AnimatePresence>
+          {latest && isBundle && (
+            <motion.div
+              key={`bundle-bar-${latest.id}`}
+              initial={{ y: 60, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 60, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25 }}
+            >
+              <BundleSummaryBar
+                products={latest.products}
+                title={bundleTitle || `${copy.advisorName} picks`}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Inline cart drawer at bottom of left pane */}
         <AnimatePresence>
@@ -109,6 +147,17 @@ export const ImmersiveLayout: React.FC<ImmersiveLayoutProps> = ({ mode }) => {
                 products={latest.products}
                 title={bundleTitle || `${copy.advisorName} picks`}
               />
+            </motion.div>
+          ) : latest && isListing ? (
+            <motion.div
+              key={`listing-${latest.id}`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.35 }}
+              className="absolute inset-0"
+            >
+              <ProductShowcaseCanvas products={latest.products} title={bundleTitle} />
             </motion.div>
           ) : latest ? (
             <motion.div

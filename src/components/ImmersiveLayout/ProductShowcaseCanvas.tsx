@@ -1,6 +1,8 @@
+import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useCart } from '@/contexts/CartContext';
 import { useDemo } from '@/contexts/DemoContext';
+import { useSelection } from '@/contexts/SelectionContext';
 import { Badge } from '@/components/ui/Badge';
 import type { Product } from '@/types/product';
 
@@ -63,13 +65,22 @@ function getVerticalSubtitle(product: Product, vertical: string): string | null 
 export const ProductShowcaseCanvas: React.FC<ProductShowcaseCanvasProps> = ({ products, title }) => {
   const { addItem, isInCart } = useCart();
   const { config, copy } = useDemo();
+  const { activeProductId, toggleActiveProduct } = useSelection();
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  // Auto-scroll the active card into view when selection changes from elsewhere (e.g., chat list click)
+  useEffect(() => {
+    if (!activeProductId) return;
+    const el = cardRefs.current[activeProductId];
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [activeProductId]);
 
   if (products.length === 1) {
     return <SingleProductHero product={products[0]} title={title} />;
   }
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center px-8 py-12 overflow-y-auto">
+    <div className="w-full h-full flex flex-col items-center px-8 py-12 overflow-y-auto">
       {title && (
         <motion.div
           initial={{ opacity: 0, y: -8 }}
@@ -77,24 +88,31 @@ export const ProductShowcaseCanvas: React.FC<ProductShowcaseCanvasProps> = ({ pr
           className="mb-10 text-center max-w-2xl"
         >
           <div className="text-[10px] uppercase tracking-widest text-white/40 mb-2">
-            Curated for you
+            {products.length >= 5 ? 'Showing' : 'Curated for you'}
           </div>
           <h2 className="text-white text-2xl md:text-3xl font-light leading-tight">{title}</h2>
         </motion.div>
       )}
 
-      <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-8">
         {products.map((product, idx) => {
           const badge = getVerticalBadge(product, config.vertical);
           const subtitle = getVerticalSubtitle(product, config.vertical);
+          const isActive = activeProductId === product.id;
           return (
             <motion.div
               key={product.id}
+              ref={(el) => { cardRefs.current[product.id] = el; }}
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.1, duration: 0.4 }}
+              transition={{ delay: idx * 0.05, duration: 0.4 }}
               whileHover={{ y: -6 }}
-              className="relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl overflow-hidden group"
+              onClick={() => toggleActiveProduct(product.id)}
+              className={`relative backdrop-blur-sm border rounded-2xl overflow-hidden group cursor-pointer transition-colors ${
+                isActive
+                  ? 'bg-white/15 border-white/40 ring-2 ring-white/30'
+                  : 'bg-white/5 border-white/10 hover:border-white/20'
+              }`}
             >
               <div className="aspect-square relative bg-black/20 flex items-center justify-center p-8">
                 <img

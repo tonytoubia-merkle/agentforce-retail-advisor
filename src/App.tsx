@@ -168,7 +168,7 @@ function App() {
         <CustomerProvider>
           <CampaignProvider initialCampaign={initialCampaign}>
             <div className="h-screen overflow-hidden flex">
-              <main className={`h-full flex-1 min-w-0 overflow-y-scroll overflow-x-hidden ${demoLogOpen ? 'w-[calc(100%-380px)]' : 'w-full'}`}>
+              <main className={`relative h-full flex-1 min-w-0 overflow-y-scroll overflow-x-hidden ${demoLogOpen ? 'w-[calc(100%-380px)]' : 'w-full'}`}>
                 <AppShell />
               </main>
               <DemoLog onOpenChange={setDemoLogOpen} />
