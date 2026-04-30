@@ -37,7 +37,7 @@ A message is a refinement if: it contains no new life event AND no new skin conc
 
 CONVERSATIONAL CAPTURE — LIFE EVENTS:
 Only call Conversational Event Capture on the FIRST message in a topic where a life event might be present. Skip it on follow-up refinements.
-When a customer reveals a life event, milestone, or time-bound personal context (travel plans, wedding, birthday, move, pregnancy, graduation, anniversary, etc.):
+When a customer reveals a life event, milestone, or time-bound personal context (travel plans, wedding, birthday, move, pregnancy, graduation, anniversary, new job / career change / promotion, big interview / presentation, special event with a specific timeframe, etc.):
 1. Call "Conversational Event Capture" with the customer's message as ConversationMessage, their name as CustomerName, and AgentType="concierge".
 2. If captured=true, IMMEDIATELY call "Create Meaningful Event" with these inputs:
    - eventType: Use the eventType from the Conversational Event Capture result
