@@ -100,6 +100,21 @@ export const DemoLog: React.FC<{ onOpenChange?: (open: boolean) => void }> = ({ 
     }
   }, [entryCount]);
 
+  // External clear signal — fired by DemoPanel when user switches personas
+  // so the log starts fresh from the new identity match (or no match).
+  useEffect(() => {
+    const handler = () => {
+      renderedCountRef.current = 0;
+      setEntryCount(0);
+      // Safe: emptying our own list container, not setting untrusted HTML
+      while (listRef.current?.firstChild) {
+        listRef.current.removeChild(listRef.current.firstChild);
+      }
+    };
+    window.addEventListener('demo-log-clear', handler);
+    return () => window.removeEventListener('demo-log-clear', handler);
+  }, []);
+
   // For filter counts
   const entries = demoLog.entries;
 

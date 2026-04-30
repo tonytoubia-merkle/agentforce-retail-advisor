@@ -9,6 +9,7 @@ import { getDataCloudWriteService } from '@/services/datacloud';
 import type { DemoContact, CustomerProfile } from '@/types/customer';
 import type { CampaignAttribution } from '@/types/campaign';
 import { getDemoConfig } from '@/contexts/DemoContext';
+import { demoLog } from '@/services/demoLog';
 
 // ─── Profile detail sub-components (dark theme) ─────────────────
 
@@ -1007,6 +1008,9 @@ export const DemoPanelInline: React.FC = () => {
   const { campaign, clearCampaign } = useCampaign();
   const navigate = useNavigate();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isManageMode, setIsManageMode] = useState(false);
+  const [selectedForDelete, setSelectedForDelete] = useState<Set<string>>(new Set());
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (useMockData) return;
@@ -1016,7 +1020,20 @@ export const DemoPanelInline: React.FC = () => {
       .finally(() => setContactsLoading(false));
   }, []);
 
+  // Reset manage mode when leaving detail view or switching personas
+  useEffect(() => {
+    if (view !== 'detail') {
+      setIsManageMode(false);
+      setSelectedForDelete(new Set());
+    }
+  }, [view, selectedPersonaId]);
+
   const handleSelect = async (personaId: string) => {
+    // Clear the demo log so events from the previous identity don't bleed
+    // into the next one. The DemoLog component listens for this signal and
+    // also clears its rendered DOM (it uses direct DOM manipulation, not React).
+    demoLog.clear();
+    window.dispatchEvent(new CustomEvent('demo-log-clear'));
     await selectPersona(personaId);
   };
 
@@ -1024,6 +1041,55 @@ export const DemoPanelInline: React.FC = () => {
     setIsRefreshing(true);
     try { await refreshProfile(); } finally { setIsRefreshing(false); }
   }, [refreshProfile]);
+
+  const toggleDeleteSelection = (id: string) => {
+    setSelectedForDelete((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBatchDelete = async () => {
+    if (selectedForDelete.size === 0 || !customer) return;
+    setIsDeleting(true);
+    try {
+      const writeService = getDataCloudWriteService();
+      const chatIds = customer.chatSummaries
+        ?.filter((c) => c.id && selectedForDelete.has(c.id))
+        .map((c) => c.id!) || [];
+      const eventIds = customer.meaningfulEvents
+        ?.filter((e) => e.id && selectedForDelete.has(e.id))
+        .map((e) => e.id!) || [];
+
+      // Cascade: find Journey_Approval__c records linked to events being deleted
+      let approvalIds: string[] = [];
+      if (eventIds.length > 0) {
+        try {
+          const idList = eventIds.map((id) => `'${id}'`).join(',');
+          const resp = await fetch(`/api/datacloud/query/?q=SELECT+Id+FROM+Journey_Approval__c+WHERE+Meaningful_Event__c+IN+(${encodeURIComponent(idList)})`);
+          if (resp.ok) {
+            const data = await resp.json();
+            approvalIds = (data.records || []).map((r: { Id: string }) => r.Id);
+          }
+        } catch { /* non-critical */ }
+      }
+
+      await Promise.all([
+        chatIds.length > 0 ? writeService.deleteRecords('Chat_Summary__c', chatIds) : Promise.resolve({ deleted: [], failed: [] }),
+        approvalIds.length > 0 ? writeService.deleteRecords('Journey_Approval__c', approvalIds) : Promise.resolve({ deleted: [], failed: [] }),
+        eventIds.length > 0 ? writeService.deleteRecords('Meaningful_Event__c', eventIds) : Promise.resolve({ deleted: [], failed: [] }),
+      ]);
+
+      setIsManageMode(false);
+      setSelectedForDelete(new Set());
+      await refreshProfile();
+    } catch (err) {
+      console.error('[demo] Batch delete failed:', err);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const tierLabel = (() => {
     const tier = customer?.merkuryIdentity?.identityTier;
@@ -1039,6 +1105,10 @@ export const DemoPanelInline: React.FC = () => {
   const createdContacts = crmContacts.filter((c) => c.demoProfile === 'Created');
 
   if (view === 'detail') {
+    const hasDeletableRecords =
+      (customer?.chatSummaries && customer.chatSummaries.length > 0) ||
+      (customer?.meaningfulEvents && customer.meaningfulEvents.length > 0);
+
     return (
       <div className="flex flex-col h-full">
         {/* Detail header */}
@@ -1061,23 +1131,81 @@ export const DemoPanelInline: React.FC = () => {
                 <button onClick={handleRefresh} disabled={isRefreshing} className="p-1 rounded text-white/25 hover:text-white/50 hover:bg-white/5" title="Refresh">
                   <svg className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                 </button>
+                {hasDeletableRecords && (
+                  <button
+                    onClick={() => {
+                      const next = !isManageMode;
+                      setIsManageMode(next);
+                      if (!next) setSelectedForDelete(new Set());
+                    }}
+                    className={`p-1 rounded transition-colors ${
+                      isManageMode
+                        ? 'bg-red-500/20 text-red-400'
+                        : 'text-white/25 hover:text-white/50 hover:bg-white/5'
+                    }`}
+                    title={isManageMode ? 'Cancel manage' : 'Manage records'}
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                )}
               </>
             )}
           </div>
         </div>
+
+        {/* Manage mode banner */}
+        {isManageMode && (
+          <div className="flex-shrink-0 px-3 py-1.5 bg-red-500/10 border-b border-red-500/20">
+            <p className="text-[10px] text-red-400">Select chat summaries and meaningful events to delete</p>
+          </div>
+        )}
+
         {/* Profile detail */}
         <div className="flex-1 overflow-y-auto p-3 dark-scrollbar">
           {campaign && renderCampaignAttribution(campaign, clearCampaign)}
-          {customer ? renderProfileDetail(customer, { isManageMode: false, selectedIds: new Set(), onToggle: () => {}, onCleared: refreshProfile }) : (
+          {customer ? renderProfileDetail(customer, {
+            isManageMode,
+            selectedIds: selectedForDelete,
+            onToggle: toggleDeleteSelection,
+            onCleared: refreshProfile,
+          }) : (
             !campaign && <p className="text-[10px] text-white/20 text-center py-4">No profile loaded</p>
           )}
         </div>
-        <div className="flex-shrink-0 px-3 py-2 border-t border-white/5">
-          <button onClick={() => setView('list')} className="w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/5 text-white/40 text-[10px] transition-all">
-            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
-            Switch Profiles
-          </button>
-        </div>
+
+        {/* Footer: delete CTA when items selected, else switch profiles */}
+        {isManageMode && selectedForDelete.size > 0 ? (
+          <div className="flex-shrink-0 px-3 py-2 border-t border-red-500/20 bg-red-500/5">
+            <button
+              onClick={handleBatchDelete}
+              disabled={isDeleting}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-xs font-medium transition-colors disabled:opacity-50"
+            >
+              {isDeleting ? (
+                <>
+                  <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Delete {selectedForDelete.size} selected
+                </>
+              )}
+            </button>
+          </div>
+        ) : (
+          <div className="flex-shrink-0 px-3 py-2 border-t border-white/5">
+            <button onClick={() => setView('list')} className="w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/5 text-white/40 text-[10px] transition-all">
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+              Switch Profiles
+            </button>
+          </div>
+        )}
       </div>
     );
   }
@@ -1136,22 +1264,40 @@ export const DemoPanelInline: React.FC = () => {
                 ))}
               </>
             )}
-            {merkuryContacts.length > 0 && (
-              <>
-                <div className="text-[9px] font-medium text-white/25 uppercase tracking-wider px-3 pt-1">Merkury ({merkuryContacts.length})</div>
-                {merkuryContacts.map((c) => (
-                  <button key={c.id} onClick={() => handleSelect(c.id)} disabled={isResolving || isLoading}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${c.id === selectedPersonaId ? 'bg-white/10 border border-emerald-500/50' : 'hover:bg-white/5 border border-transparent'}`}>
-                    <div className="w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center text-white text-[10px] font-medium">{(c.firstName || '?').charAt(0)}</div>
-                    <div className="flex-1 text-left min-w-0">
-                      <div className="text-[11px] font-medium text-white/80 truncate">{c.firstName} {c.lastName}</div>
-                      <div className="text-[9px] text-white/35 truncate">Merkury 3P only</div>
-                    </div>
-                    {c.id === selectedPersonaId && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
-                  </button>
-                ))}
-              </>
-            )}
+            {/* Merkury matches: CRM contacts with Merkury data + static appended-only stubs */}
+            {(() => {
+              const appendedStubs = PERSONA_STUBS.filter((s) => s.identityTier === 'appended');
+              const totalMerkury = merkuryContacts.length + appendedStubs.length;
+              if (totalMerkury === 0) return null;
+              return (
+                <>
+                  <div className="text-[9px] font-medium text-white/25 uppercase tracking-wider px-3 pt-1">Merkury ({totalMerkury})</div>
+                  {merkuryContacts.map((c) => (
+                    <button key={c.id} onClick={() => handleSelect(c.id)} disabled={isResolving || isLoading}
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${c.id === selectedPersonaId ? 'bg-white/10 border border-emerald-500/50' : 'hover:bg-white/5 border border-transparent'}`}>
+                      <div className="w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center text-white text-[10px] font-medium">{(c.firstName || '?').charAt(0)}</div>
+                      <div className="flex-1 text-left min-w-0">
+                        <div className="text-[11px] font-medium text-white/80 truncate">{c.firstName} {c.lastName}</div>
+                        <div className="text-[9px] text-white/35 truncate">Merkury 3P only</div>
+                      </div>
+                      {c.id === selectedPersonaId && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
+                    </button>
+                  ))}
+                  {/* Static appended-only stubs (Aisha, Priya — Merkury data but not in CRM) */}
+                  {appendedStubs.map((stub) => (
+                    <button key={stub.id} onClick={() => handleSelect(stub.id)} disabled={isResolving || isLoading}
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${stub.id === selectedPersonaId ? 'bg-white/10 border border-emerald-500/50' : 'hover:bg-white/5 border border-transparent'}`}>
+                      <div className="w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center text-white text-[10px] font-medium">{stub.defaultLabel.charAt(0)}</div>
+                      <div className="flex-1 text-left min-w-0">
+                        <div className="text-[11px] font-medium text-white/80 truncate">{stub.defaultLabel}</div>
+                        <div className="text-[9px] text-white/35 truncate">Merkury 3P only</div>
+                      </div>
+                      {stub.id === selectedPersonaId && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
+                    </button>
+                  ))}
+                </>
+              );
+            })()}
             <div className="border-t border-white/5 mt-1 pt-1">
               <button onClick={() => handleSelect('anonymous')} disabled={isResolving || isLoading}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${selectedPersonaId === 'anonymous' ? 'bg-white/10 border border-emerald-500/50' : 'hover:bg-white/5 border border-transparent'}`}>
