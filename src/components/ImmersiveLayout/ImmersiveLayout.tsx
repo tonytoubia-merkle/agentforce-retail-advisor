@@ -128,7 +128,9 @@ const ImmersiveLayoutInner: React.FC<ImmersiveLayoutProps> = ({ mode }) => {
       </div>
 
       {/* ── RIGHT PANE: Visual canvas ─────────────────────────────────── */}
-      <div className="flex-1 h-full relative overflow-hidden">
+      {/* `isolate` creates a stacking context so GenerativeBackground's -z-10
+          stays inside this pane instead of being clipped by the parent bg-black. */}
+      <div className="flex-1 h-full relative overflow-hidden isolate">
         {/* Ambient background — always present */}
         <GenerativeBackground background={scene.background} setting={scene.setting} />
 
