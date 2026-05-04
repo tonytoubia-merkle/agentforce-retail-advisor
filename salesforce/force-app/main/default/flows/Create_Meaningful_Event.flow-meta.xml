@@ -43,7 +43,7 @@
             </value>
         </assignmentItems>
         <connector>
-            <targetReference>Check_Duplicate_Event</targetReference>
+            <targetReference>Has_Resolved_Contact</targetReference>
         </connector>
     </assignments>
 
@@ -69,7 +69,7 @@
             </value>
         </assignmentItems>
         <connector>
-            <targetReference>Check_Duplicate_Event</targetReference>
+            <targetReference>Has_Resolved_Contact</targetReference>
         </connector>
     </assignments>
 
@@ -93,7 +93,7 @@
             </value>
         </assignmentItems>
         <connector>
-            <targetReference>Check_Duplicate_Event</targetReference>
+            <targetReference>Has_Resolved_Contact</targetReference>
         </connector>
     </assignments>
 
@@ -117,7 +117,7 @@
             </value>
         </assignmentItems>
         <connector>
-            <targetReference>Check_Duplicate_Event</targetReference>
+            <targetReference>Has_Resolved_Contact</targetReference>
         </connector>
     </assignments>
 
@@ -141,25 +141,32 @@
             </value>
         </assignmentItems>
         <connector>
-            <targetReference>Check_Duplicate_Event</targetReference>
+            <targetReference>Has_Resolved_Contact</targetReference>
         </connector>
     </assignments>
 
+    <!-- Per directive: ONLY events tied to a contactable record may be created.
+         When no Contact is resolved (no SF id, no email match), terminate
+         without creating an orphan record. -->
     <assignments>
         <name>Set_Fallback_Ids</name>
         <label>Set Fallback Ids</label>
         <locationX>850</locationX>
         <locationY>158</locationY>
         <assignmentItems>
-            <assignToReference>safeCustomerId</assignToReference>
+            <assignToReference>outputSuccess</assignToReference>
             <operator>Assign</operator>
             <value>
-                <stringValue>agent-captured</stringValue>
+                <booleanValue>false</booleanValue>
             </value>
         </assignmentItems>
-        <connector>
-            <targetReference>Create_Event_Record</targetReference>
-        </connector>
+        <assignmentItems>
+            <assignToReference>outputMessage</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Skipped: no Contact could be resolved — orphans not allowed</stringValue>
+            </value>
+        </assignmentItems>
     </assignments>
 
     <assignments>
@@ -280,6 +287,43 @@
                 <targetReference>Lookup_Contact_By_Email</targetReference>
             </connector>
             <label>Is Email in contactId</label>
+        </rules>
+    </decisions>
+
+    <!-- Final guard: Email lookups assign a (possibly null) Contact Id from
+         their Lookup result. If no Contact was found, resolvedContactId stays
+         null and we MUST NOT create an orphan record. Reuse the same fallback
+         path that yields outputSuccess=false. -->
+    <decisions>
+        <name>Has_Resolved_Contact</name>
+        <label>Has Resolved Contact?</label>
+        <locationX>176</locationX>
+        <locationY>238</locationY>
+        <defaultConnector>
+            <targetReference>Set_Fallback_Ids</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>No Contact — Skip</defaultConnectorLabel>
+        <rules>
+            <name>Contact_Resolved</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>resolvedContactId</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>resolvedContactId</leftValueReference>
+                <operator>StartsWith</operator>
+                <rightValue>
+                    <stringValue>003</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Check_Duplicate_Event</targetReference>
+            </connector>
+            <label>Yes — Has Contact</label>
         </rules>
     </decisions>
 
@@ -645,6 +689,14 @@
         <value>
             <booleanValue>false</booleanValue>
         </value>
+    </variables>
+    <variables>
+        <name>outputMessage</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>true</isOutput>
+        <description>Human-readable status message — useful when Success is false to explain why creation was skipped.</description>
     </variables>
     <variables>
         <name>resolvedContactId</name>
