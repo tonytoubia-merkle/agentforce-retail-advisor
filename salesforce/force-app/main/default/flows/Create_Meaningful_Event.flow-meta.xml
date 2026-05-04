@@ -47,6 +47,32 @@
         </connector>
     </assignments>
 
+    <!-- Used when contactId contains a 003 pattern but with extra prefix/suffix
+         (e.g. "Contact ID: 003ABC..."). Uses the extracted ID instead of the raw input. -->
+    <assignments>
+        <name>Set_Contact_From_Extracted</name>
+        <label>Set Contact From Extracted</label>
+        <locationX>120</locationX>
+        <locationY>158</locationY>
+        <assignmentItems>
+            <assignToReference>resolvedContactId</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>extractedContactId</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>safeCustomerId</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>extractedContactId</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Check_Duplicate_Event</targetReference>
+        </connector>
+    </assignments>
+
     <assignments>
         <name>Set_Contact_From_Email</name>
         <label>Set Contact From Email</label>
@@ -219,26 +245,19 @@
         </defaultConnector>
         <defaultConnectorLabel>No contactId</defaultConnectorLabel>
         <rules>
-            <name>Is_SF_Contact_Id</name>
+            <name>Has_Embedded_SF_Contact_Id</name>
             <conditionLogic>and</conditionLogic>
             <conditions>
-                <leftValueReference>contactId</leftValueReference>
-                <operator>IsNull</operator>
+                <leftValueReference>extractedIdIsValid</leftValueReference>
+                <operator>EqualTo</operator>
                 <rightValue>
-                    <booleanValue>false</booleanValue>
-                </rightValue>
-            </conditions>
-            <conditions>
-                <leftValueReference>contactId</leftValueReference>
-                <operator>StartsWith</operator>
-                <rightValue>
-                    <stringValue>003</stringValue>
+                    <booleanValue>true</booleanValue>
                 </rightValue>
             </conditions>
             <connector>
-                <targetReference>Set_Contact_From_Id</targetReference>
+                <targetReference>Set_Contact_From_Extracted</targetReference>
             </connector>
-            <label>Is SF Contact Id</label>
+            <label>contactId contains a Contact Id</label>
         </rules>
         <rules>
             <name>Is_Email_In_ContactId</name>
@@ -365,6 +384,26 @@
         <name>tenMinutesAgo</name>
         <dataType>DateTime</dataType>
         <expression>NOW() - (10/1440)</expression>
+    </formulas>
+
+    <!-- Extract a Salesforce Contact ID (15 or 18 chars starting with 003) from
+         a contactId input that may be prefixed by the agent (e.g. "Contact ID: 003ABC..."
+         or "003ABC... (Maya Thompson)"). Returns blank if no 003 pattern found. -->
+    <formulas>
+        <name>extractedContactId</name>
+        <dataType>String</dataType>
+        <expression>IF(
+  CONTAINS({!contactId}, "003"),
+  MID({!contactId}, FIND("003", {!contactId}), 18),
+  ""
+)</expression>
+    </formulas>
+
+    <!-- True if extractedContactId looks like a real SF Contact ID (length 15 or 18) -->
+    <formulas>
+        <name>extractedIdIsValid</name>
+        <dataType>Boolean</dataType>
+        <expression>OR(LEN({!extractedContactId}) = 15, LEN({!extractedContactId}) = 18)</expression>
     </formulas>
 
     <!-- ─── Record Creates ──────────────────────────────────── -->
