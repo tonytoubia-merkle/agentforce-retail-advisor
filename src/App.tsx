@@ -13,6 +13,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AdvisorPage } from '@/components/AdvisorPage';
 import { StorefrontPage } from '@/components/Storefront';
 import { MediaWallPage } from '@/components/MediaWall';
+import { HistoryWallPage } from '@/components/HistoryWall';
 import { LeadScoreBadge } from '@/components/MerkuryLeadScore/LeadScoreBadge';
 import { ProductProvider } from '@/contexts/ProductContext';
 import { resolveUTMToCampaign } from '@/mocks/adCreatives';
@@ -72,6 +73,7 @@ function AnimatedRoutes() {
     if (location.pathname === '/advisor') return 'advisor';
     if (location.pathname === '/skin-advisor') return 'skin-advisor';
     if (location.pathname === '/media-wall') return 'media';
+    if (location.pathname === '/history-wall') return 'history-wall';
     return 'storefront';
   }, [location.pathname]);
 
@@ -89,6 +91,7 @@ function AnimatedRoutes() {
           <Route path="/advisor" element={<AdvisorWrapper />} />
           <Route path="/skin-advisor" element={<SkinAdvisorWrapper />} />
           <Route path="/media-wall" element={<MediaWallPage />} />
+          <Route path="/history-wall" element={<HistoryWallPage />} />
           <Route path="*" element={<StorefrontPage />} />
         </Routes>
       </motion.div>
