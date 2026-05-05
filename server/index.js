@@ -2574,6 +2574,285 @@ Return ONLY valid JSON, no markdown fences.`;
     return;
   }
 
+  // ─── POST /api/seed-persona — seed a History Wall persona into Salesforce ──────
+  // Body: { personaId, seedData: { email, displayName, identityTier, orders,
+  //         browseSessions, chatSummaries, meaningfulEvents, agentCapturedProfile } }
+  // Finds-or-creates a Contact by email, then writes Chat_Summary__c,
+  // Meaningful_Event__c, Browse_Session__c, Agent_Captured_Profile__c, and
+  // Order + OrderItem records (best-effort — silent skip if products not found).
+  if (req.url === '/api/seed-persona' && req.method === 'POST') {
+    const chunks = [];
+    req.on('data', (c) => chunks.push(c));
+    req.on('end', () => {
+      try {
+        const { personaId, seedData } = JSON.parse(Buffer.concat(chunks).toString());
+        if (!personaId || !seedData) {
+          res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ error: 'Missing personaId or seedData' }));
+          return;
+        }
+
+        withServerToken(null, async (token) => {
+          if (!token) {
+            res.writeHead(503, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            res.end(JSON.stringify({ error: 'Could not obtain Salesforce token — check CLIENT_ID / CLIENT_SECRET in .env.local' }));
+            return;
+          }
+
+          // Promisified SF REST call
+          function sfRest(method, path, body = null) {
+            return new Promise((resolve) => {
+              const sfUrl = new URL(SF_INSTANCE);
+              const bodyStr = body ? JSON.stringify(body) : null;
+              const headers = {
+                host: sfUrl.hostname,
+                authorization: `Bearer ${token}`,
+                accept: 'application/json',
+              };
+              if (bodyStr) {
+                headers['content-type'] = 'application/json';
+                headers['content-length'] = Buffer.byteLength(bodyStr);
+              }
+              const sfReq = https.request(
+                { hostname: sfUrl.hostname, port: 443, path, method, headers },
+                (sfRes) => {
+                  const rc = [];
+                  sfRes.on('data', (c) => rc.push(c));
+                  sfRes.on('end', () => {
+                    const raw = Buffer.concat(rc).toString();
+                    try { resolve({ status: sfRes.statusCode, data: JSON.parse(raw) }); }
+                    catch { resolve({ status: sfRes.statusCode, data: {} }); }
+                  });
+                }
+              );
+              sfReq.on('error', (err) => {
+                console.error(`[seed-persona] sfRest error ${method} ${path}:`, err.message);
+                resolve({ status: 0, data: {} });
+              });
+              if (bodyStr) sfReq.end(bodyStr);
+              else sfReq.end();
+            });
+          }
+
+          try {
+            const {
+              email = '', displayName = '', identityTier = 'known',
+              orders = [], browseSessions = [], chatSummaries = [],
+              meaningfulEvents = [], agentCapturedProfile = {},
+            } = seedData;
+
+            const counts = {
+              contact: null, chatSummaries: 0, meaningfulEvents: 0,
+              browseSessions: 0, agentProfileFields: 0, orders: 0, errors: [],
+            };
+
+            // ── 1. Find or create Contact ───────────────────────────────────────
+            let contactId = null;
+            let accountId = null;
+
+            if (identityTier === 'known' && email) {
+              const safeEmail = email.replace(/'/g, "\\'");
+              const qRes = await sfRest('GET',
+                `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT Id, AccountId FROM Contact WHERE Email = '${safeEmail}' LIMIT 1`)}`
+              );
+              if (qRes.data?.records?.length > 0) {
+                contactId = qRes.data.records[0].Id;
+                accountId = qRes.data.records[0].AccountId;
+                counts.contact = 'found';
+                console.log(`[seed-persona] Found Contact ${contactId} for ${email}`);
+              }
+
+              if (!contactId) {
+                const nameParts = displayName.trim().split(/\s+/);
+                const firstName = nameParts[0] || 'Demo';
+                const lastName = nameParts.slice(1).join(' ') || 'User';
+                const acctName = displayName || email;
+                const safeAcct = acctName.replace(/'/g, "\\'");
+
+                // Find or create Account (required for Orders)
+                const aRes = await sfRest('GET',
+                  `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT Id FROM Account WHERE Name = '${safeAcct}' LIMIT 1`)}`
+                );
+                if (aRes.data?.records?.length > 0) {
+                  accountId = aRes.data.records[0].Id;
+                } else {
+                  const newAcct = await sfRest('POST', '/services/data/v60.0/sobjects/Account', { Name: acctName });
+                  if (newAcct.status === 201 && newAcct.data?.id) accountId = newAcct.data.id;
+                }
+
+                const cRes = await sfRest('POST', '/services/data/v60.0/sobjects/Contact', {
+                  FirstName: firstName,
+                  LastName: lastName,
+                  Email: email,
+                  ...(accountId && { AccountId: accountId }),
+                  Description: `History Wall Demo Persona (${personaId}) — seeded ${new Date().toISOString().slice(0, 10)}`,
+                });
+                if (cRes.status === 201 && cRes.data?.id) {
+                  contactId = cRes.data.id;
+                  counts.contact = 'created';
+                  console.log(`[seed-persona] Created Contact ${contactId} for ${email}`);
+                } else {
+                  counts.errors.push(`Contact create failed (${cRes.status}): ${JSON.stringify(cRes.data)}`);
+                }
+              }
+            }
+
+            if (!contactId) {
+              res.writeHead(422, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+              res.end(JSON.stringify({ error: 'Could not find or create Contact', counts, personaId }));
+              return;
+            }
+
+            // ── 2. Chat Summaries ───────────────────────────────────────────────
+            for (const s of chatSummaries) {
+              const r = await sfRest('POST', '/services/data/v60.0/sobjects/Chat_Summary__c', {
+                Customer_Id__c: contactId,
+                Session_Date__c: s.sessionDate,
+                Summary_Text__c: s.summary,
+                Sentiment__c: s.sentiment,
+                Topics_Discussed__c: (s.topicsDiscussed || []).join(';'),
+              });
+              if (r.status === 201) counts.chatSummaries++;
+              else counts.errors.push(`Chat_Summary__c failed (${r.status})`);
+            }
+
+            // ── 3. Meaningful Events ────────────────────────────────────────────
+            for (const e of meaningfulEvents) {
+              const r = await sfRest('POST', '/services/data/v60.0/sobjects/Meaningful_Event__c', {
+                Customer_Id__c: contactId,
+                Event_Type__c: e.eventType,
+                Description__c: e.description,
+                Captured_At__c: e.capturedAt,
+                Agent_Note__c: e.agentNote || null,
+                Metadata_JSON__c: e.metadata ? JSON.stringify(e.metadata) : null,
+              });
+              if (r.status === 201) counts.meaningfulEvents++;
+              else counts.errors.push(`Meaningful_Event__c failed (${r.status})`);
+            }
+
+            // ── 4. Browse Sessions ──────────────────────────────────────────────
+            for (const b of browseSessions) {
+              const r = await sfRest('POST', '/services/data/v60.0/sobjects/Browse_Session__c', {
+                Customer_Id__c: contactId,
+                Session_Date__c: b.sessionDate,
+                Categories_Browsed__c: (b.categoriesBrowsed || []).join(';'),
+                Products_Viewed__c: (b.productsViewed || []).join(';'),
+                Duration_Minutes__c: b.durationMinutes,
+                Device__c: b.device,
+                ...(b.utmCampaign && { UTM_Campaign__c: b.utmCampaign }),
+                ...(b.utmSource && { UTM_Source__c: b.utmSource }),
+              });
+              if (r.status === 201) counts.browseSessions++;
+              else counts.errors.push(`Browse_Session__c failed (${r.status})`);
+            }
+
+            // ── 5. Agent Captured Profile fields ────────────────────────────────
+            for (const [fieldName, fieldData] of Object.entries(agentCapturedProfile)) {
+              if (!fieldData || fieldData.value === undefined || fieldData.value === null) continue;
+              const value = typeof fieldData.value === 'object'
+                ? JSON.stringify(fieldData.value)
+                : String(fieldData.value);
+              const r = await sfRest('POST', '/services/data/v60.0/sobjects/Agent_Captured_Profile__c', {
+                Customer_Id__c: contactId,
+                Field_Name__c: fieldName,
+                Field_Value__c: value,
+                Captured_At__c: fieldData.capturedAt || new Date().toISOString(),
+                Captured_From__c: fieldData.capturedFrom || 'history-wall',
+                Confidence__c: fieldData.confidence || 'inferred',
+                Data_Type__c: typeof fieldData.value === 'object' ? 'array' : 'string',
+              });
+              if (r.status === 201) counts.agentProfileFields++;
+              else counts.errors.push(`Agent_Captured_Profile__c failed for ${fieldName} (${r.status})`);
+            }
+
+            // ── 6. Orders (best-effort — requires products seeded via seed-products.js) ─
+            if (orders.length > 0 && accountId) {
+              const pbRes = await sfRest('GET',
+                `/services/data/v60.0/query?q=${encodeURIComponent('SELECT Id FROM Pricebook2 WHERE IsStandard = true LIMIT 1')}`
+              );
+              const pricebookId = pbRes.data?.records?.[0]?.Id;
+
+              if (pricebookId) {
+                for (const order of orders) {
+                  const orderRes = await sfRest('POST', '/services/data/v60.0/sobjects/Order', {
+                    AccountId: accountId,
+                    EffectiveDate: order.orderDate,
+                    Status: 'Draft',
+                    Pricebook2Id: pricebookId,
+                    ...(order.channel && { Channel__c: order.channel }),
+                    ...(order.orderId && { OrderReferenceNumber: order.orderId }),
+                  });
+                  if (orderRes.status !== 201) {
+                    counts.errors.push(`Order create failed (${orderRes.status})`);
+                    continue;
+                  }
+                  const sfOrderId = orderRes.data.id;
+                  let itemsCreated = 0;
+
+                  for (const item of (order.lineItems || [])) {
+                    const safeName = item.productName.replace(/'/g, "\\'");
+                    const pRes = await sfRest('GET',
+                      `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT Id FROM Product2 WHERE Name LIKE '%${safeName}%' LIMIT 1`)}`
+                    );
+                    const product2Id = pRes.data?.records?.[0]?.Id;
+                    if (!product2Id) continue;
+
+                    const pbeRes = await sfRest('GET',
+                      `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT Id FROM PricebookEntry WHERE Product2Id = '${product2Id}' AND Pricebook2Id = '${pricebookId}' LIMIT 1`)}`
+                    );
+                    let pbeId = pbeRes.data?.records?.[0]?.Id;
+                    if (!pbeId) {
+                      const newPbe = await sfRest('POST', '/services/data/v60.0/sobjects/PricebookEntry', {
+                        Pricebook2Id: pricebookId,
+                        Product2Id: product2Id,
+                        UnitPrice: item.unitPrice,
+                        IsActive: true,
+                      });
+                      if (newPbe.status === 201) pbeId = newPbe.data.id;
+                    }
+                    if (!pbeId) continue;
+
+                    const oi = await sfRest('POST', '/services/data/v60.0/sobjects/OrderItem', {
+                      OrderId: sfOrderId,
+                      Product2Id: product2Id,
+                      PricebookEntryId: pbeId,
+                      Quantity: item.quantity,
+                      UnitPrice: item.unitPrice,
+                    });
+                    if (oi.status === 201) itemsCreated++;
+                  }
+
+                  if (itemsCreated > 0) {
+                    await sfRest('PATCH', `/services/data/v60.0/sobjects/Order/${sfOrderId}`, { Status: 'Activated' });
+                    counts.orders++;
+                  } else {
+                    // Remove empty draft order
+                    await sfRest('DELETE', `/services/data/v60.0/sobjects/Order/${sfOrderId}`);
+                  }
+                }
+              }
+            }
+
+            console.log(`[seed-persona] ✅ ${personaId} (${email}) → ${contactId} | ${JSON.stringify(counts)}`);
+            res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            res.end(JSON.stringify({ success: true, personaId, contactId, recordsCreated: counts }));
+
+          } catch (innerErr) {
+            console.error('[seed-persona] Error:', innerErr.message, innerErr.stack);
+            if (!res.headersSent) {
+              res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+              res.end(JSON.stringify({ error: innerErr.message }));
+            }
+          }
+        });
+      } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ error: 'Invalid request body' }));
+      }
+    });
+    return;
+  }
+
   const route = findRoute(req.url);
   if (!route) {
     res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
