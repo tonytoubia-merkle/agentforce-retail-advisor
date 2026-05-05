@@ -154,8 +154,52 @@ function ClaimModal({ persona, onSeed, onDone, onCancel }: ClaimModalProps) {
             </motion.div>
           )}
 
-          {/* Success */}
-          {seedState === 'success' && seedResult && (
+          {/* Success — acquisition-only (anonymous / appended) */}
+          {seedState === 'success' && seedResult?.acquisitionOnly && (
+            <motion.div
+              key="success-acq"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="px-6 py-8 space-y-6"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-white font-semibold">No CRM identity — acquisition mode</p>
+                  <p className="text-sm text-white/50">No Contact created · routes to paid + lookalike</p>
+                </div>
+              </div>
+              <div className="bg-indigo-900/20 border border-indigo-700/30 rounded-xl px-5 py-4 space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wider text-indigo-400/60">What the optimizer does instead</p>
+                <p className="text-sm text-white/70">
+                  Without a resolvable identity, this profile cannot enter any CRM journey or receive a personalized email.
+                  The campaign wizard routes the budget to <strong className="text-white/90">paid social lookalike audiences</strong> seeded
+                  from known high-value customers — and sets an <strong className="text-white/90">identity-capture goal</strong>
+                  (email gate, loyalty enrollment) as the first conversion event.
+                </p>
+                <div className="pt-2 space-y-1">
+                  {persona.optimizationStory.recommendedJourneys.map((j) => (
+                    <div key={j} className="flex items-start gap-2">
+                      <span className="text-indigo-400 text-[10px] mt-0.5">▸</span>
+                      <span className="text-[11px] text-white/60">{j}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <p className="text-[11px] text-white/30">
+                Every anonymous session is an identity-capture opportunity.
+                Once resolved, the optimization engine reassigns this profile to the appropriate CRM segment.
+              </p>
+            </motion.div>
+          )}
+
+          {/* Success — CRM record seeded */}
+          {seedState === 'success' && seedResult && !seedResult.acquisitionOnly && (
             <motion.div
               key="success"
               initial={{ opacity: 0, y: 8 }}
@@ -169,12 +213,26 @@ function ClaimModal({ persona, onSeed, onDone, onCancel }: ClaimModalProps) {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <div>
-                  <p className="text-white font-semibold">Seeded to Salesforce</p>
-                  <p className="text-sm text-white/50">
-                    Contact {seedResult.recordsCreated.contact === 'created' ? 'created' : 'found'} · {seedResult.contactId.slice(0, 15)}…
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-semibold">
+                    Contact {seedResult.recordsCreated.contact === 'created' ? 'created' : 'found'} in Salesforce
                   </p>
+                  <p className="text-sm text-white/50 font-mono truncate">{seedResult.contactId}</p>
                 </div>
+                {seedResult.contactId && import.meta.env.VITE_AGENTFORCE_INSTANCE_URL && (
+                  <a
+                    href={`${import.meta.env.VITE_AGENTFORCE_INSTANCE_URL}/lightning/r/Contact/${seedResult.contactId}/view`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/8 hover:bg-white/15 text-white/60 hover:text-white text-xs font-medium transition-all border border-white/10"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    View in SF
+                  </a>
+                )}
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">

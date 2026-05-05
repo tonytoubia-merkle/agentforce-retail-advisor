@@ -37,6 +37,15 @@ export function HistoryWallPage() {
   const [claimedPersonaId, setClaimedPersonaId] = useState<string | null>(getClaimedFromStorage);
   const [showSuccess, setShowSuccess] = useState(false);
   const [claimedPersona, setClaimedPersona] = useState<HistoryWallPersona | null>(null);
+  const [urlCopied, setUrlCopied] = useState(false);
+
+  function copyWallUrl() {
+    const url = `${window.location.origin}/history-wall`;
+    void navigator.clipboard.writeText(url).then(() => {
+      setUrlCopied(true);
+      setTimeout(() => setUrlCopied(false), 2000);
+    });
+  }
 
   // Load initial counts + subscribe to real-time updates
   useEffect(() => {
@@ -87,14 +96,34 @@ export function HistoryWallPage() {
               </div>
             </div>
 
-            {/* Live counter + nav */}
-            <div className="flex items-center gap-4">
+            {/* Live counter + share + nav */}
+            <div className="flex items-center gap-3">
               {totalClaims > 0 && (
                 <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   <span className="text-xs text-emerald-400 font-medium">{totalClaims} claimed live</span>
                 </div>
               )}
+              <button
+                onClick={copyWallUrl}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/8 hover:bg-white/14 text-white/60 hover:text-white text-xs font-medium transition-all border border-white/10"
+              >
+                {urlCopied ? (
+                  <>
+                    <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="text-emerald-400">Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    Copy link
+                  </>
+                )}
+              </button>
               <button
                 onClick={() => navigate('/')}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/10 hover:bg-white/15 text-white/70 hover:text-white text-sm font-medium transition-all"
