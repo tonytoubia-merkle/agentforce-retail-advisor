@@ -13,6 +13,7 @@ import {
   subscribeToSelections,
   getOrCreateSessionId,
 } from '@/services/supabase/historyWall';
+import { seedPersonaToSalesforce } from '@/services/salesforce/seedPersona';
 import { PersonaCard } from './PersonaCard';
 
 // ─── Claimed-persona persistence (sessionStorage) ─────────────────────────────
@@ -44,14 +45,14 @@ export function HistoryWallPage() {
     return unsub;
   }, []);
 
-  const handleClaim = useCallback(async (persona: HistoryWallPersona) => {
+  // Called by the modal after seeding completes (success or error — card is claimed either way)
+  const handleClaimComplete = useCallback((persona: HistoryWallPersona) => {
     const sessionId = getOrCreateSessionId();
-    await recordPersonaSelection(persona.id, sessionId);
+    void recordPersonaSelection(persona.id, sessionId);
     saveClaimedToStorage(persona.id);
     setClaimedPersonaId(persona.id);
     setClaimedPersona(persona);
     setShowSuccess(true);
-    // Re-fetch counts after recording
     fetchSelectionCounts().then(setSelectionCounts);
   }, []);
 
@@ -217,7 +218,8 @@ export function HistoryWallPage() {
                 persona={persona}
                 claimCount={selectionCounts[persona.id] ?? 0}
                 isClaimed={claimedPersonaId === persona.id}
-                onClaim={handleClaim}
+                onSeed={seedPersonaToSalesforce}
+                onClaimComplete={handleClaimComplete}
               />
             </motion.div>
           ))}
