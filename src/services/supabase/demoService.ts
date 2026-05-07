@@ -40,6 +40,7 @@ function rowToConfig(r: Record<string, unknown>): DemoConfig {
     },
     imageProvider: r.image_provider as DemoConfig['imageProvider'],
     featureFlags: r.feature_flags as DemoConfig['featureFlags'],
+    storefrontStyle: (r.storefront_style as DemoConfig['storefrontStyle']) ?? undefined,
     deployedAt: r.deployed_at as string | undefined,
     createdAt: r.created_at as string,
     updatedAt: r.updated_at as string,

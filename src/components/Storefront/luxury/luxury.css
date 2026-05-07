@@ -1,0 +1,379 @@
+/* ─── Tachibana / Luxury Maison design tokens ─────────────────────────
+   All custom-property tokens scoped under .tk-luxury so they don't leak
+   into the default storefront. Class prefix `tk-` matches the Flask
+   reference templates so future diffs are easy to spot. */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Inter:wght@300;400;500&family=Noto+Serif+JP:wght@300;400&display=swap');
+
+.tk-luxury {
+  /* Brand colors — Kyoto palette */
+  --sumi:        #1a1a1a;            /* sumi ink black */
+  --kuwa-cha:    #6b4423;            /* mulberry-tea brown */
+  --kinari:      #f5f0e6;            /* unbleached-silk cream */
+  --akakuchiba:  #a85c43;            /* red-fallen-leaf */
+  --aijiro:      #c4d4d8;            /* indigo-white */
+
+  /* Functional surfaces */
+  --paper:       #fafaf7;
+  --paper-edge:  #e7e2d6;
+  --ink:         #1a1a1a;
+  --ink-quiet:   #6b6357;
+  --brass-soft:  #8a7855;
+
+  /* Type system */
+  --serif: 'Cormorant Garamond', 'Times New Roman', serif;
+  --sans:  'Inter', system-ui, -apple-system, sans-serif;
+  --jp:    'Noto Serif JP', 'Yu Mincho', serif;
+
+  /* Geometry */
+  --gutter: 96px;
+  --section: 160px;
+  --section-tight: 96px;
+
+  /* The whole maison sits on paper, in ink */
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-weight: 300;
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: 0.01em;
+}
+
+/* ─── Containers ─────────────────────────────────────────────────── */
+.tk-luxury .tk-container {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+@media (min-width: 1024px) {
+  .tk-luxury .tk-container { padding: 0 var(--gutter); }
+}
+
+.tk-luxury .tk-section { padding: var(--section) 0; }
+.tk-luxury .tk-section--tight { padding: var(--section-tight) 0; }
+
+/* ─── Typography utilities ───────────────────────────────────────── */
+.tk-luxury .t-display {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: 40px;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.tk-luxury .t-display--lg { font-size: clamp(48px, 6vw, 84px); }
+.tk-luxury .t-display--md { font-size: clamp(32px, 3.5vw, 48px); }
+
+.tk-luxury .t-body-lg {
+  font-size: 18px;
+  line-height: 1.6;
+  font-weight: 300;
+}
+.tk-luxury .t-soft   { color: var(--ink-quiet); }
+.tk-luxury .t-quiet  { color: var(--ink-quiet); font-style: italic; }
+.tk-luxury .t-meta {
+  font-family: var(--sans);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--ink-quiet);
+  font-weight: 400;
+}
+.tk-luxury .t-caps {
+  font-family: var(--sans);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.24em;
+  color: var(--ink-quiet);
+  font-weight: 500;
+}
+.tk-luxury .t-jp {
+  font-family: var(--jp);
+  font-weight: 300;
+}
+
+/* ─── Spacing helpers ────────────────────────────────────────────── */
+.tk-luxury .tk-mt-sm   { margin-top: 12px; }
+.tk-luxury .tk-mt      { margin-top: 20px; }
+.tk-luxury .tk-mt-lg   { margin-top: 32px; }
+.tk-luxury .tk-mt-xl   { margin-top: 56px; }
+
+.tk-luxury .tk-stack    { display: flex; flex-direction: column; gap: 32px; }
+.tk-luxury .tk-stack-sm { display: flex; flex-direction: column; gap: 12px; }
+.tk-luxury .tk-stack-lg { display: flex; flex-direction: column; gap: var(--space, 96px); }
+
+.tk-luxury .tk-flex          { display: flex; }
+.tk-luxury .tk-flex--between { display: flex; justify-content: space-between; }
+.tk-luxury .tk-flex--center  { display: flex; align-items: center; }
+.tk-luxury .tk-gap           { gap: 16px; }
+
+.tk-luxury .tk-text-center { text-align: center; }
+
+/* Two-column with offset, used heavily on PDP/atelier */
+.tk-luxury .tk-twocol--off {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 64px;
+}
+@media (max-width: 900px) {
+  .tk-luxury .tk-twocol--off { grid-template-columns: 1fr; gap: 48px; }
+}
+
+/* ─── Material plates (gradient placeholders for imagery) ────────── */
+.tk-luxury .tk-plate {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  isolation: isolate;
+}
+.tk-luxury .tk-plate--portrait { aspect-ratio: 3 / 4; }
+.tk-luxury .tk-plate--square   { aspect-ratio: 1 / 1; }
+
+/* Material gradients (Pisa veg-tan, sumi-dyed leather, raw silk, archive
+   red, indigo-white). All hand-tuned to feel like the material under
+   gallery lighting. */
+.tk-luxury .tk-plate--kuwa-cha {
+  background: linear-gradient(135deg, #6b4423 0%, #8b5a3c 45%, #4a2f1a 100%);
+  color: #f5f0e6;
+}
+.tk-luxury .tk-plate--sumi {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 60%, #0a0a0a 100%);
+  color: #f5f0e6;
+}
+.tk-luxury .tk-plate--kinari {
+  background: linear-gradient(135deg, #f5f0e6 0%, #e7dfca 100%);
+  color: var(--kuwa-cha);
+}
+.tk-luxury .tk-plate--akakuchiba {
+  background: linear-gradient(135deg, #a85c43 0%, #c87253 50%, #823f2a 100%);
+  color: #f5f0e6;
+}
+.tk-luxury .tk-plate--aijiro {
+  background: linear-gradient(135deg, #c4d4d8 0%, #a8bcc2 100%);
+  color: var(--sumi);
+}
+
+.tk-luxury .tk-plate__mark {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 38%;
+  height: 38%;
+  opacity: 0.45;
+}
+.tk-luxury .tk-plate__caption {
+  position: absolute;
+  left: 16px;
+  bottom: 14px;
+  font-family: var(--sans);
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  opacity: 0.78;
+}
+
+/* ─── Buttons & links ────────────────────────────────────────────── */
+.tk-luxury .tk-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 26px;
+  font-family: var(--sans);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-weight: 500;
+  border-radius: 0;
+  transition: background 200ms ease, color 200ms ease, border-color 200ms ease;
+  cursor: pointer;
+}
+.tk-luxury .tk-btn--ghost {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--ink);
+}
+.tk-luxury .tk-btn--ghost:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+.tk-luxury .tk-btn--ink {
+  background: var(--ink);
+  color: var(--paper);
+  border: 1px solid var(--ink);
+}
+.tk-luxury .tk-btn--ink:hover {
+  background: transparent;
+  color: var(--ink);
+}
+
+.tk-luxury .tk-link {
+  font-family: var(--sans);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--paper-edge);
+  padding-bottom: 2px;
+  transition: border-color 200ms ease;
+  background: none;
+  cursor: pointer;
+}
+.tk-luxury .tk-link:hover { border-color: var(--kuwa-cha); }
+
+.tk-luxury .tk-rule {
+  border: 0;
+  border-top: 1px solid var(--paper-edge);
+}
+
+/* ─── Kamon divider ──────────────────────────────────────────────── */
+.tk-luxury .tk-kamon-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 96px auto;
+  color: var(--brass-soft);
+  opacity: 0.6;
+  height: 32px;
+}
+.tk-luxury .tk-kamon-divider svg { width: 32px; height: 32px; }
+
+/* ─── Product card (collection grid) ─────────────────────────────── */
+.tk-luxury .tk-collection-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 80px 48px;
+}
+@media (max-width: 1024px) { .tk-luxury .tk-collection-grid { grid-template-columns: repeat(2, 1fr); gap: 64px 32px; } }
+@media (max-width: 640px)  { .tk-luxury .tk-collection-grid { grid-template-columns: 1fr; gap: 56px; } }
+
+.tk-luxury .tk-product-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  font: inherit;
+  width: 100%;
+}
+.tk-luxury .tk-product-card__plate { margin-bottom: 22px; }
+.tk-luxury .tk-product-card__title {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 22px;
+  letter-spacing: 0.005em;
+}
+.tk-luxury .tk-product-card__title-jp {
+  margin-left: 12px;
+  font-family: var(--jp);
+  font-size: 0.6em;
+  color: var(--kuwa-cha);
+}
+.tk-luxury .tk-product-card__meta {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--ink-quiet);
+  letter-spacing: 0.04em;
+}
+.tk-luxury .tk-product-card__meta strong {
+  font-weight: 500;
+  color: var(--ink);
+}
+.tk-luxury .tk-product-card__price {
+  margin-top: 10px;
+  font-family: var(--serif);
+  font-size: 17px;
+  letter-spacing: 0.04em;
+}
+
+/* ─── Header / Footer overrides ──────────────────────────────────── */
+.tk-luxury .tk-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(250, 250, 247, 0.94);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--paper-edge);
+}
+.tk-luxury .tk-nav__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 80px;
+  padding: 0 32px;
+  max-width: 1320px;
+  margin: 0 auto;
+}
+@media (min-width: 1024px) {
+  .tk-luxury .tk-nav__inner { padding: 0 var(--gutter); }
+}
+.tk-luxury .tk-nav__brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+.tk-luxury .tk-nav__brand .kamon { color: var(--ink); width: 28px; height: 28px; }
+.tk-luxury .tk-nav__brand-name {
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+.tk-luxury .tk-nav__brand-jp {
+  font-family: var(--jp);
+  font-size: 16px;
+  color: var(--kuwa-cha);
+  margin-left: 8px;
+}
+.tk-luxury .tk-nav__links {
+  display: none;
+  gap: 36px;
+}
+@media (min-width: 1024px) { .tk-luxury .tk-nav__links { display: flex; } }
+.tk-luxury .tk-nav__link {
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-quiet);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  transition: color 200ms ease;
+  font-family: var(--sans);
+  font-weight: 400;
+}
+.tk-luxury .tk-nav__link:hover,
+.tk-luxury .tk-nav__link.is-active { color: var(--ink); }
+
+.tk-luxury .tk-footer {
+  background: var(--ink);
+  color: var(--kinari);
+  padding: 96px 0 56px;
+  margin-top: 96px;
+}
+.tk-luxury .tk-footer .t-caps,
+.tk-luxury .tk-footer .t-meta { color: rgba(245, 240, 230, 0.6); }
+
+/* ─── Maison passport panel & bantō card ─────────────────────────── */
+.tk-luxury .tk-paper {
+  background: var(--kinari);
+  border: 1px solid var(--paper-edge);
+}

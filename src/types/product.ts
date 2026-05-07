@@ -78,6 +78,25 @@ export interface WellnessAttributes {
   certifications?: string[];
 }
 
+/** Luxury-maison product attributes — used by the Tachibana-style storefront
+ *  variant. The master is the named craftsperson; material is the leather /
+ *  hide / lacquer; tannery is the European supplier of record; lot is the
+ *  per-piece tracking number that appears on the digital passport. */
+export interface LuxuryAttributes {
+  /** Named craftsperson — appears on the PDP, passport, and Bag line items. */
+  master?: string;
+  /** Leather / hide / metal name (e.g. "Kuwa-cha", "Sumi", "18k Japanese gold"). */
+  material?: string;
+  /** Tannery or workshop of origin (e.g. "Pisa", "Lucca", "Vicenza"). */
+  tannery?: string;
+  /** Japanese name for the piece (e.g. "桐 トート"). */
+  jpName?: string;
+  /** Per-piece passport identifier (e.g. "橘-2024-K-0089"). */
+  lot?: string;
+  /** Atelier date label (e.g. "Spring 2024", "In atelier · ships May 2026"). */
+  atelierDate?: string;
+}
+
 export interface ProductAttributes extends BeautyAttributes {
   /** Shared across all verticals. */
   size?: string;
@@ -88,6 +107,10 @@ export interface ProductAttributes extends BeautyAttributes {
   travel?: TravelAttributes;
   fashion?: FashionAttributes;
   wellness?: WellnessAttributes;
+  /** Storefront-style sub-shape — populated for `storefrontStyle === 'luxury_maison'`
+   *  demos (Tachibana, etc.). Read by the luxury components for the master
+   *  craftsperson, material origin, lot number, and Japanese name. */
+  luxury?: LuxuryAttributes;
 
   /** Optional "optimize my cart" upgrade path. When the cart contains this
    *  product at a quantity >= replacesQuantity, the Cart Optimizer widget
