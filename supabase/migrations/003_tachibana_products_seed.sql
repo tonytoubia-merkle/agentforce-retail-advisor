@@ -1,206 +1,155 @@
 -- 003_tachibana_products_seed.sql
--- Comprehensive Tachibana maison catalog. 34 pieces across four categories
--- (leather goods, jewelry, outerwear, lifestyle), each with the
--- `attributes.luxury` sub-shape pre-populated so the SPA renders master,
--- material, tannery, lot, and Japanese name without further wiring.
---
--- Idempotent: deletes any existing Tachibana product rows first, so
--- re-running this migration is safe and keeps the catalog as the single
--- source of truth. Imagery is left blank (image_url = '', images = '{}')
--- and will be populated in batches as Imagen / Firefly assets land.
+-- Tachibana maison catalog. 34 pieces; one DELETE + one INSERT, no DO block.
+-- Idempotent: re-running deletes existing rows first.
 
--- ─── 1. Pre-clean ──────────────────────────────────────────────────
 delete from demo_products
  where demo_id = (select id from demos where slug = 'tachibana');
 
--- ─── 2. Insert ─────────────────────────────────────────────────────
-insert into demo_products (
-  demo_id, name, brand, category, price, currency,
-  description, short_description, image_url, images, rating,
-  review_count, in_stock, attributes, retailers, sort_order
-)
+insert into demo_products
+  (demo_id, name, brand, category, price, currency, description, short_description, image_url, images, rating, review_count, in_stock, attributes, retailers, sort_order)
 select t.id, x.name, 'Tachibana', x.category, x.price, 'USD',
-       x.description, x.short_description, '', '{}'::text[],
-       4.9, 0, true,
+       x.description, x.short_description, '', '{}'::text[], 4.9, 0, true,
        jsonb_build_object('luxury', jsonb_build_object(
-         'master',      x.master,
-         'material',    x.material,
-         'tannery',     x.tannery,
-         'jpName',      x.jp_name,
-         'lot',         x.lot,
-         'atelierDate', x.atelier_date
-       )),
-       '[]'::jsonb,
-       x.sort_order
+         'master', x.master, 'material', x.material, 'tannery', x.tannery,
+         'jpName', x.jp_name, 'lot', x.lot, 'atelierDate', x.atelier_date)),
+       '[]'::jsonb, x.sort_order
   from demos t
  cross join (values
-    -- ── Leather goods (16) ───────────────────────────────────────
-    ('Kiri Tote',                'leather-goods', 4800,
+    ('Kiri Tote', 'leather-goods', 4800,
        'The volume of the house. Forty-two stitches per inch by Hideo Mori, eleven days at the bench. Kuwa-cha mulberry-tea leather, vegetable-tanned at Conceria 800 in Pisa over twenty-eight days. Nishijin silk lining woven by the Nishikawa workshop in Kyoto.',
        'A daily carryall in mulberry-tea leather.',
-       'Hideo Mori',          'Kuwa-cha',                 'Pisa',     '桐 トート',         '橘-2024-K-0089', 'Spring 2024',  10),
-    ('Kiri Tote Mini',           'leather-goods', 3400,
+       'Hideo Mori', 'Kuwa-cha', 'Pisa', '桐 トート', '橘-2024-K-0089', 'Spring 2024', 10),
+    ('Kiri Tote Mini', 'leather-goods', 3400,
        'The Kiri form, contracted. Same eleven-day bench by Hideo Mori, scaled for a quieter day. Holds a passport, a small book, and the things you carry without thinking.',
        'The Kiri form, scaled to the hand.',
-       'Hideo Mori',          'Kuwa-cha',                 'Pisa',     '桐 ミニ',           '橘-2024-K-0211', 'Spring 2024',  20),
-    ('Sumi Briefcase',           'leather-goods', 5400,
+       'Hideo Mori', 'Kuwa-cha', 'Pisa', '桐 ミニ', '橘-2024-K-0211', 'Spring 2024', 20),
+    ('Sumi Briefcase', 'leather-goods', 5400,
        'The brief made for a long career. Sumi-dyed leather of remarkable depth, hand-finished in our atelier. Single rolled handle, brass-soft hardware, suede-lined sleeve for a 13-inch laptop.',
        'A formal briefcase in sumi-dyed leather.',
-       'Akiko Tanaka',        'Sumi',                     'Pisa',     '墨',                '橘-2022-S-0421', 'Autumn 2022',  30),
-    ('Sumi Slim Folio',          'leather-goods', 3900,
+       'Akiko Tanaka', 'Sumi', 'Pisa', '墨', '橘-2022-S-0421', 'Autumn 2022', 30),
+    ('Sumi Slim Folio', 'leather-goods', 3900,
        'For the lighter day at the firm. The Sumi profile, slimmed to hold a 13-inch laptop and a notebook only. Less weight, the same gravity.',
        'A laptop folio in sumi-dyed leather.',
-       'Akiko Tanaka',        'Sumi',                     'Pisa',     '墨 薄',             '橘-2024-S-0118', 'Spring 2024',  40),
-    ('Tachibana Voyage',         'leather-goods', 7200,
+       'Akiko Tanaka', 'Sumi', 'Pisa', '墨 薄', '橘-2024-S-0118', 'Spring 2024', 40),
+    ('Tachibana Voyage', 'leather-goods', 7200,
        'Made for the long absence. A weekender that holds five days of clothes, a pair of shoes, and the feeling that you have packed for the right kind of trip. Junji Okada signs every Voyage on the inside seam.',
        'A weekender for the long absence.',
-       'Junji Okada',         'Kuwa-cha',                 'Pisa',     '橘 旅',             '橘-2026-V-0017', 'In atelier · ships May 2026', 50),
-    ('Tachibana Voyage 24h',     'leather-goods', 5800,
+       'Junji Okada', 'Kuwa-cha', 'Pisa', '橘 旅', '橘-2026-V-0017', 'In atelier, ships May 2026', 50),
+    ('Tachibana Voyage 24h', 'leather-goods', 5800,
        'The same architecture as the Voyage, sized for an overnight. Same hand, same weight of brass. The compromise is in time, not craft.',
        'An overnight made by the maker of the Voyage.',
-       'Junji Okada',         'Sumi',                     'Pisa',     '橘 旅 24',          '橘-2024-V-0042', 'Autumn 2024',  60),
-    ('Hana Minaudière',          'leather-goods', 3600,
+       'Junji Okada', 'Sumi', 'Pisa', '橘 旅 24', '橘-2024-V-0042', 'Autumn 2024', 60),
+    ('Hana Minaudière', 'leather-goods', 3600,
        'An evening clutch returned to the catalog from the 1931 archive, re-cut with a softer edge by Yuki Sato. Six pieces this season, by appointment only.',
        'A 1931 evening clutch, re-cut.',
-       'Yuki Sato',           'Sumi',                     'Lucca',    '花',                '橘-2023-H-0204', 'Spring 2023',  70),
-    ('Hana Mini',                'leather-goods', 2400,
-       'The Hana, scaled to the wrist. Akakuchiba red — the colour of a fallen autumn leaf — with a single brass-soft chain. Long enough to wear cross-body, short enough to hold by hand.',
+       'Yuki Sato', 'Sumi', 'Lucca', '花', '橘-2023-H-0204', 'Spring 2023', 70),
+    ('Hana Mini', 'leather-goods', 2400,
+       'The Hana, scaled to the wrist. Akakuchiba red, the colour of a fallen autumn leaf, with a single brass-soft chain. Long enough to wear cross-body, short enough to hold by hand.',
        'The Hana, scaled to the wrist.',
-       'Yuki Sato',           'Akakuchiba',               'Lucca',    '花 ミニ',           '橘-2024-H-0312', 'Spring 2024',  80),
-    ('Hana Tote',                'leather-goods', 4200,
-       'A daily Hana — the soft akakuchiba leather of the evening pieces, in a tote that takes the day. Open-top, internal slip pockets, no closure.',
+       'Yuki Sato', 'Akakuchiba', 'Lucca', '花 ミニ', '橘-2024-H-0312', 'Spring 2024', 80),
+    ('Hana Tote', 'leather-goods', 4200,
+       'A daily Hana. The soft akakuchiba leather of the evening pieces, in a tote that takes the day. Open-top, internal slip pockets, no closure.',
        'A daily tote in fallen-leaf red.',
-       'Yuki Sato',           'Akakuchiba',               'Lucca',    '花 トート',         '橘-2024-H-0407', 'Spring 2024',  90),
-    ('Camellia Backpack',        'leather-goods', 5600,
+       'Yuki Sato', 'Akakuchiba', 'Lucca', '花 トート', '橘-2024-H-0407', 'Spring 2024', 90),
+    ('Camellia Backpack', 'leather-goods', 5600,
        'A leather pack that does not pretend to be technical. Two straps, a single roll-top, a small slip pocket for the things you reach for without thinking. Hideo Mori, fourteen days.',
        'A leather pack, made quietly.',
-       'Hideo Mori',          'Kuwa-cha',                 'Pisa',     '椿 リュック',       '橘-2025-CAM-0019', 'Autumn 2025', 100),
-    ('Sumi Card Case',           'leather-goods',  680,
+       'Hideo Mori', 'Kuwa-cha', 'Pisa', '椿 リュック', '橘-2025-CAM-0019', 'Autumn 2025', 100),
+    ('Sumi Card Case', 'leather-goods', 680,
        'Six card slots, one centre slip, no logo. The kamon is pressed in iron-gall on the inside seam, where only the lining ever sees it.',
        'A flat card case in sumi.',
-       'Hideo Mori',          'Sumi',                     'Pisa',     '墨 札',             '橘-2021-S-1109', 'Spring 2021', 110),
-    ('Sumi Bifold Wallet',       'leather-goods', 1200,
+       'Hideo Mori', 'Sumi', 'Pisa', '墨 札', '橘-2021-S-1109', 'Spring 2021', 110),
+    ('Sumi Bifold Wallet', 'leather-goods', 1200,
        'Eight cards, one bill compartment, one coin pocket fastened with a single brass-soft press. The seam runs unbroken across the spine.',
        'A small bifold for a small day.',
-       'Akiko Tanaka',        'Sumi',                     'Pisa',     '墨 二折',           '橘-2024-W-0033', 'Spring 2024', 120),
-    ('Kuwa-cha Long Wallet',     'leather-goods', 1400,
+       'Akiko Tanaka', 'Sumi', 'Pisa', '墨 二折', '橘-2024-W-0033', 'Spring 2024', 120),
+    ('Kuwa-cha Long Wallet', 'leather-goods', 1400,
        'A long wallet for a long career. Twelve cards, three bill compartments, an interior zip for receipts you mean to keep.',
        'A long wallet for the long career.',
-       'Akiko Tanaka',        'Kuwa-cha',                 'Pisa',     '桑茶 長財布',       '橘-2024-W-0214', 'Spring 2024', 130),
-    ('Kuwa-cha Belt 35mm',       'leather-goods', 1100,
+       'Akiko Tanaka', 'Kuwa-cha', 'Pisa', '桑茶 長財布', '橘-2024-W-0214', 'Spring 2024', 130),
+    ('Kuwa-cha Belt 35mm', 'leather-goods', 1100,
        'A single-piece belt, 35mm wide, 4mm thick. 18k Japanese gold buckle by Marco Bianchi in Vicenza. Cut to your waist at any of our houses.',
        'A leather belt, cut to your waist.',
-       'Hideo Mori',          'Kuwa-cha',                 'Pisa',     '桑茶 帯',           '橘-2024-B-0091', 'Spring 2024', 140),
-    ('Hisashi Document Folio',   'leather-goods', 2200,
+       'Hideo Mori', 'Kuwa-cha', 'Pisa', '桑茶 帯', '橘-2024-B-0091', 'Spring 2024', 140),
+    ('Hisashi Document Folio', 'leather-goods', 2200,
        'A4 document folio in sumi leather. Single hinge, magnetic closure, suede-lined interior. For the contract that ought to arrive in person.',
        'An A4 folio for the in-person meeting.',
-       'Junji Okada',         'Sumi',                     'Pisa',     '久 書類入れ',       '橘-2024-DF-0014', 'Autumn 2024', 150),
-    ('Edo Pen Roll',             'leather-goods',  620,
+       'Junji Okada', 'Sumi', 'Pisa', '久 書類入れ', '橘-2024-DF-0014', 'Autumn 2024', 150),
+    ('Edo Pen Roll', 'leather-goods', 620,
        'A single-piece kuwa-cha leather pen roll for three writing instruments. Closes with a wrapped cord. Nishijin silk lining.',
        'A leather roll for three pens.',
-       'Akiko Tanaka',        'Kuwa-cha',                 'Pisa',     '江戸 ペンロール',   '橘-2024-PR-0061', 'Spring 2024', 160),
-
-    -- ── Jewelry (8) ──────────────────────────────────────────────
-    ('Tachibana Crest Signet',   'jewelry',       8900,
-       'The kamon, miniaturised. 18k Japanese gold, lost-wax cast in Vicenza by Marco Bianchi from the original 1923 die. The interior is engraved with the lot number — the exterior carries only the five-petal mandarin orange.',
+       'Akiko Tanaka', 'Kuwa-cha', 'Pisa', '江戸 ペンロール', '橘-2024-PR-0061', 'Spring 2024', 160),
+    ('Tachibana Crest Signet', 'jewelry', 8900,
+       'The kamon, miniaturised. 18k Japanese gold, lost-wax cast in Vicenza by Marco Bianchi from the original 1923 die. The interior is engraved with the lot number, the exterior carries only the five-petal mandarin orange.',
        'The kamon, miniaturised in 18k gold.',
-       'Marco Bianchi',       '18k Japanese gold',        'Vicenza',  '橘 紋',             '橘-2023-C-0061', 'Winter 2023', 170),
-    ('Tachibana Crest Pendant',  'jewelry',       4400,
+       'Marco Bianchi', '18k Japanese gold', 'Vicenza', '橘 紋', '橘-2023-C-0061', 'Winter 2023', 170),
+    ('Tachibana Crest Pendant', 'jewelry', 4400,
        'The signet, pendant-cut. On a 50cm rolo chain in the same 18k gold. Worn plain or under a high collar.',
        'The signet, pendant-cut.',
-       'Marco Bianchi',       '18k Japanese gold',        'Vicenza',  '橘 紋 ペンダント',   '橘-2024-C-0142', 'Spring 2024', 180),
-    ('Kiku Cuff',                'jewelry',      12800,
+       'Marco Bianchi', '18k Japanese gold', 'Vicenza', '橘 紋 ペンダント', '橘-2024-C-0142', 'Spring 2024', 180),
+    ('Kiku Cuff', 'jewelry', 12800,
        'A wide cuff with the chrysanthemum, worked in low relief. Hand-finished in Vicenza over four working days. The interior is brushed. The exterior catches the light.',
        'A chrysanthemum cuff, worked in low relief.',
-       'Marco Bianchi',       '18k Japanese gold',        'Vicenza',  '菊 カフ',           '橘-2024-K-0008', 'Spring 2024', 190),
-    ('Mizuhiki Bracelet',        'jewelry',       6200,
-       'Three strands of 18k gold cord, knotted in the mizuhiki style — the ceremonial cord knot of the Japanese gift. Worn alone or stacked.',
+       'Marco Bianchi', '18k Japanese gold', 'Vicenza', '菊 カフ', '橘-2024-K-0008', 'Spring 2024', 190),
+    ('Mizuhiki Bracelet', 'jewelry', 6200,
+       'Three strands of 18k gold cord, knotted in the mizuhiki style, the ceremonial cord knot of the Japanese gift. Worn alone or stacked.',
        'A ceremonial knot, in 18k gold cord.',
-       'Marco Bianchi',       '18k Japanese gold',        'Vicenza',  '水引 ブレスレット',   '橘-2024-MZ-0033', 'Autumn 2024', 200),
-    ('Mon Stud Earrings',        'jewelry',       2800,
+       'Marco Bianchi', '18k Japanese gold', 'Vicenza', '水引 ブレスレット', '橘-2024-MZ-0033', 'Autumn 2024', 200),
+    ('Mon Stud Earrings', 'jewelry', 2800,
        'The kamon, in stud form. 6mm. 18k Japanese gold, butterfly back.',
        'The kamon, in stud form.',
-       'Marco Bianchi',       '18k Japanese gold',        'Vicenza',  '紋 ピアス',         '橘-2024-E-0082', 'Spring 2024', 210),
-    ('Hana Drop Earrings',       'jewelry',       4200,
+       'Marco Bianchi', '18k Japanese gold', 'Vicenza', '紋 ピアス', '橘-2024-E-0082', 'Spring 2024', 210),
+    ('Hana Drop Earrings', 'jewelry', 4200,
        'A small kamon in 18k gold, suspended above a single freshwater Akoya pearl from the Mie pearl farm. 28mm drop.',
        'Kamon and pearl drop, 28mm.',
-       'Marco Bianchi',       '18k Japanese gold + pearl', 'Vicenza',  '花 ドロップ',       '橘-2024-E-0119', 'Autumn 2024', 220),
-    ('Sumi Lacquer Hairpin',     'jewelry',        980,
+       'Marco Bianchi', '18k Japanese gold + pearl', 'Vicenza', '花 ドロップ', '橘-2024-E-0119', 'Autumn 2024', 220),
+    ('Sumi Lacquer Hairpin', 'jewelry', 980,
        'A single hair stick, urushi-lacquered in sumi black over Wajima boxwood. The kamon is inlaid in 18k gold leaf at the head. 16cm.',
        'A lacquered hair stick, gold-inlaid.',
-       'Tetsuya Asano',       'Urushi lacquer · boxwood', 'Wajima',   '墨 髪留め',         '橘-2024-HP-0024', 'Autumn 2024', 230),
-    ('Mon Cufflinks',            'jewelry',       3200,
+       'Tetsuya Asano', 'Urushi lacquer + boxwood', 'Wajima', '墨 髪留め', '橘-2024-HP-0024', 'Autumn 2024', 230),
+    ('Mon Cufflinks', 'jewelry', 3200,
        'The kamon, twice. Brushed-finish 18k gold, T-bar back. For a French cuff that means business.',
        'The kamon, in cufflink form.',
-       'Marco Bianchi',       '18k Japanese gold',        'Vicenza',  '紋 カフリンクス',   '橘-2024-CL-0067', 'Winter 2024', 240),
-
-    -- ── Outerwear (4) ────────────────────────────────────────────
-    ('Kuwa-cha Travel Coat',     'outerwear',     9200,
+       'Marco Bianchi', '18k Japanese gold', 'Vicenza', '紋 カフリンクス', '橘-2024-CL-0067', 'Winter 2024', 240),
+    ('Kuwa-cha Travel Coat', 'outerwear', 9200,
        'A single-breasted travel coat in kuwa-cha leather. Cut to fall to mid-calf. Lined in Nishijin silk woven by the Nishikawa workshop. Mariko Aoki, Kyoto.',
        'A leather travel coat, mid-calf.',
-       'Mariko Aoki',         'Kuwa-cha leather',         'Pisa + Kyoto', '桑茶 旅外套',   '橘-2024-CO-0008', 'Autumn 2024', 250),
-    ('Sumi Bomber',              'outerwear',     6400,
+       'Mariko Aoki', 'Kuwa-cha leather', 'Pisa + Kyoto', '桑茶 旅外套', '橘-2024-CO-0008', 'Autumn 2024', 250),
+    ('Sumi Bomber', 'outerwear', 6400,
        'A short jacket in sumi-dyed leather. 18k Japanese gold zipper teeth by Marco Bianchi. Ribbed Nishijin silk hem and cuff.',
        'A short leather jacket, in sumi.',
-       'Mariko Aoki',         'Sumi leather',             'Pisa + Kyoto', '墨 ボンバー',   '橘-2024-CO-0019', 'Autumn 2024', 260),
-    ('Kinari Wrap',              'outerwear',     2800,
+       'Mariko Aoki', 'Sumi leather', 'Pisa + Kyoto', '墨 ボンバー', '橘-2024-CO-0019', 'Autumn 2024', 260),
+    ('Kinari Wrap', 'outerwear', 2800,
        'A long wrap in undyed Nishijin silk. Worn over a kimono, a coat, or shoulders bare. Reiko Nishikawa, Kyoto.',
        'A wrap in undyed Nishijin silk.',
-       'Reiko Nishikawa',     'Nishijin silk',            'Kyoto',    '生成 巻き',         '橘-2024-WR-0011', 'Spring 2024', 270),
-    ('Aijiro Haori',             'outerwear',     4100,
+       'Reiko Nishikawa', 'Nishijin silk', 'Kyoto', '生成 巻き', '橘-2024-WR-0011', 'Spring 2024', 270),
+    ('Aijiro Haori', 'outerwear', 4100,
        'A formal haori jacket in indigo-white silk. Hand-embroidered kamon at the collar. Worn over the kimono or as a long blazer over Western dress.',
        'A formal haori, indigo-white.',
-       'Reiko Nishikawa',     'Aijiro silk',              'Kyoto',    '藍白 羽織',         '橘-2024-HA-0007', 'Spring 2024', 280),
-
-    -- ── Lifestyle (6) ────────────────────────────────────────────
-    ('Paulownia Stationery Box', 'lifestyle',     1400,
+       'Reiko Nishikawa', 'Aijiro silk', 'Kyoto', '藍白 羽織', '橘-2024-HA-0007', 'Spring 2024', 280),
+    ('Paulownia Stationery Box', 'lifestyle', 1400,
        'A traditional kiri-paulownia box, the Japanese conservation wood. Six interior compartments for letters, seals, and small objects. The kamon is iron-burned into the underside of the lid.',
        'A paulownia box for letters and seals.',
-       'Tomoko Sakurai',      'Paulownia (kiri-wood)',    'Kyoto',    '桐 文房具箱',       '橘-2024-PB-0014', 'Spring 2024', 290),
-    ('Sumi Fountain Pen',        'lifestyle',     2200,
+       'Tomoko Sakurai', 'Paulownia (kiri-wood)', 'Kyoto', '桐 文房具箱', '橘-2024-PB-0014', 'Spring 2024', 290),
+    ('Sumi Fountain Pen', 'lifestyle', 2200,
        'Wajima urushi lacquer in sumi black, hand-applied over forty days. 18k gold nib in medium. Cartridge or piston converter.',
        'A lacquered pen with an 18k nib.',
-       'Tetsuya Asano',       'Urushi lacquer + 18k gold', 'Wajima',  '墨 万年筆',         '橘-2024-FP-0044', 'Autumn 2024', 300),
-    ('Tachibana Incense Set',    'lifestyle',      480,
-       'Three coils of Kyoto incense — kyara aged twenty years, sandalwood, white plum. A small black-iron incense holder. Six paulownia boxes by Tomoko Sakurai.',
+       'Tetsuya Asano', 'Urushi lacquer + 18k gold', 'Wajima', '墨 万年筆', '橘-2024-FP-0044', 'Autumn 2024', 300),
+    ('Tachibana Incense Set', 'lifestyle', 480,
+       'Three coils of Kyoto incense, kyara aged twenty years, sandalwood, white plum. A small black-iron incense holder. Six paulownia boxes by Tomoko Sakurai.',
        'Three coils of aged Kyoto incense.',
-       'Yuriko Tachibana',    'Kyara · sandalwood · plum','Kyoto',    '橘 香セット',       '橘-2024-IN-0061', 'Autumn 2024', 310),
-    ('Kuwa-cha A5 Notebook',     'lifestyle',      480,
+       'Yuriko Tachibana', 'Kyara, sandalwood, plum', 'Kyoto', '橘 香セット', '橘-2024-IN-0061', 'Autumn 2024', 310),
+    ('Kuwa-cha A5 Notebook', 'lifestyle', 480,
        'A leather A5 notebook with a refillable insert of 96 pages of cream Nakayama writing paper. The kamon is iron-pressed at the lower right of the cover.',
        'A leather A5 notebook, refillable.',
-       'Hideo Mori',          'Kuwa-cha leather',         'Pisa',     '桑茶 ノート',       '橘-2024-NB-0091', 'Spring 2024', 320),
-    ('Kinari Tea Towel Set',     'lifestyle',      620,
+       'Hideo Mori', 'Kuwa-cha leather', 'Pisa', '桑茶 ノート', '橘-2024-NB-0091', 'Spring 2024', 320),
+    ('Kinari Tea Towel Set', 'lifestyle', 620,
        'Three Nishijin silk tea towels in undyed kinari. Hand-rolled hems. The kamon is woven, not printed, into the lower right corner.',
        'Three Nishijin silk tea towels.',
-       'Reiko Nishikawa',     'Nishijin silk',            'Kyoto',    '生成 茶巾',         '橘-2024-TT-0042', 'Spring 2024', 330),
-    ('Mon Coasters',             'lifestyle',      280,
+       'Reiko Nishikawa', 'Nishijin silk', 'Kyoto', '生成 茶巾', '橘-2024-TT-0042', 'Spring 2024', 330),
+    ('Mon Coasters', 'lifestyle', 280,
        'Four paulownia coasters, hand-cut and lightly burned with the kamon at the centre. 100mm diameter. They will darken with use.',
        'Four paulownia coasters with kamon.',
-       'Tomoko Sakurai',      'Paulownia (kiri-wood)',    'Kyoto',    '紋 コースター',     '橘-2024-CO-0029', 'Autumn 2024', 340)
-  ) as x(
-    name, category, price,
-    description, short_description,
-    master, material, tannery, jp_name, lot, atelier_date,
-    sort_order
-  )
+       'Tomoko Sakurai', 'Paulownia (kiri-wood)', 'Kyoto', '紋 コースター', '橘-2024-CO-0029', 'Autumn 2024', 340)
+  ) as x(name, category, price, description, short_description, master, material, tannery, jp_name, lot, atelier_date, sort_order)
  where t.slug = 'tachibana';
-
--- ─── 3. Sanity check ───────────────────────────────────────────────
--- Verifies we ended with 34 rows for Tachibana and that every row has
--- the luxury sub-shape populated. Wrap in DO so re-run is idempotent.
-do $$
-declare
-  ttl int;
-  no_lux int;
-begin
-  select count(*) into ttl
-    from demo_products dp
-    join demos d on d.id = dp.demo_id
-   where d.slug = 'tachibana';
-  select count(*) into no_lux
-    from demo_products dp
-    join demos d on d.id = dp.demo_id
-   where d.slug = 'tachibana'
-     and (dp.attributes->'luxury') is null;
-  raise notice 'Tachibana products: % total, % missing luxury sub-shape', ttl, no_lux;
-end$$;
