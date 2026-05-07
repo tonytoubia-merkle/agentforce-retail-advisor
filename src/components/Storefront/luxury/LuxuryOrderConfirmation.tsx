@@ -9,7 +9,7 @@ export const LuxuryOrderConfirmation: React.FC = () => {
   const eta = lastOrderResult?.estimatedDelivery;
 
   return (
-    <section className="tk-section--tight tk-container tk-text-center" style={{ paddingTop: 96 }}>
+    <section className="tk-section--tight tk-container tk-text-center">
       <div style={{ color: 'var(--brass-soft)', display: 'inline-flex' }}>
         <Kamon size={56} />
       </div>

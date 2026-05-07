@@ -37,11 +37,14 @@ export const LuxuryHome: React.FC = () => {
   return (
     <>
       {/* ── Hero ────────────────────────────────────────────────── */}
-      <section className="tk-section--tight tk-container" style={{ paddingTop: 80 }}>
+      <section className="tk-section--tight tk-container">
         <p className="t-caps">Kyoto · Since 1923</p>
         {greeting && <p className="t-meta tk-mt" style={{ color: 'var(--brass-soft)' }}>{greeting}</p>}
-        <h1 className="t-display t-display--lg tk-mt-sm" style={{ maxWidth: '14ch' }}>
-          {config.brandTagline || 'A house of leather and lacquer.'}
+        {/* Editorial hero — fixed copy on purpose. brand_tagline is for SEO
+            / marketing emails and is a full sentence; the home wants the
+            quiet two-line declaration of what the house is. */}
+        <h1 className="t-display t-display--lg tk-mt-sm" style={{ maxWidth: '12ch' }}>
+          A house of leather and lacquer.
         </h1>
         <p className="t-body-lg t-soft tk-mt-lg" style={{ maxWidth: '52ch' }}>
           We are a Kyoto atelier of twenty-three master craftspeople. Italian-tradition saddle work,

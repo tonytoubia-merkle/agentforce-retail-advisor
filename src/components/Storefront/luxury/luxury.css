@@ -51,8 +51,19 @@
   .tk-luxury .tk-container { padding: 0 var(--gutter); }
 }
 
-.tk-luxury .tk-section { padding: var(--section) 0; }
-.tk-luxury .tk-section--tight { padding: var(--section-tight) 0; }
+/* Use longhand top/bottom so this rule doesn't fight `.tk-container`'s
+   horizontal padding when both classes sit on the same element (which is
+   the common case across every luxury page). Shorthand `padding` would
+   reset the horizontal padding to 0 and the content would sit flush
+   against the viewport edge. */
+.tk-luxury .tk-section {
+  padding-top: var(--section);
+  padding-bottom: var(--section);
+}
+.tk-luxury .tk-section--tight {
+  padding-top: var(--section-tight);
+  padding-bottom: var(--section-tight);
+}
 
 /* ─── Typography utilities ───────────────────────────────────────── */
 .tk-luxury .t-display {
