@@ -4,6 +4,16 @@ export type DemoVertical = 'beauty' | 'fashion' | 'travel' | 'wellness' | 'cpg';
 export type DemoStatus = 'draft' | 'deploying' | 'live' | 'archived' | 'error';
 export type ImageProvider = 'imagen' | 'firefly' | 'cms-only' | 'none';
 
+/**
+ * Storefront visual variant. `default` is the universal Tailwind grid layout
+ * shared by every demo. `luxury_maison` is the editorial Kyoto-house variant
+ * (Tachibana et al.) — lots of white space, kamon mark instead of logo,
+ * "Bantō" instead of "advisor", restoration / atelier journeys, no big
+ * gradients or social-proof badges. Both variants share the same data layer
+ * (products, cart, customer, Merkury, Data Cloud) and routing.
+ */
+export type StorefrontStyle = 'default' | 'luxury_maison';
+
 export interface DemoTheme {
   primaryColor: string;
   accentColor: string;
@@ -67,6 +77,12 @@ export interface DemoConfig {
 
   // Theme
   theme: DemoTheme;
+
+  /**
+   * Visual variant. Default for every demo unless explicitly opted in.
+   * Stored in Supabase column `storefront_style`.
+   */
+  storefrontStyle?: StorefrontStyle;
 
   // Salesforce
   salesforce: DemoSalesforceConfig;

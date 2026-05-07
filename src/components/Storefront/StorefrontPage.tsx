@@ -1,5 +1,6 @@
 import { useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { LuxuryStorefrontPage } from './luxury/LuxuryStorefrontPage';
 import { StoreHeader } from './StoreHeader';
 import { HeroBanner } from './HeroBanner';
 import { ProductSection } from './ProductSection';
@@ -20,7 +21,22 @@ import { useProducts } from '@/contexts/ProductContext';
 import { useDemo } from '@/contexts/DemoContext';
 import type { Product, ProductCategory } from '@/types/product';
 
+/**
+ * StorefrontPage — top-level dispatcher.
+ *
+ * Reads `config.storefrontStyle` and forks to the matching component tree.
+ * Keeping this thin (and free of any other hooks) means the variant flag
+ * can flip mid-session — e.g. when DemoContext finishes its async load —
+ * without violating the Rules of Hooks. The default body lives below and
+ * keeps its full hook order intact.
+ */
 export const StorefrontPage: React.FC = () => {
+  const { config } = useDemo();
+  if (config.storefrontStyle === 'luxury_maison') return <LuxuryStorefrontPage />;
+  return <DefaultStorefrontBody />;
+};
+
+const DefaultStorefrontBody: React.FC = () => {
   const { products, loading: productsLoading } = useProducts();
   const { view, selectedCategory, selectedProduct, navigateHome, navigateToCategory } = useStore();
   const { customer, isAuthenticated } = useCustomer();
