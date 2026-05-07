@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { useStore } from '@/contexts/StoreContext';
 import { Kamon } from './Kamon';
+import { LuxuryPlate, type PlateColor } from './LuxuryPlate';
 import type { Product } from '@/types/product';
 
 interface Props {
   product: Product;
 }
 
-const PLATES = ['kuwa-cha', 'sumi', 'kinari'] as const;
+const PLATES: PlateColor[] = ['kuwa-cha', 'sumi', 'kinari'];
 
 /**
  * LuxuryProductDetailPage — long-form, editorial PDP.
@@ -70,18 +71,30 @@ export const LuxuryProductDetailPage: React.FC<Props> = ({ product }) => {
 
       <section className="tk-container" style={{ paddingBottom: 80 }}>
         <div className="tk-twocol--off" style={{ alignItems: 'start', gap: 96 }}>
-          {/* Left — three stacked plates */}
+          {/* Left — three stacked plates. The hero (i=0) takes the
+              product's imageUrl when one exists; i=1 and i=2 take the
+              first two supplementary `images[]` entries (edge stitching
+              macro + interior reveal, in our generation plan). Any slot
+              without imagery falls back to the gradient. */}
           <div className="tk-stack">
-            {PLATES.map((plate, i) => (
-              <div key={plate} className={`tk-plate tk-plate--${plate} tk-plate--portrait`}>
-                <Kamon className="tk-plate__mark" />
-                <span className="tk-plate__caption">
-                  {i === 0 && `${material} · ${tannery}`}
-                  {i === 1 && `Master · ${master}`}
-                  {i === 2 && `Lot · ${lot}`}
-                </span>
-              </div>
-            ))}
+            {PLATES.map((plate, i) => {
+              const url = i === 0 ? product.imageUrl : product.images?.[i - 1];
+              return (
+                <LuxuryPlate
+                  key={plate}
+                  color={plate}
+                  imageUrl={url || undefined}
+                  alt={product.name}
+                  caption={
+                    i === 0
+                      ? `${material} · ${tannery}`
+                      : i === 1
+                      ? `Master · ${master}`
+                      : `Lot · ${lot}`
+                  }
+                />
+              );
+            })}
           </div>
 
           {/* Right — sticky title / monogram / price */}

@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
 import { useDemo } from '@/contexts/DemoContext';
 import { Kamon } from './Kamon';
+import { LuxuryPlate, type PlateColor } from './LuxuryPlate';
 import type { Product, ProductCategory } from '@/types/product';
 
-const PLATE_ROTATION = ['kuwa-cha', 'sumi', 'kinari', 'akakuchiba', 'aijiro'] as const;
+const PLATE_ROTATION: PlateColor[] = ['kuwa-cha', 'sumi', 'kinari', 'akakuchiba', 'aijiro'];
 
 interface Props {
   category: ProductCategory;
@@ -70,12 +71,13 @@ export const LuxuryCategoryPage: React.FC<Props> = ({ category, products }) => {
               const material = lux?.material || String(p.category);
               return (
                 <button key={p.id} type="button" onClick={() => navigateToProduct(p)} className="tk-product-card">
-                  <div className={`tk-plate tk-plate--${plate} tk-plate--portrait tk-product-card__plate`}>
-                    <Kamon className="tk-plate__mark" />
-                    <span className="tk-plate__caption">
-                      {material}{lux?.tannery ? ` · ${lux.tannery}` : ''}
-                    </span>
-                  </div>
+                  <LuxuryPlate
+                    color={plate}
+                    className="tk-product-card__plate"
+                    imageUrl={p.imageUrl || undefined}
+                    alt={p.name}
+                    caption={`${material}${lux?.tannery ? ` · ${lux.tannery}` : ''}`}
+                  />
                   <div className="tk-product-card__title">
                     {p.name}
                     {lux?.jpName && <span className="tk-product-card__title-jp">{lux.jpName}</span>}

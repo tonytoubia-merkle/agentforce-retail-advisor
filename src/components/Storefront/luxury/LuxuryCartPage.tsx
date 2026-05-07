@@ -2,8 +2,9 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
 import { Kamon } from './Kamon';
+import { LuxuryPlate, type PlateColor } from './LuxuryPlate';
 
-const PLATE_ROTATION = ['kuwa-cha', 'sumi', 'kinari', 'akakuchiba', 'aijiro'] as const;
+const PLATE_ROTATION: PlateColor[] = ['kuwa-cha', 'sumi', 'kinari', 'akakuchiba', 'aijiro'];
 
 /**
  * LuxuryCartPage — single-column line items, quiet sticky summary on the
@@ -63,10 +64,15 @@ export const LuxuryCartPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => navigateToProduct(item.product)}
-                      className={`tk-plate tk-plate--${plate}`}
-                      style={{ aspectRatio: '3 / 4', cursor: 'pointer', border: 0, padding: 0 }}
+                      style={{ cursor: 'pointer', border: 0, padding: 0, background: 'transparent' }}
+                      aria-label={`Open ${item.product.name}`}
                     >
-                      <Kamon className="tk-plate__mark" />
+                      <LuxuryPlate
+                        color={plate}
+                        imageUrl={item.product.imageUrl || undefined}
+                        alt={item.product.name}
+                        style={{ aspectRatio: '3 / 4' }}
+                      />
                     </button>
                     <div>
                       <button
