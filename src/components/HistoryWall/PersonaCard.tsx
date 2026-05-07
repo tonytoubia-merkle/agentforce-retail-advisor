@@ -499,6 +499,7 @@ export function PersonaCard({ persona, claimCount, isClaimed, onSeed, onClaimCom
   const [showModal, setShowModal] = useState(false);
   const cfg = ARCHETYPE_CONFIG[persona.archetype];
   const idBadge = identityBadge(persona.seedData.identityTier);
+  const { seedData } = persona;
 
   function handleDone() {
     setShowModal(false);
