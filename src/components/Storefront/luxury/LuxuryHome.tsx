@@ -4,9 +4,10 @@ import { useProducts } from '@/contexts/ProductContext';
 import { useCustomer } from '@/contexts/CustomerContext';
 import { useDemo } from '@/contexts/DemoContext';
 import { Kamon } from './Kamon';
+import { LuxuryPlate, type PlateColor } from './LuxuryPlate';
 import type { Product, ProductCategory } from '@/types/product';
 
-const PLATE_ROTATION = ['kuwa-cha', 'sumi', 'kinari', 'akakuchiba', 'aijiro'] as const;
+const PLATE_ROTATION: PlateColor[] = ['kuwa-cha', 'sumi', 'kinari', 'akakuchiba', 'aijiro'];
 
 /**
  * LuxuryHome — the editorial maison landing.
@@ -109,12 +110,13 @@ export const LuxuryHome: React.FC = () => {
                   className="tk-product-card"
                   style={{ display: 'block' }}
                 >
-                  <div className={`tk-plate tk-plate--${plate} tk-plate--portrait tk-product-card__plate`}>
-                    <Kamon className="tk-plate__mark" />
-                    <span className="tk-plate__caption">
-                      {p.attributes?.luxury?.tannery || (p.brand ? p.brand : 'Pisa')}
-                    </span>
-                  </div>
+                  <LuxuryPlate
+                    color={plate}
+                    className="tk-product-card__plate"
+                    imageUrl={p.imageUrl || undefined}
+                    alt={p.name}
+                    caption={p.attributes?.luxury?.tannery || p.brand || 'Pisa'}
+                  />
                   <div className="tk-product-card__title">
                     {p.name}
                     {p.attributes?.luxury?.jpName && (
@@ -145,10 +147,7 @@ export const LuxuryHome: React.FC = () => {
       {/* ── From the atelier ────────────────────────────────────── */}
       <section className="tk-section--tight tk-container">
         <div className="tk-twocol--off" style={{ alignItems: 'start' }}>
-          <div className="tk-plate tk-plate--kuwa-cha tk-plate--portrait">
-            <Kamon className="tk-plate__mark" />
-            <span className="tk-plate__caption">Hideo Mori · Kyoto</span>
-          </div>
+          <LuxuryPlate color="kuwa-cha" caption="Hideo Mori · Kyoto" alt="Hideo Mori at the Kyoto atelier" />
           <div>
             <p className="t-caps">From the atelier</p>
             <h2 className="t-display t-display--md tk-mt-sm" style={{ maxWidth: '20ch' }}>

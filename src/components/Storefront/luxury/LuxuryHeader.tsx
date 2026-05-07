@@ -7,6 +7,19 @@ import { Kamon } from './Kamon';
 import type { ProductCategory } from '@/types/product';
 
 /**
+ * Maison-native nav categories. Aligned with the Tachibana product seed
+ * (see `003_tachibana_products_seed.sql`). Hardcoded here because this
+ * header is luxury-only — adding these to the shared `verticalCopy.ts`
+ * would force them onto every fashion demo.
+ */
+const MAISON_CATEGORIES: { label: string; value: ProductCategory }[] = [
+  { label: 'Leather goods', value: 'leather-goods' as ProductCategory },
+  { label: 'Jewelry',       value: 'jewelry' as ProductCategory },
+  { label: 'Outerwear',     value: 'outerwear' as ProductCategory },
+  { label: 'Lifestyle',     value: 'lifestyle' as ProductCategory },
+];
+
+/**
  * LuxuryHeader — sticky kamon-marked nav.
  *
  * Lives outside the per-page panels so it stays in place across navigation.
@@ -20,10 +33,9 @@ export const LuxuryHeader: React.FC = () => {
   const { navigateHome, navigateToCategory, navigateToCart, navigateToAccount } = useStore();
   const { itemCount } = useCart();
   const { isAuthenticated } = useCustomer();
-  const { config, copy } = useDemo();
+  const { config } = useDemo();
 
   const path = location.pathname;
-  const isActive = (test: (p: string) => boolean) => test(path);
 
   return (
     <header className="tk-nav">
@@ -37,15 +49,20 @@ export const LuxuryHeader: React.FC = () => {
           </span>
         </button>
 
-        {/* Section nav — Maison / Atelier / Journal / My Maison */}
+        {/* Section nav — four maison categories + three editorial sections.
+            `copy` is intentionally not consulted here; the maison's category
+            taxonomy differs from generic fashion. */}
         <nav className="tk-nav__links" aria-label="Primary">
-          <button
-            type="button"
-            className={`tk-nav__link ${isActive((p) => p.startsWith('/shop')) ? 'is-active' : ''}`}
-            onClick={() => navigateToCategory((copy.catalogNav[0]?.value || 'all') as ProductCategory)}
-          >
-            Maison
-          </button>
+          {MAISON_CATEGORIES.map((c) => (
+            <button
+              key={c.value as string}
+              type="button"
+              className={`tk-nav__link ${path === `/shop/${c.value}` ? 'is-active' : ''}`}
+              onClick={() => navigateToCategory(c.value)}
+            >
+              {c.label}
+            </button>
+          ))}
           <button
             type="button"
             className={`tk-nav__link ${path === '/atelier' ? 'is-active' : ''}`}
