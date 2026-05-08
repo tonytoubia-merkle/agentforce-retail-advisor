@@ -140,9 +140,17 @@ export const DemoLog: React.FC<{ onOpenChange?: (open: boolean) => void }> = ({ 
     <>
       <style>{`@keyframes fadeInRight { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }`}</style>
 
-      {/* Collapsed tab — fixed position, always clickable when panel is closed */}
+      {/* Collapsed tab — fixed position, always clickable when panel is closed.
+          aria-label / title / id / data-testid give Playwright (used by the
+          demo-recording pipeline) and any screen reader a stable handle.
+          The visible text is "Demo" but it's vertical writing-mode, which
+          some action selectors don't read reliably. */}
       <button
         onClick={() => setOpen(true)}
+        aria-label="Open demo panel"
+        title="Open demo panel"
+        id="demo-panel-open"
+        data-testid="demo-panel-open"
         className="fixed right-0 top-1/2 -translate-y-1/2 z-[60] flex items-center gap-1.5 bg-stone-900/95 border border-white/10 border-r-0 rounded-l-lg px-2 py-3 shadow-xl hover:bg-stone-800 transition-all"
         style={{ writingMode: 'vertical-lr', opacity: open ? 0 : 1, pointerEvents: open ? 'none' : 'auto' }}
       >
@@ -168,7 +176,19 @@ export const DemoLog: React.FC<{ onOpenChange?: (open: boolean) => void }> = ({ 
               <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <h2 className="text-[10px] font-semibold text-white/60 uppercase tracking-wider">Demo</h2>
             </div>
-            <button onClick={() => setOpen(false)} className="p-1 rounded text-white/30 hover:text-white/60 hover:bg-white/10 transition-colors">
+            {/* Collapse arrow — chevron points right ("push the panel away"
+                / "collapse to the right edge"). The Playwright recording
+                pipeline finds this by accessible name; without aria-label
+                + title the unlabeled chevron-right SVG was the only handle
+                and the demo flow couldn't dismiss the panel. */}
+            <button
+              onClick={() => setOpen(false)}
+              aria-label="Collapse demo panel"
+              title="Collapse demo panel"
+              id="demo-panel-collapse"
+              data-testid="demo-panel-collapse"
+              className="p-1 rounded text-white/30 hover:text-white/60 hover:bg-white/10 transition-colors"
+            >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7" />
               </svg>
