@@ -1,12 +1,40 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
-import { useDemo } from '@/contexts/DemoContext';
 import { Kamon } from './Kamon';
 import { LuxuryPlate, type PlateColor } from './LuxuryPlate';
 import type { Product, ProductCategory } from '@/types/product';
 
 const PLATE_ROTATION: PlateColor[] = ['kuwa-cha', 'sumi', 'kinari', 'akakuchiba', 'aijiro'];
+
+/**
+ * Per-category editorial copy. Keyed by the seed migration's category
+ * slugs. Falls back to a generic display name when a piece lives under
+ * a category that doesn't match here (legacy fashion catalogNav values
+ * like 'new', 'dress', 'accessory', etc.).
+ */
+const CATEGORY_COPY: Record<string, { label: string; intro: string }> = {
+  'leather-goods': {
+    label: 'Leather goods',
+    intro:
+      'The volume of the house. Hand-stitched in Kyoto by twenty-three master craftspeople. Italian-tradition saddle work, finished in our atelier since 1958. Each piece carries the name of its maker.',
+  },
+  jewelry: {
+    label: 'Jewelry',
+    intro:
+      '18k Japanese gold by Marco Bianchi in Vicenza, lacquer by Tetsuya Asano in Wajima. The kamon, miniaturised — the chrysanthemum, in low relief. Worn alone or as the only mark of the house.',
+  },
+  outerwear: {
+    label: 'Outerwear',
+    intro:
+      'Leather coats hand-cut in Kyoto from our Pisa-tanned hides; haori and wraps woven on Nishijin looms by the Nishikawa workshop. Made each season in numbers the atelier can finish.',
+  },
+  lifestyle: {
+    label: 'Lifestyle',
+    intro:
+      'Paulownia, urushi, Nishijin, Kyoto incense. The objects of an ordinary day at the atelier — a stationery box, a fountain pen, a tea towel — made to the same standard as the leather.',
+  },
+};
 
 interface Props {
   category: ProductCategory;
@@ -23,15 +51,19 @@ interface Props {
 export const LuxuryCategoryPage: React.FC<Props> = ({ category, products }) => {
   const navigate = useNavigate();
   const { navigateToProduct } = useStore();
-  const { copy } = useDemo();
 
   const filtered = useMemo(
     () => products.filter((p) => p.category === category),
     [products, category],
   );
 
-  const navItem = copy.catalogNav.find((c) => c.value === category);
-  const collectionLabel = navItem?.label || (typeof category === 'string' ? category : 'Pieces');
+  const slug = String(category);
+  const copy = CATEGORY_COPY[slug] || {
+    label: slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+    intro:
+      'Hand-finished in Kyoto. Each piece carries the name of its maker, the date it left our workshop, and a passport that travels with it for the rest of its life.',
+  };
+  const collectionLabel = copy.label;
 
   return (
     <>
@@ -48,9 +80,7 @@ export const LuxuryCategoryPage: React.FC<Props> = ({ category, products }) => {
         </p>
         <h1 className="t-display t-display--lg tk-mt-sm">{collectionLabel}</h1>
         <p className="t-body-lg t-soft tk-mt-lg" style={{ maxWidth: '60ch' }}>
-          The volume of the house. Hand-stitched in Kyoto by twenty-three master craftspeople.
-          Italian-tradition saddle work, finished in our atelier since 1958. Each piece carries
-          the name of its maker.
+          {copy.intro}
         </p>
       </section>
 
@@ -68,7 +98,12 @@ export const LuxuryCategoryPage: React.FC<Props> = ({ category, products }) => {
             {filtered.map((p, i) => {
               const plate = PLATE_ROTATION[i % PLATE_ROTATION.length];
               const lux = p.attributes?.luxury;
-              const material = lux?.material || String(p.category);
+              // Prefer luxury.material; fall back to a humanised category label
+              // (so a missing-luxury row reads "Leather goods" instead of
+              // "leather-goods" in the plate caption).
+              const material =
+                lux?.material ||
+                String(p.category).replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
               return (
                 <button key={p.id} type="button" onClick={() => navigateToProduct(p)} className="tk-product-card">
                   <LuxuryPlate

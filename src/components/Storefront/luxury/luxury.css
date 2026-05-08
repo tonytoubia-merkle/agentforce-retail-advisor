@@ -385,9 +385,13 @@
 }
 .tk-luxury .tk-nav__links {
   display: none;
-  gap: 36px;
+  gap: 24px;
+  /* Keep nav items on one line; if the viewport is too narrow, items at
+     the end overflow rather than wrap into the brand. */
+  flex-wrap: nowrap;
 }
 @media (min-width: 1024px) { .tk-luxury .tk-nav__links { display: flex; } }
+@media (min-width: 1280px) { .tk-luxury .tk-nav__links { gap: 32px; } }
 .tk-luxury .tk-nav__link {
   font-size: 12px;
   letter-spacing: 0.18em;
@@ -400,6 +404,10 @@
   transition: color 200ms ease;
   font-family: var(--sans);
   font-weight: 400;
+  /* Don't let a 2-word label like "Leather goods" wrap and crowd the
+     brand mark; it's better to compress the gap or wait for a wider
+     viewport. */
+  white-space: nowrap;
 }
 .tk-luxury .tk-nav__link:hover,
 .tk-luxury .tk-nav__link.is-active { color: var(--ink); }

@@ -52,6 +52,15 @@ function demoProductToProduct(dp: DemoProduct): Product {
       isHypoallergenic: attrs.isHypoallergenic as boolean,
       isDermatologistTested: attrs.isDermatologistTested as boolean,
       keyIngredients: attrs.keyIngredients as string[],
+      // Forward the per-vertical sub-shapes so demo-specific UIs can read them.
+      // Each is opt-in: only the Supabase row's matching key is forwarded;
+      // others remain undefined and the components fall back to defaults.
+      luxury: attrs.luxury as ProductAttributes['luxury'],
+      travel: attrs.travel as ProductAttributes['travel'],
+      fashion: attrs.fashion as ProductAttributes['fashion'],
+      wellness: attrs.wellness as ProductAttributes['wellness'],
+      bundleUpgrade: attrs.bundleUpgrade as ProductAttributes['bundleUpgrade'],
+      dietary: attrs.dietary as ProductAttributes['dietary'],
     },
     rating: dp.rating,
     reviewCount: dp.reviewCount,
