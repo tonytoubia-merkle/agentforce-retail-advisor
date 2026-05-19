@@ -417,7 +417,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode; agentId
   );
   const sessionInitializedRef = useRef(false);
   const { processUIDirective, resetScene, setBackground, getSceneSnapshot, restoreSceneSnapshot } = useScene();
-  const { customer, selectedPersonaId, isAuthenticated, isResolving, identifyByEmail, refreshProfile, _isRefreshRef, _onSessionReset } = useCustomer();
+  const { customer, selectedPersonaId, isAuthenticated, isResolving, identifyByEmail, refreshProfile, _isRefreshRef, _lastRefreshAtRef, _onSessionReset } = useCustomer();
   const { campaign } = useCampaign();
   const { showCapture } = useActivityToast();
   const messagesRef = useRef<AgentMessage[]>([]);
@@ -483,9 +483,16 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode; agentId
       return;
     }
 
-    // If this is a profile refresh (not a persona switch), skip session reset
-    if (_isRefreshRef.current) {
-      console.log('[session] Profile refresh — keeping conversation intact');
+    // If this is a profile refresh (not a persona switch), skip session reset.
+    // Check BOTH the boolean ref AND the timestamp — the legacy
+    // setTimeout(0)-cleared ref can race with React's commit + effect cycle
+    // and read false by the time this runs; the 1s timestamp window catches it.
+    const refreshAgeMs = Date.now() - (_lastRefreshAtRef?.current ?? 0);
+    if (_isRefreshRef.current || refreshAgeMs < 1000) {
+      console.log('[session] Profile refresh — keeping conversation intact', { refreshAgeMs });
+      // Clear the boolean ref now that we've consumed it, in case the
+      // setTimeout(0) reset never fires (e.g., tab backgrounded).
+      _isRefreshRef.current = false;
       return;
     }
 
@@ -790,14 +797,13 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode; agentId
         }
 
         // Show toast notifications for any background captures.
-        // The agent creates the actual Salesforce records via Create_Meaningful_Event
-        // flow action — we only surface the toast UI here, no client-side writes.
-        // Dedupe by type to avoid multiple toasts for the same capture detected
-        // through different detection paths in client.ts.
+        // Dedupe by type to avoid multiple toasts for the same capture
+        // detected through different detection paths in client.ts.
         const captures = response.uiDirective.payload?.captures;
         if (captures?.length) {
           const shown = new Set<string>();
           let sawProfileChange = false;
+          const meaningfulEventCaptures: Array<{ type: string; label: string }> = [];
           for (const c of captures) {
             if (!shown.has(c.type)) {
               showCapture(c);
@@ -812,15 +818,62 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode; agentId
                 sawProfileChange = true;
               }
             }
+            if (c.type === 'meaningful_event') meaningfulEventCaptures.push(c);
           }
-          // The agent flows (Create_Meaningful_Event / Update_Contact_Profile)
-          // write to Salesforce server-side. Schedule a lightweight profile
-          // refresh so the DemoPanel, IdentityPanel, and the next turn's
-          // prompt context all reflect the new records. The delay covers
-          // typical SF write commit + indexing latency (1–3s); the inner
-          // refresh re-pulls events/profile and merges without touching
-          // the active conversation.
-          if (sawProfileChange) {
+
+          // ─── Client-side fallback Meaningful_Event__c write ───────
+          // The agent SHOULD be calling the Create_Meaningful_Event flow
+          // server-side, but in practice the action sometimes no-ops:
+          // the agent narrates "I've captured it" without invoking the
+          // tool, OR the flow's contact-resolution path silently drops
+          // an "orphan" insert. The toast still fires (we parse the
+          // agent text) but no Meaningful_Event__c row appears in CRM,
+          // which means refreshProfile() pulls back the SAME old list
+          // and the Demo Panel never updates.
+          //
+          // To make the demo robust, we mirror the skin-concern auto-
+          // capture path below: write the record client-side ourselves.
+          // The server-side flow's `Check_Duplicate_Event` decision
+          // de-dupes if both writes happen to land. After the write,
+          // refresh the profile so the Demo Panel + next-turn prompt
+          // context both see the new event.
+          if (meaningfulEventCaptures.length && customer?.id) {
+            const writes = meaningfulEventCaptures.map((c) => {
+              const description = (c.label || '')
+                .replace(/^Event\s+Captured:\s*/i, '')
+                .trim() || content;
+              return fetch('/api/sf-record', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  sobject: 'Meaningful_Event__c',
+                  fields: {
+                    Customer_Id__c: customer.id,
+                    Contact__c: customer.id,
+                    Event_Type__c: 'life-event',
+                    Description__c: description,
+                    Agent_Note__c: 'Client fallback write — agent reported capture in chat.',
+                    Captured_At__c: new Date().toISOString(),
+                    Urgency__c: 'No Date',
+                    Approval_Status__c: 'Pending Review',
+                  },
+                }),
+              }).then((r) => {
+                if (!r.ok) throw new Error(`sf-record ${r.status}`);
+                console.log('[conversation] Client fallback Meaningful_Event__c written:', description);
+              }).catch((err) => {
+                console.warn('[conversation] Client fallback write failed (may already exist server-side):', err);
+              });
+            });
+            // After ALL writes settle, refresh the profile so the new
+            // events flow into customer.meaningfulEvents.
+            Promise.allSettled(writes).then(() => {
+              window.setTimeout(() => { refreshProfile(); }, 600);
+            });
+          } else if (sawProfileChange) {
+            // No meaningful_event capture (e.g., only profile_enrichment) —
+            // still refresh in case the agent's Update_Contact_Profile
+            // flow wrote something server-side.
             window.setTimeout(() => { refreshProfile(); }, 2200);
           }
         }
