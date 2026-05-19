@@ -31,6 +31,11 @@ interface CustomerContextValue {
   enrollInLoyalty: () => void;
   /** @internal Used by ConversationContext to detect refresh vs switch. */
   _isRefreshRef: React.MutableRefObject<boolean>;
+  /** @internal Timestamp (ms) of the last lightweight refresh.
+   *  ConversationContext checks `Date.now() - this < 1000` to short-circuit
+   *  session reset when the customer object changes because of a refresh
+   *  rather than a persona switch. Robust against setTimeout(0) races. */
+  _lastRefreshAtRef: React.MutableRefObject<number>;
   /** @internal Register callback for session reset notifications. */
   _onSessionReset: (cb: (personaId: string) => void) => () => void;
 }
@@ -47,6 +52,13 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [error, setError] = useState<Error | null>(null);
   /** When true, the next customer update is a profile refresh — don't reset conversation. */
   const isRefreshRef = useRef(false);
+  // Timestamp of the last lightweight profile refresh. The ConversationContext
+  // effect uses this AS WELL AS isRefreshRef to short-circuit: setTimeout(0)
+  // to clear the ref races with React's effect-after-commit scheduling and
+  // can fire BEFORE the effect runs, causing the conversation to incorrectly
+  // reset. A timestamp window survives the race because we just check
+  // (now - lastRefreshAt) on the effect side.
+  const lastRefreshAtRef = useRef(0);
   /** Callbacks registered by ConversationContext to clear a persona's cached session. */
   const sessionResetCallbacksRef = useRef<Set<(personaId: string) => void>>(new Set());
 
@@ -332,10 +344,9 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       // Mark as refresh so conversation is NOT reset
       isRefreshRef.current = true;
+      lastRefreshAtRef.current = Date.now();
       setCustomer(profile);
       setIsAuthenticated(true);
-      // Reset refresh flag on next tick
-      setTimeout(() => { isRefreshRef.current = false; }, 0);
       return true;
     } catch (err) {
       console.error('[identity] Email identification failed:', err);
@@ -357,8 +368,13 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       try {
         const dataCloudService = getDataCloudService();
         const fresh = await dataCloudService.getCustomerProfileById(selectedPersonaId);
-        // Flag as refresh so ConversationContext skips session reset
+        // Mark this customer change as a refresh, not a persona switch.
+        // The timestamp lives for 1 second — long enough for React's commit +
+        // effect cycle to pick it up, short enough that a follow-up persona
+        // switch within that window is rare. The boolean ref stays for
+        // legacy consumers; cleared after a longer fallback delay.
         isRefreshRef.current = true;
+        lastRefreshAtRef.current = Date.now();
         // Merge fresh data into existing customer — keep auth state, merkury, appended untouched
         setCustomer(prev => prev ? {
           ...prev,
@@ -372,8 +388,6 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           skinAnalyses: fresh.skinAnalyses ?? prev.skinAnalyses,
           journeyApprovals: fresh.journeyApprovals ?? prev.journeyApprovals,
         } : prev);
-        // Clear flag after React processes the state update
-        setTimeout(() => { isRefreshRef.current = false; }, 0);
       } catch (err) {
         console.error('[customer] Lightweight refresh failed:', err);
         isRefreshRef.current = false;
@@ -383,8 +397,8 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const persona = getPersonaById(selectedPersonaId);
       if (persona) {
         isRefreshRef.current = true;
+        lastRefreshAtRef.current = Date.now();
         setCustomer(prev => prev ? { ...prev, ...persona.profile, id: prev.id, name: prev.name, email: prev.email } : prev);
-        setTimeout(() => { isRefreshRef.current = false; }, 0);
       }
     }
   }, [selectedPersonaId, customer]);
@@ -498,9 +512,9 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     if (result) {
       isRefreshRef.current = true;
+      lastRefreshAtRef.current = Date.now();
       await selectPersona(result.contactId);
       setIsAuthenticated(true);
-      isRefreshRef.current = false;
     }
 
     return result;
@@ -514,6 +528,7 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (!prev) return prev;
       if (prev.loyalty) return prev;
       isRefreshRef.current = true;
+      lastRefreshAtRef.current = Date.now();
       return {
         ...prev,
         loyalty: {
@@ -525,9 +540,6 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         },
       };
     });
-    // Clear the refresh flag on the next tick so legitimate persona changes
-    // still fire conversation resets.
-    setTimeout(() => { isRefreshRef.current = false; }, 0);
   }, []);
 
   return (
@@ -535,7 +547,7 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       customer, selectedPersonaId, isAuthenticated, isLoading, isResolving, error,
       selectPersona, signIn, signOut, identifyByEmail, registerContact, createGuestContact,
       refreshProfile, resetPersonaSession, enrollInLoyalty,
-      _isRefreshRef: isRefreshRef, _onSessionReset: onSessionReset,
+      _isRefreshRef: isRefreshRef, _lastRefreshAtRef: lastRefreshAtRef, _onSessionReset: onSessionReset,
     }}>
       {children}
     </CustomerContext.Provider>
