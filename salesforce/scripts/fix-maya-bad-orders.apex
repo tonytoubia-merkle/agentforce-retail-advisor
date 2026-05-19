@@ -19,8 +19,10 @@
 // To re-price instead of delete, flip DRY_RUN to true to inspect first,
 // then change MODE = 'REPRICE' below.
 
-Boolean DRY_RUN = false;
-String  MODE    = 'DELETE'; // 'DELETE' or 'REPRICE'
+// Re-priced Order 00000346 on 2026-05-08; defaults restored to DRY_RUN
+// so any future re-run requires an explicit opt-in to mutate.
+Boolean DRY_RUN = true;
+String  MODE    = 'REPRICE'; // 'DELETE' or 'REPRICE'
 Decimal SANITY_THRESHOLD = 500.00;
 
 Id MAYA_CONTACT = '003Ka00003xPb09IAC';
