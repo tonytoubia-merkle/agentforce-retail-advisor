@@ -417,7 +417,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode; agentId
   );
   const sessionInitializedRef = useRef(false);
   const { processUIDirective, resetScene, setBackground, getSceneSnapshot, restoreSceneSnapshot } = useScene();
-  const { customer, selectedPersonaId, isAuthenticated, isResolving, identifyByEmail, _isRefreshRef, _onSessionReset } = useCustomer();
+  const { customer, selectedPersonaId, isAuthenticated, isResolving, identifyByEmail, refreshProfile, _isRefreshRef, _onSessionReset } = useCustomer();
   const { campaign } = useCampaign();
   const { showCapture } = useActivityToast();
   const messagesRef = useRef<AgentMessage[]>([]);
@@ -797,6 +797,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode; agentId
         const captures = response.uiDirective.payload?.captures;
         if (captures?.length) {
           const shown = new Set<string>();
+          let sawProfileChange = false;
           for (const c of captures) {
             if (!shown.has(c.type)) {
               showCapture(c);
@@ -807,7 +808,20 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode; agentId
                 details: { ...c },
               });
               shown.add(c.type);
+              if (c.type === 'meaningful_event' || c.type === 'profile_enrichment') {
+                sawProfileChange = true;
+              }
             }
+          }
+          // The agent flows (Create_Meaningful_Event / Update_Contact_Profile)
+          // write to Salesforce server-side. Schedule a lightweight profile
+          // refresh so the DemoPanel, IdentityPanel, and the next turn's
+          // prompt context all reflect the new records. The delay covers
+          // typical SF write commit + indexing latency (1–3s); the inner
+          // refresh re-pulls events/profile and merges without touching
+          // the active conversation.
+          if (sawProfileChange) {
+            window.setTimeout(() => { refreshProfile(); }, 2200);
           }
         }
       }
@@ -851,6 +865,11 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode; agentId
             console.log('[conversation] Skincare-video event created successfully');
             showCapture({ type: 'meaningful_event', label: 'Skin Concern Captured — Video Journey Triggered' });
             demoLog.log({ category: 'data-capture', title: 'Skin Concern → Video Journey', subtitle: 'Meaningful event written to CRM', details: { type: 'skincare-video', customerId: customer.id } });
+            // Refresh customer profile so the new event appears in the Demo
+            // Panel + IdentityPanel + next-turn prompt context. Short delay
+            // covers SF write commit; refreshProfile re-merges without
+            // resetting the active conversation.
+            window.setTimeout(() => { refreshProfile(); }, 1500);
           }).catch((err) => {
             console.error('[conversation] Failed to create skincare-video event:', err);
           });
@@ -876,7 +895,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode; agentId
       });
       setIsAgentTyping(false);
     }
-  }, [processUIDirective, identifyByEmail, showCapture, customer]);
+  }, [processUIDirective, identifyByEmail, showCapture, customer, refreshProfile]);
 
   // Like sendMessage but doesn't add the user message to the visible chat —
   // used for background signals like the skin analysis summary handoff.
