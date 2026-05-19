@@ -842,6 +842,11 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode; agentId
               const description = (c.label || '')
                 .replace(/^Event\s+Captured:\s*/i, '')
                 .trim() || content;
+              // Pull a short paraphrase of the user's message as the
+              // agent-note context so the Demo Panel reads naturally
+              // (e.g. "Customer said: I'm getting married next month")
+              // rather than leaking the technical fallback path.
+              const userExcerpt = content.length > 160 ? content.slice(0, 160) + '…' : content;
               return fetch('/api/sf-record', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -852,7 +857,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode; agentId
                     Contact__c: customer.id,
                     Event_Type__c: 'life-event',
                     Description__c: description,
-                    Agent_Note__c: 'Client fallback write — agent reported capture in chat.',
+                    Agent_Note__c: `Customer said: "${userExcerpt}"`,
                     Captured_At__c: new Date().toISOString(),
                     Urgency__c: 'No Date',
                     Approval_Status__c: 'Pending Review',
