@@ -25,10 +25,14 @@
   --sans:  'Inter', system-ui, -apple-system, sans-serif;
   --jp:    'Noto Serif JP', 'Yu Mincho', serif;
 
-  /* Geometry */
+  /* Geometry — the maison rhythm. Two stacked tk-section--tight + an
+     intervening kamon divider used to compound to ~384px of empty space
+     between hero CTAs and the next block; these tighter defaults plus
+     the smaller kamon divider margin (below) keep the editorial breath
+     while removing the wasteland. */
   --gutter: 96px;
-  --section: 160px;
-  --section-tight: 96px;
+  --section: 128px;
+  --section-tight: 64px;
 
   /* The whole maison sits on paper, in ink */
   background: var(--paper);
@@ -276,12 +280,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 96px auto;
+  /* Was 96px each side — combined with two adjacent tk-section--tight at
+     96px padding, that produced ~384px of empty space between blocks.
+     32px gives a noticeable but not absurd breath. */
+  margin: 32px auto;
   color: var(--brass-soft);
   opacity: 0.6;
-  height: 32px;
+  height: 24px;
 }
-.tk-luxury .tk-kamon-divider svg { width: 32px; height: 32px; }
+.tk-luxury .tk-kamon-divider svg { width: 24px; height: 24px; }
 
 /* ─── Product card (collection grid) ─────────────────────────────── */
 .tk-luxury .tk-collection-grid {
@@ -351,6 +358,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  /* Always keep a minimum gap between brand / nav / utilities so the
+     primary nav can't collide with the right-side utility cluster
+     (was "SIGN INBANTŌ" mashed together). */
+  gap: 32px;
   height: 80px;
   padding: 0 32px;
   max-width: 1320px;
@@ -369,6 +380,14 @@
   cursor: pointer;
   color: inherit;
   font: inherit;
+  /* Brand is a fixed identifier — never let the nav steal width and
+     force the name + kanji to wrap onto two lines. */
+  flex-shrink: 0;
+}
+.tk-luxury .tk-nav__brand > span {
+  display: inline-flex;
+  align-items: baseline;
+  white-space: nowrap;
 }
 .tk-luxury .tk-nav__brand .kamon { color: var(--ink); width: 28px; height: 28px; }
 .tk-luxury .tk-nav__brand-name {
@@ -385,16 +404,19 @@
 }
 .tk-luxury .tk-nav__links {
   display: none;
-  gap: 24px;
-  /* Keep nav items on one line; if the viewport is too narrow, items at
-     the end overflow rather than wrap into the brand. */
+  /* Tighter base gap so 7 items + utilities fit without crowding at
+     1024–1280px. Bump back up on wider viewports for editorial breath. */
+  gap: 18px;
   flex-wrap: nowrap;
 }
 @media (min-width: 1024px) { .tk-luxury .tk-nav__links { display: flex; } }
-@media (min-width: 1280px) { .tk-luxury .tk-nav__links { gap: 32px; } }
+@media (min-width: 1280px) { .tk-luxury .tk-nav__links { gap: 26px; } }
+@media (min-width: 1440px) { .tk-luxury .tk-nav__links { gap: 32px; } }
 .tk-luxury .tk-nav__link {
-  font-size: 12px;
-  letter-spacing: 0.18em;
+  /* Slightly smaller + tighter tracking buys ~12% horizontal so the nav
+     stops colliding with brand and utilities on 1024–1280px viewports. */
+  font-size: 11px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink-quiet);
   background: none;
@@ -404,10 +426,10 @@
   transition: color 200ms ease;
   font-family: var(--sans);
   font-weight: 400;
-  /* Don't let a 2-word label like "Leather goods" wrap and crowd the
-     brand mark; it's better to compress the gap or wait for a wider
-     viewport. */
   white-space: nowrap;
+}
+@media (min-width: 1440px) {
+  .tk-luxury .tk-nav__link { font-size: 12px; letter-spacing: 0.18em; }
 }
 .tk-luxury .tk-nav__link:hover,
 .tk-luxury .tk-nav__link.is-active { color: var(--ink); }
