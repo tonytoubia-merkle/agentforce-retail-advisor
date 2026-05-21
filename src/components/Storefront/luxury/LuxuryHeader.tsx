@@ -84,6 +84,13 @@ export const LuxuryHeader: React.FC = () => {
           >
             Restoration
           </button>
+        </nav>
+
+        {/* Right utilities — Sign In / My Maison + Bantō + Bag.
+            Sign-in lives here rather than in the primary nav so the
+            7-item nav has room to breathe between brand and the
+            utility cluster. */}
+        <div className="tk-flex tk-gap" style={{ alignItems: 'center', gap: 18, flexShrink: 0 }}>
           <button
             type="button"
             className={`tk-nav__link ${path === '/account' ? 'is-active' : ''}`}
@@ -91,10 +98,6 @@ export const LuxuryHeader: React.FC = () => {
           >
             {isAuthenticated ? 'My Maison' : 'Sign in'}
           </button>
-        </nav>
-
-        {/* Right utilities — quiet bag + advisor */}
-        <div className="tk-flex tk-gap" style={{ alignItems: 'center', gap: 24 }}>
           <button
             type="button"
             className="tk-nav__link"
