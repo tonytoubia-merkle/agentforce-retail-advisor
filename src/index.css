@@ -1,6 +1,23 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* Tailwind v4 CSS-first theme — replaces the prior tailwind.config.js extend.fontFamily.sans */
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Preserve v3 default behaviors that v4 changed:
+   - Default border color reverted from currentColor → gray-200
+   - Default ring width reverted from 3px → 1px
+   This avoids visual regressions across components that use bare `border` or `ring`. */
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+}
 
 /* ─── Demo Builder: CSS custom properties (injected by DemoContext) ── */
 :root {
