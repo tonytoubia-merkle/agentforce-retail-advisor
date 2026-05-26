@@ -5,7 +5,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useCustomer } from '@/contexts/CustomerContext';
 import { getDemoConfig } from '@/contexts/DemoContext';
 import { trackPurchase } from '@/services/personalization';
-import { getCommerceClient } from '@/services/commerce';
+import { getCommerceBackend } from '@/services/commerce';
 import { Kamon } from './Kamon';
 
 type Step = 'personalization' | 'delivery' | 'payment' | 'processing';
@@ -72,7 +72,7 @@ export const LuxuryCheckoutPage: React.FC = () => {
         return;
       }
 
-      getCommerceClient()
+      getCommerceBackend()
         .checkout({
           items: items.map((item) => ({
             productId: item.product.id,

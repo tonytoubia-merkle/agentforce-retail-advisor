@@ -6,7 +6,7 @@ import { useCustomer } from '@/contexts/CustomerContext';
 import { ProductImage } from './ProductImage';
 import { MerkuryProfilePicker } from './MerkuryProfilePicker';
 import { trackPurchase } from '@/services/personalization';
-import { getCommerceClient } from '@/services/commerce';
+import { getCommerceBackend } from '@/services/commerce';
 import { getDemoConfig } from '@/contexts/DemoContext';
 
 export const CheckoutPage: React.FC = () => {
@@ -77,9 +77,9 @@ export const CheckoutPage: React.FC = () => {
         return;
       }
 
-      // Commerce Cloud headless checkout via Shopper Baskets + Orders API
-      const commerceClient = getCommerceClient();
-      commerceClient.checkout({
+      // Headless checkout — routes through the active CommerceBackend
+      // (Commerce on Core today; SFCC SCAPI when VITE_COMMERCE_BACKEND=sfcc)
+      getCommerceBackend().checkout({
         items: items.map((item) => ({
           productId: item.product.id,
           productName: item.product.name,
