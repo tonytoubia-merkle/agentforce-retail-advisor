@@ -298,10 +298,16 @@ export function parseUIDirective(response: RawAgentResponse): UIDirective | unde
     return extractDirective({ uiDirective: response.metadata.uiDirective });
   }
 
-  const text = response.message || response.rawText || '';
-  const parsed = tryParseJSON(text);
-  if (parsed) {
-    return extractDirective(parsed);
+  // Try message first, then rawText as a fallback. The agent often returns a
+  // human-readable message AND a separate rawText with the structured
+  // directive embedded — either may carry the JSON, so we attempt both.
+  for (const text of [response.message, response.rawText]) {
+    if (!text) continue;
+    const parsed = tryParseJSON(text);
+    if (parsed) {
+      const directive = extractDirective(parsed);
+      if (directive) return directive;
+    }
   }
 
   return undefined;
