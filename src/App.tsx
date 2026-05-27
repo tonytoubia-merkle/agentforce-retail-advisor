@@ -199,12 +199,16 @@ const router = createBrowserRouter([
       // StorefrontPage so the storefront chrome (header, banners, luxury
       // variant) renders the same as before — the loaders make the data
       // dependency explicit and give each route its own error surface.
+      // Phase 3d: route ids so CategoryPage / ProductDetailPage can consume
+      // the loader data via useRouteLoaderData() (with prop fallback).
       {
+        id: 'shop-product',
         path: 'shop/:category/:productId',
         element: <StorefrontPage />,
         loader: productByCategoryLoader,
       },
       {
+        id: 'shop-category',
         path: 'shop/:category',
         element: <StorefrontPage />,
         loader: categoryLoader,

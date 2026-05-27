@@ -1,18 +1,26 @@
 import { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useRouteLoaderData } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
 import { useDemo } from '@/contexts/DemoContext';
 import { ProductImage } from './ProductImage';
 import { isPersonalizationConfigured, trackAddToCart } from '@/services/personalization';
+import type { ProductDetailRouteData } from '@/routes/shopLoaders';
 import type { Product } from '@/types/product';
 
 interface ProductDetailPageProps {
   product: Product;
 }
 
-export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product }) => {
+export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product: propProduct }) => {
+  // Phase 3d: prefer the route loader's product when reached through the
+  // shop-product route (/shop/:category/:productId). Falls back to the prop
+  // when StorefrontPage's catch-all renders this through its internal view
+  // dispatch (e.g., during demo-context-driven re-renders before the router
+  // has revalidated).
+  const loaderData = useRouteLoaderData('shop-product') as ProductDetailRouteData | undefined;
+  const product = loaderData?.product ?? propProduct;
   const navigate = useNavigate();
   const onBeautyAdvisor = useCallback(() => navigate('/advisor', {
     state: { productContext: { id: product.id, salesforceId: product.salesforceId, name: product.name, brand: product.brand, category: product.category, price: product.price, description: product.description, imageUrl: product.imageUrl, concerns: product.attributes?.concerns, skinType: product.attributes?.skinType } }
