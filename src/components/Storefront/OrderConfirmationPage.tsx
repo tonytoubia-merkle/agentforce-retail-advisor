@@ -35,7 +35,7 @@ export const OrderConfirmationPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-stone-50 to-rose-50 flex items-center justify-center py-12">
+    <div className="min-h-screen bg-linear-to-br from-stone-50 to-rose-50 flex items-center justify-center py-12">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -47,7 +47,7 @@ export const OrderConfirmationPage: React.FC = () => {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-            className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-emerald-400 to-emerald-500 rounded-full flex items-center justify-center"
+            className="w-20 h-20 mx-auto mb-6 bg-linear-to-br from-emerald-400 to-emerald-500 rounded-full flex items-center justify-center"
           >
             <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
@@ -139,7 +139,7 @@ export const OrderConfirmationPage: React.FC = () => {
 
               <button
                 onClick={onBeautyAdvisor}
-                className="w-full px-6 py-3 bg-gradient-to-r from-rose-500 to-purple-500 text-white font-medium rounded-full hover:shadow-lg hover:shadow-rose-500/25 transition-all flex items-center justify-center gap-2"
+                className="w-full px-6 py-3 bg-linear-to-r from-rose-500 to-purple-500 text-white font-medium rounded-full hover:shadow-lg hover:shadow-rose-500/25 transition-all flex items-center justify-center gap-2"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -156,7 +156,7 @@ export const OrderConfirmationPage: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="mt-6 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-4 text-center"
+            className="mt-6 bg-linear-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-4 text-center"
           >
             <p className="text-sm text-amber-800">
               <span className="font-semibold">+{lastOrderResult?.pointsEarned || 50} points</span> added to your{' '}

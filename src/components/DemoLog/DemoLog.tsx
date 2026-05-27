@@ -151,7 +151,7 @@ export const DemoLog: React.FC<{ onOpenChange?: (open: boolean) => void }> = ({ 
         title="Open demo panel"
         id="demo-panel-open"
         data-testid="demo-panel-open"
-        className="fixed right-0 top-1/2 -translate-y-1/2 z-[60] flex items-center gap-1.5 bg-stone-900/95 border border-white/10 border-r-0 rounded-l-lg px-2 py-3 shadow-xl hover:bg-stone-800 transition-all"
+        className="fixed right-0 top-1/2 -translate-y-1/2 z-60 flex items-center gap-1.5 bg-stone-900/95 border border-white/10 border-r-0 rounded-l-lg px-2 py-3 shadow-xl hover:bg-stone-800 transition-all"
         style={{ writingMode: 'vertical-lr', opacity: open ? 0 : 1, pointerEvents: open ? 'none' : 'auto' }}
       >
           <span className="text-[10px] font-medium text-white/60 tracking-wider uppercase">Demo</span>
@@ -164,13 +164,13 @@ export const DemoLog: React.FC<{ onOpenChange?: (open: boolean) => void }> = ({ 
 
       {/* Panel — flex sibling that takes real space in layout */}
       <div
-        className="h-screen flex-shrink-0 bg-stone-950 border-l border-white/10 shadow-2xl transition-[width] duration-300 ease-out overflow-hidden"
+        className="h-screen shrink-0 bg-stone-950 border-l border-white/10 shadow-2xl transition-[width] duration-300 ease-out overflow-hidden"
         style={{ width: open ? 380 : 0 }}
       >
         {/* Inner — fixed 380px so content doesn't squish during width transition */}
         <div className="w-[380px] h-full flex flex-col">
         {/* Header with tabs */}
-        <div className="flex-shrink-0 border-b border-white/5">
+        <div className="shrink-0 border-b border-white/5">
           <div className="flex items-center justify-between px-3 pt-2 pb-0">
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -218,7 +218,7 @@ export const DemoLog: React.FC<{ onOpenChange?: (open: boolean) => void }> = ({ 
         {/* Tab: Log */}
         <div style={{ display: activeTab === 'log' ? 'flex' : 'none', flexDirection: 'column', flex: 1, minHeight: 0 }}>
           {/* Filter chips */}
-          <div className="flex-shrink-0 flex flex-wrap gap-1 px-3 py-2 border-b border-white/5">
+          <div className="shrink-0 flex flex-wrap gap-1 px-3 py-2 border-b border-white/5">
             <button
               onClick={() => setActiveFilters(new Set(allActive ? [] : ALL_CATEGORIES))}
               className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium transition-colors ${allActive ? 'bg-white/10 text-white/60' : 'bg-white/5 text-white/25 hover:text-white/40'}`}

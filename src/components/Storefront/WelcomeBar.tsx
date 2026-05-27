@@ -12,7 +12,7 @@ export const WelcomeBar: React.FC = () => {
   const firstName = customer?.name?.split(' ')[0];
 
   return (
-    <div className="bg-gradient-to-r from-rose-50 via-purple-50 to-rose-50 border-b border-rose-100 py-1.5">
+    <div className="bg-linear-to-r from-rose-50 via-purple-50 to-rose-50 border-b border-rose-100 py-1.5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-center gap-3 text-sm">
         <span className="text-stone-600">
           {isKnown && firstName && firstName !== 'Guest'

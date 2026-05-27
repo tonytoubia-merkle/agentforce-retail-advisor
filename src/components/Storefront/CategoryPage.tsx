@@ -39,7 +39,7 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({ category, products }
   return (
     <div className="min-h-screen bg-white">
       {/* Category header */}
-      <div className="bg-gradient-to-br from-stone-50 to-rose-50 py-12 sm:py-16">
+      <div className="bg-linear-to-br from-stone-50 to-rose-50 py-12 sm:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <button
             onClick={goBack}

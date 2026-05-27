@@ -83,7 +83,7 @@ export function HistoryWallPage() {
 
             {/* Brand */}
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-700 flex items-center justify-center flex-shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-linear-to-br from-violet-500 to-indigo-700 flex items-center justify-center shrink-0">
                 <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
@@ -169,7 +169,7 @@ export function HistoryWallPage() {
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${claimedPersona.avatarGradient} flex items-center justify-center flex-shrink-0`}>
+              <div className={`w-8 h-8 rounded-lg bg-linear-to-br ${claimedPersona.avatarGradient} flex items-center justify-center shrink-0`}>
                 <span className="text-white text-xs font-bold">{claimedPersona.avatarInitials}</span>
               </div>
               <div>
@@ -195,7 +195,7 @@ export function HistoryWallPage() {
 
         {/* Filter bar */}
         <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2 scrollbar-hide">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-white/30 flex-shrink-0 mr-1">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-white/30 shrink-0 mr-1">
             Filter:
           </span>
           {ARCHETYPE_FILTER_GROUPS.map((group) => {
@@ -208,7 +208,7 @@ export function HistoryWallPage() {
                 key={group.label}
                 onClick={() => setActiveFilter(group.label)}
                 className={`
-                  flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all
+                  shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all
                   ${isActive
                     ? 'bg-white text-stone-900'
                     : 'bg-white/8 text-white/50 hover:bg-white/12 hover:text-white/70'
@@ -281,7 +281,7 @@ export function HistoryWallPage() {
                 { label: 'Anonymous', color: 'bg-neutral-500', desc: 'Identity capture first — personalization follows' },
               ].map(({ label, color, desc }) => (
                 <div key={label} className="flex items-start gap-2.5">
-                  <span className={`w-2 h-2 rounded-full ${color} mt-1.5 flex-shrink-0`} />
+                  <span className={`w-2 h-2 rounded-full ${color} mt-1.5 shrink-0`} />
                   <div>
                     <span className="text-[11px] font-medium text-white/60">{label}</span>
                     <span className="text-[10px] text-white/25 block">{desc}</span>

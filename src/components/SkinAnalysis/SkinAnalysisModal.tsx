@@ -193,7 +193,7 @@ export const SkinAnalysisModal: React.FC = () => {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100 flex-shrink-0">
+        <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100 shrink-0">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">AI Skin Analysis</h2>
             {copy.partnershipText && (
@@ -251,7 +251,7 @@ export const SkinAnalysisModal: React.FC = () => {
                       autoPlay
                       playsInline
                       muted
-                      className="w-full rounded-2xl bg-black aspect-[4/3] object-cover"
+                      className="w-full rounded-2xl bg-black aspect-4/3 object-cover"
                     />
                     <canvas ref={canvasRef} className="hidden" />
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -303,7 +303,7 @@ export const SkinAnalysisModal: React.FC = () => {
                   <div className="p-3 bg-red-50 text-red-700 rounded-xl text-sm">{error}</div>
                 )}
                 <div className="relative">
-                  <img src={previewUrl} alt="Skin photo" className="w-full rounded-2xl object-cover aspect-[4/3]" />
+                  <img src={previewUrl} alt="Skin photo" className="w-full rounded-2xl object-cover aspect-4/3" />
                 </div>
                 <p className="text-sm text-center text-gray-500">
                   Make sure your face is clearly visible with even lighting.
@@ -382,7 +382,7 @@ export const SkinAnalysisModal: React.FC = () => {
                     onKeyDown={(e) => e.key === 'Enter' && handleEmailGateContinue()}
                     placeholder="your@email.com"
                     autoFocus
-                    className={`w-full px-4 py-3 rounded-xl border text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-400 ${emailError ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white'}`}
+                    className={`w-full px-4 py-3 rounded-xl border text-sm text-gray-800 placeholder-gray-400 focus:outline-hidden focus:ring-2 focus:ring-violet-400 ${emailError ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white'}`}
                   />
                   {emailError && <p className="text-xs text-red-500 text-left">{emailError}</p>}
                 </div>
@@ -406,8 +406,8 @@ export const SkinAnalysisModal: React.FC = () => {
                 className="p-5 flex flex-col gap-4"
               >
                 {/* Score summary */}
-                <div className="flex items-center gap-4 p-4 bg-gradient-to-br from-violet-50 to-indigo-50 rounded-2xl">
-                  <div className="w-16 h-16 rounded-full bg-white shadow flex items-center justify-center flex-shrink-0">
+                <div className="flex items-center gap-4 p-4 bg-linear-to-br from-violet-50 to-indigo-50 rounded-2xl">
+                  <div className="w-16 h-16 rounded-full bg-white shadow flex items-center justify-center shrink-0">
                     <div className="text-center">
                       <span className="text-xl font-bold text-violet-700">{result.overallScore}</span>
                       <span className="text-[10px] text-gray-400 block -mt-0.5">/ 100</span>
@@ -431,7 +431,7 @@ export const SkinAnalysisModal: React.FC = () => {
                       .sort((a, b) => b.score - a.score)
                       .map((concern) => (
                         <div key={concern.concern} className="flex items-center gap-2.5 p-2.5 bg-gray-50 rounded-xl">
-                          <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${SEVERITY_COLORS[concern.severity]}`} />
+                          <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${SEVERITY_COLORS[concern.severity]}`} />
                           <div className="min-w-0">
                             <p className="text-xs font-medium text-gray-700 truncate">{concern.label}</p>
                             <p className="text-[10px] text-gray-400">{SEVERITY_LABELS[concern.severity]}</p>
@@ -467,7 +467,7 @@ export const SkinAnalysisModal: React.FC = () => {
                 {/* Save confirmation */}
                 {profileSaved ? (
                   <div className="flex items-center gap-2 px-4 py-3 bg-emerald-50 rounded-2xl border border-emerald-100">
-                    <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-4 h-4 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                     <p className="text-xs text-emerald-700 font-medium">
@@ -476,14 +476,14 @@ export const SkinAnalysisModal: React.FC = () => {
                   </div>
                 ) : saveFailed ? (
                   <div className="flex items-center gap-2 px-4 py-3 bg-amber-50 rounded-2xl border border-amber-100">
-                    <svg className="w-4 h-4 text-amber-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-4 h-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
                     </svg>
                     <p className="text-xs text-amber-700">Couldn't save right now — your results are still available below.</p>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 px-4 py-3 bg-violet-50 rounded-2xl border border-violet-100">
-                    <svg className="w-3.5 h-3.5 text-violet-400 animate-spin flex-shrink-0" fill="none" viewBox="0 0 24 24">
+                    <svg className="w-3.5 h-3.5 text-violet-400 animate-spin shrink-0" fill="none" viewBox="0 0 24 24">
                       <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" className="opacity-25" />
                       <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>

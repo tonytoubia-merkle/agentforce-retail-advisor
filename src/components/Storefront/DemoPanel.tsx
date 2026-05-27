@@ -45,7 +45,7 @@ interface ManageOptions {
 const DeleteCheckbox: React.FC<{ id: string; selected: boolean; onToggle: (id: string) => void }> = ({ id, selected, onToggle }) => (
   <button
     onClick={(e) => { e.stopPropagation(); onToggle(id); }}
-    className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${
+    className={`w-4 h-4 rounded border shrink-0 flex items-center justify-center transition-colors ${
       selected
         ? 'bg-red-500 border-red-500'
         : 'border-white/30 hover:border-white/50'
@@ -571,12 +571,12 @@ export const DemoPanel: React.FC = () => {
               : 'hover:bg-white/5 border border-transparent'
           } ${(isResolving || isLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0 ${
+          <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-medium shrink-0 ${
             tier === 'Merkury'
-              ? 'bg-gradient-to-br from-amber-400 to-orange-400'
+              ? 'bg-linear-to-br from-amber-400 to-orange-400'
               : tier === 'Created'
-                ? 'bg-gradient-to-br from-emerald-400 to-teal-500'
-                : 'bg-gradient-to-br from-purple-400 to-pink-400'
+                ? 'bg-linear-to-br from-emerald-400 to-teal-500'
+                : 'bg-linear-to-br from-purple-400 to-pink-400'
           }`}>
             {contactFirstName.charAt(0).toUpperCase()}
           </div>
@@ -589,13 +589,13 @@ export const DemoPanel: React.FC = () => {
             </div>
           </div>
           {isActive && (
-            <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
+            <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
           )}
         </button>
         {showDelete && (
           <button
             onClick={(e) => handleDeleteContact(contact.id, e)}
-            className="p-1.5 rounded-lg text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-colors flex-shrink-0"
+            className="p-1.5 rounded-lg text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-colors shrink-0"
             title="Delete contact"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -640,7 +640,7 @@ export const DemoPanel: React.FC = () => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.95 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="fixed bottom-20 right-6 z-50 w-80 bg-gradient-to-b from-stone-800 to-stone-900 rounded-xl shadow-2xl border border-white/10 overflow-hidden"
+              className="fixed bottom-20 right-6 z-50 w-80 bg-linear-to-b from-stone-800 to-stone-900 rounded-xl shadow-2xl border border-white/10 overflow-hidden"
             >
               {/* Header */}
               <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
@@ -704,12 +704,12 @@ export const DemoPanel: React.FC = () => {
                                   : 'hover:bg-white/5 border border-transparent'
                               } ${(isResolving || isLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
-                              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0 ${
+                              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-medium shrink-0 ${
                                 stub.identityTier === 'anonymous'
-                                  ? 'bg-gradient-to-br from-gray-500 to-gray-600'
+                                  ? 'bg-linear-to-br from-gray-500 to-gray-600'
                                   : stub.identityTier === 'appended'
-                                    ? 'bg-gradient-to-br from-amber-400 to-orange-400'
-                                    : 'bg-gradient-to-br from-purple-400 to-pink-400'
+                                    ? 'bg-linear-to-br from-amber-400 to-orange-400'
+                                    : 'bg-linear-to-br from-purple-400 to-pink-400'
                               }`}>
                                 {stub.identityTier === 'anonymous' ? '?' : stubFirstName.charAt(0)}
                               </div>
@@ -728,7 +728,7 @@ export const DemoPanel: React.FC = () => {
                                 </div>
                               </div>
                               {isActive && (
-                                <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
+                                <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
                               )}
                             </button>
                           );
@@ -769,7 +769,7 @@ export const DemoPanel: React.FC = () => {
                                           : 'hover:bg-white/5 border border-transparent'
                                       } ${(isResolving || isLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     >
-                                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0 bg-gradient-to-br from-amber-400 to-orange-400">
+                                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-medium shrink-0 bg-linear-to-br from-amber-400 to-orange-400">
                                         {stubFirstName.charAt(0)}
                                       </div>
                                       <div className="flex-1 text-left min-w-0">
@@ -781,7 +781,7 @@ export const DemoPanel: React.FC = () => {
                                         </div>
                                       </div>
                                       {isActive && (
-                                        <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
+                                        <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
                                       )}
                                     </button>
                                   );
@@ -808,7 +808,7 @@ export const DemoPanel: React.FC = () => {
                                   : 'hover:bg-white/5 border border-transparent'
                               } ${(isResolving || isLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
-                              <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0 bg-gradient-to-br from-gray-500 to-gray-600">
+                              <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-medium shrink-0 bg-linear-to-br from-gray-500 to-gray-600">
                                 ?
                               </div>
                               <div className="flex-1 text-left min-w-0">
@@ -816,7 +816,7 @@ export const DemoPanel: React.FC = () => {
                                 <div className="text-[10px] text-red-400/70">No identity match</div>
                               </div>
                               {selectedPersonaId === 'anonymous' && (
-                                <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
+                                <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
                               )}
                             </button>
                           </div>
@@ -869,10 +869,10 @@ export const DemoPanel: React.FC = () => {
                     {customer && (
                       <div className="px-4 py-3 border-b border-white/10">
                         <div className="flex items-center gap-3">
-                          <div className={`w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0 ${
+                          <div className={`w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-medium shrink-0 ${
                             customer.merkuryIdentity?.identityTier === 'appended'
-                              ? 'bg-gradient-to-br from-amber-400 to-orange-400'
-                              : 'bg-gradient-to-br from-purple-400 to-pink-400'
+                              ? 'bg-linear-to-br from-amber-400 to-orange-400'
+                              : 'bg-linear-to-br from-purple-400 to-pink-400'
                           }`}>
                             {(customer.name || 'G').charAt(0).toUpperCase()}
                           </div>
@@ -1112,7 +1112,7 @@ export const DemoPanelInline: React.FC = () => {
     return (
       <div className="flex flex-col h-full">
         {/* Detail header */}
-        <div className="flex-shrink-0 px-3 py-2 border-b border-white/5">
+        <div className="shrink-0 px-3 py-2 border-b border-white/5">
           <div className="flex items-center gap-2">
             <button onClick={() => setView('list')} className="text-white/50 hover:text-white">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
@@ -1157,7 +1157,7 @@ export const DemoPanelInline: React.FC = () => {
 
         {/* Manage mode banner */}
         {isManageMode && (
-          <div className="flex-shrink-0 px-3 py-1.5 bg-red-500/10 border-b border-red-500/20">
+          <div className="shrink-0 px-3 py-1.5 bg-red-500/10 border-b border-red-500/20">
             <p className="text-[10px] text-red-400">Select chat summaries and meaningful events to delete</p>
           </div>
         )}
@@ -1177,7 +1177,7 @@ export const DemoPanelInline: React.FC = () => {
 
         {/* Footer: delete CTA when items selected, else switch profiles */}
         {isManageMode && selectedForDelete.size > 0 ? (
-          <div className="flex-shrink-0 px-3 py-2 border-t border-red-500/20 bg-red-500/5">
+          <div className="shrink-0 px-3 py-2 border-t border-red-500/20 bg-red-500/5">
             <button
               onClick={handleBatchDelete}
               disabled={isDeleting}
@@ -1199,7 +1199,7 @@ export const DemoPanelInline: React.FC = () => {
             </button>
           </div>
         ) : (
-          <div className="flex-shrink-0 px-3 py-2 border-t border-white/5">
+          <div className="shrink-0 px-3 py-2 border-t border-white/5">
             <button onClick={() => setView('list')} className="w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/5 text-white/40 text-[10px] transition-all">
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
               Switch Profiles
@@ -1314,7 +1314,7 @@ export const DemoPanelInline: React.FC = () => {
       </div>
       {/* View profile button */}
       {customer && selectedPersonaId && selectedPersonaId !== 'anonymous' && (
-        <div className="flex-shrink-0 px-3 py-2 border-t border-white/5">
+        <div className="shrink-0 px-3 py-2 border-t border-white/5">
           <button onClick={() => setView('detail')} className="w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/50 hover:text-white text-[10px] transition-all">
             View {customer.name?.split(' ')[0]}'s Profile
           </button>

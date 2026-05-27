@@ -162,12 +162,12 @@ export const PersonaSelector: React.FC = () => {
                         } ${isResolving || isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         <div className="flex items-start gap-3">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 ${
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 ${
                             stub.identityTier === 'anonymous'
-                              ? 'bg-gradient-to-br from-gray-500 to-gray-600'
+                              ? 'bg-linear-to-br from-gray-500 to-gray-600'
                               : stub.identityTier === 'appended'
-                                ? 'bg-gradient-to-br from-amber-400 to-orange-400'
-                                : 'bg-gradient-to-br from-purple-400 to-pink-400'
+                                ? 'bg-linear-to-br from-amber-400 to-orange-400'
+                                : 'bg-linear-to-br from-purple-400 to-pink-400'
                           }`}>
                             {stub.identityTier === 'anonymous'
                               ? '?'
@@ -232,7 +232,7 @@ export const PersonaSelector: React.FC = () => {
                               } ${isResolving || isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
                               <div className="flex items-center gap-3">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 bg-gradient-to-br ${gradient}`}>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 bg-linear-to-br ${gradient}`}>
                                   {(c.firstName || '?').charAt(0)}
                                 </div>
                                 <div className="min-w-0">
@@ -244,7 +244,7 @@ export const PersonaSelector: React.FC = () => {
                                   </div>
                                 </div>
                                 {isActive && (
-                                  <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0 ml-auto" />
+                                  <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0 ml-auto" />
                                 )}
                               </div>
                             </button>

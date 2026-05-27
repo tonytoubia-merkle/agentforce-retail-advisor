@@ -35,7 +35,7 @@ export const MediaWallPage: React.FC = () => {
             <div className="flex items-center gap-4">
               {/* Merkury logo */}
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-linear-to-br from-cyan-400 to-blue-600 flex items-center justify-center">
                   <span className="text-white font-bold text-sm">M</span>
                 </div>
                 <div>

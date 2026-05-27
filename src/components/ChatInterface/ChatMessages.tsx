@@ -87,7 +87,7 @@ function RoutineCard({ section, index }: { section: RoutineSection; index: numbe
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.12 }}
-      className={`rounded-xl border bg-gradient-to-br ${accentClass} backdrop-blur-sm p-3.5 mb-2.5`}
+      className={`rounded-xl border bg-linear-to-br ${accentClass} backdrop-blur-sm p-3.5 mb-2.5`}
     >
       <div className={`flex items-center gap-1.5 mb-2.5 ${labelClass} text-[11px] font-semibold uppercase tracking-wider`}>
         <span>{icon}</span>
@@ -96,7 +96,7 @@ function RoutineCard({ section, index }: { section: RoutineSection; index: numbe
       <ol className="flex flex-col gap-1.5">
         {section.steps.map((step, i) => (
           <li key={i} className="flex items-start gap-2 text-[12px] text-white/85 leading-snug">
-            <span className={`mt-0.5 w-4 h-4 rounded-full ${dotClass} flex items-center justify-center text-[9px] font-bold text-black/70 flex-shrink-0`}>
+            <span className={`mt-0.5 w-4 h-4 rounded-full ${dotClass} flex items-center justify-center text-[9px] font-bold text-black/70 shrink-0`}>
               {i + 1}
             </span>
             <span>{step}</span>

@@ -287,12 +287,12 @@ export const IdentityPanel: React.FC = () => {
                   {/* Active persona card */}
                   <div className="p-3">
                     <div className="flex items-center gap-2.5">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 ${
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 ${
                         activeStub.identityTier === 'anonymous'
-                          ? 'bg-gradient-to-br from-gray-500 to-gray-600'
+                          ? 'bg-linear-to-br from-gray-500 to-gray-600'
                           : activeStub.identityTier === 'appended'
-                            ? 'bg-gradient-to-br from-amber-400 to-orange-400'
-                            : 'bg-gradient-to-br from-purple-400 to-pink-400'
+                            ? 'bg-linear-to-br from-amber-400 to-orange-400'
+                            : 'bg-linear-to-br from-purple-400 to-pink-400'
                       }`}>
                         {activeStub.identityTier === 'anonymous' ? '?' : getLabel(activeStub).charAt(0)}
                       </div>
@@ -385,12 +385,12 @@ export const IdentityPanel: React.FC = () => {
                         }`}
                       >
                         <div className="flex items-center gap-2.5">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0 ${
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0 ${
                             stub.identityTier === 'anonymous'
-                              ? 'bg-gradient-to-br from-gray-500 to-gray-600'
+                              ? 'bg-linear-to-br from-gray-500 to-gray-600'
                               : stub.identityTier === 'appended'
-                                ? 'bg-gradient-to-br from-amber-400 to-orange-400'
-                                : 'bg-gradient-to-br from-purple-400 to-pink-400'
+                                ? 'bg-linear-to-br from-amber-400 to-orange-400'
+                                : 'bg-linear-to-br from-purple-400 to-pink-400'
                           }`}>
                             {stub.identityTier === 'anonymous' ? '?' : label.charAt(0)}
                           </div>

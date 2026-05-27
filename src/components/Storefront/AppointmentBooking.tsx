@@ -246,7 +246,7 @@ export const AppointmentBooking: React.FC<{ onClose?: () => void }> = ({ onClose
                 <button
                   key={day.date}
                   onClick={() => { setSelectedDate(day.date); setSelectedTime(''); }}
-                  className={`flex-shrink-0 px-4 py-2 rounded-full text-sm transition-all ${
+                  className={`shrink-0 px-4 py-2 rounded-full text-sm transition-all ${
                     selectedDate === day.date
                       ? 'bg-stone-900 text-white'
                       : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
@@ -291,7 +291,7 @@ export const AppointmentBooking: React.FC<{ onClose?: () => void }> = ({ onClose
               value={customerNotes}
               onChange={(e) => setCustomerNotes(e.target.value)}
               placeholder="Anything you'd like your consultant to know..."
-              className="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-stone-300 resize-none"
+              className="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-stone-300 resize-none"
               rows={3}
             />
           </div>

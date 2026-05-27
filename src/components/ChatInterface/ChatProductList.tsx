@@ -62,7 +62,7 @@ export const ChatProductList: React.FC<ChatProductListProps> = ({ products }) =>
               }`}
             >
               <span
-                className={`flex-shrink-0 w-5 h-5 rounded-full text-[10px] font-semibold flex items-center justify-center transition-colors ${
+                className={`shrink-0 w-5 h-5 rounded-full text-[10px] font-semibold flex items-center justify-center transition-colors ${
                   isActive ? 'bg-white text-black' : 'bg-white/15 text-white/80'
                 }`}
               >
@@ -76,7 +76,7 @@ export const ChatProductList: React.FC<ChatProductListProps> = ({ products }) =>
                   <div className="text-white/45 text-[10px] truncate">{subtitle}</div>
                 )}
               </div>
-              <span className="text-white/70 text-[11px] tabular-nums flex-shrink-0">
+              <span className="text-white/70 text-[11px] tabular-nums shrink-0">
                 ${product.price.toFixed(2)}
               </span>
             </button>

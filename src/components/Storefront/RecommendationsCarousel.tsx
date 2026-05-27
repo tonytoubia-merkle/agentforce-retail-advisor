@@ -131,7 +131,7 @@ export const RecommendationsCarousel: React.FC<Props> = ({ products: catalog }) 
             return (
               <div
                 key={product.productId || i}
-                className={`flex-shrink-0 w-32 sm:w-40 snap-start group ${clickable ? 'cursor-pointer' : ''}`}
+                className={`shrink-0 w-32 sm:w-40 snap-start group ${clickable ? 'cursor-pointer' : ''}`}
                 onClick={() => product.catalogProduct && navigateToProduct(product.catalogProduct)}
               >
                 <div className="aspect-square bg-stone-50 rounded-xl overflow-hidden mb-2 relative">

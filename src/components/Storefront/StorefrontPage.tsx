@@ -152,7 +152,7 @@ const DefaultStorefrontBody: React.FC = () => {
 
             {/* Loyalty banner for authenticated members */}
             {isAuthenticated && customer?.loyalty && (
-              <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200">
+              <div className="bg-linear-to-r from-amber-50 to-orange-50 border-b border-amber-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-center gap-3 text-sm">
                   <span className="text-amber-800 font-medium">
                     You have {customer.loyalty.pointsBalance?.toLocaleString()} points, {customer.name?.split(' ')[0]}!
@@ -183,7 +183,7 @@ const DefaultStorefrontBody: React.FC = () => {
                       <button
                         key={cat.value}
                         onClick={() => navigateToCategory(cat.value as ProductCategory)}
-                        className={`bg-gradient-to-br ${CAT_TINTS[i % CAT_TINTS.length]} rounded-2xl p-6 sm:p-8 text-center hover:shadow-lg transition-shadow group`}
+                        className={`bg-linear-to-br ${CAT_TINTS[i % CAT_TINTS.length]} rounded-2xl p-6 sm:p-8 text-center hover:shadow-lg transition-shadow group`}
                       >
                         <span className="text-lg font-medium text-stone-900 group-hover:text-rose-600 transition-colors">
                           {cat.label}
@@ -306,7 +306,7 @@ const DefaultStorefrontBody: React.FC = () => {
             {/* Secondary Advisor Hero — vertical-aware. Beauty shows skin analyzer;
                 travel shows trip concierge; fashion shows stylist; wellness/cpg hide it. */}
             {copy.secondaryAdvisorHero && (
-              <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-rose-950 to-purple-950 py-20 px-4">
+              <section className="relative overflow-hidden bg-linear-to-br from-slate-900 via-rose-950 to-purple-950 py-20 px-4">
                 {/* decorative background blobs */}
                 <div className="absolute inset-0 pointer-events-none">
                   <div className="absolute -top-20 -left-20 w-96 h-96 bg-rose-500/20 rounded-full blur-3xl" />
@@ -323,7 +323,7 @@ const DefaultStorefrontBody: React.FC = () => {
                     </div>
                     <h2 className="text-4xl sm:text-5xl font-light text-white leading-tight mb-4">
                       {copy.secondaryAdvisorHero.title}<br />
-                      <span className="font-semibold bg-gradient-to-r from-rose-300 to-purple-300 bg-clip-text text-transparent">
+                      <span className="font-semibold bg-linear-to-r from-rose-300 to-purple-300 bg-clip-text text-transparent">
                         {copy.secondaryAdvisorHero.titleAccent}
                       </span>
                     </h2>
@@ -334,7 +334,7 @@ const DefaultStorefrontBody: React.FC = () => {
                     <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
                       <button
                         onClick={copy.secondaryAdvisorRoute === 'skin' ? navigateToSkinAdvisor : navigateToAdvisor}
-                        className="group px-8 py-4 bg-gradient-to-r from-rose-500 to-purple-600 text-white font-semibold rounded-full hover:shadow-2xl hover:shadow-rose-500/40 hover:scale-105 transition-all duration-200 text-base"
+                        className="group px-8 py-4 bg-linear-to-r from-rose-500 to-purple-600 text-white font-semibold rounded-full hover:shadow-2xl hover:shadow-rose-500/40 hover:scale-105 transition-all duration-200 text-base"
                       >
                         <span className="flex items-center gap-2 justify-center">
                           {copy.secondaryAdvisorHero.primaryCTA}
@@ -350,7 +350,7 @@ const DefaultStorefrontBody: React.FC = () => {
                   </div>
 
                   {/* Right: feature chips */}
-                  <div className="flex-shrink-0 grid grid-cols-2 gap-3 lg:w-72">
+                  <div className="shrink-0 grid grid-cols-2 gap-3 lg:w-72">
                     {copy.secondaryAdvisorHero.chips.map(({ icon, title, desc }) => (
                       <div key={title} className="p-4 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-sm">
                         <div className="text-2xl mb-2">{icon}</div>

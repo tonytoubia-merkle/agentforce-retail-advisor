@@ -200,7 +200,7 @@ export const LoyaltyWidget: React.FC<LoyaltyWidgetProps> = ({
 
   if (!loyaltyMember.enrolled) {
     return (
-      <div className="bg-gradient-to-br from-rose-50 to-purple-50 rounded-xl shadow-sm p-6 border border-stone-200">
+      <div className="bg-linear-to-br from-rose-50 to-purple-50 rounded-xl shadow-sm p-6 border border-stone-200">
         <h3 className="text-lg font-semibold text-stone-900 mb-2">Join Our Loyalty Program</h3>
         <p className="text-stone-600 mb-4">
           Earn points on every purchase and redeem for exclusive discounts!
@@ -225,7 +225,7 @@ export const LoyaltyWidget: React.FC<LoyaltyWidgetProps> = ({
               <select
                 value={selectedProgram}
                 onChange={(e) => setSelectedProgram(e.target.value)}
-                className="w-full px-3 py-2 border border-stone-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500"
+                className="w-full px-3 py-2 border border-stone-300 rounded-md shadow-sm focus:outline-hidden focus:ring-2 focus:ring-rose-500 focus:border-rose-500"
               >
                 <option value="">Choose a program</option>
                 {mockPrograms.map((program) => (
@@ -282,7 +282,7 @@ export const LoyaltyWidget: React.FC<LoyaltyWidgetProps> = ({
         </div>
         <div className="w-full bg-stone-200 rounded-full h-2">
           <div 
-            className="bg-gradient-to-r from-rose-500 to-purple-500 h-2 rounded-full" 
+            className="bg-linear-to-r from-rose-500 to-purple-500 h-2 rounded-full" 
             style={{ width: `${Math.min(loyaltyMember.pointsBalance / 100, 100)}%` }}
           ></div>
         </div>

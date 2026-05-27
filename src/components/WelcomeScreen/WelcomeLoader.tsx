@@ -30,7 +30,7 @@ export const WelcomeLoader: React.FC = () => {
       {/* Subtle shimmer bar */}
       <div className="w-48 h-[2px] rounded-full overflow-hidden mb-10 bg-white/10">
         <motion.div
-          className="h-full bg-gradient-to-r from-transparent via-white/60 to-transparent"
+          className="h-full bg-linear-to-r from-transparent via-white/60 to-transparent"
           animate={{ x: ['-100%', '200%'] }}
           transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
           style={{ width: '50%' }}

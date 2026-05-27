@@ -89,9 +89,9 @@ export const BundleOptimizerCard: React.FC = () => {
       initial={{ opacity: 0, y: -6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.05 }}
-      className="mb-4 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-white p-4 flex items-center gap-4 shadow-sm"
+      className="mb-4 rounded-xl border border-emerald-200 bg-linear-to-r from-emerald-50 to-white p-4 flex items-center gap-4 shadow-sm"
     >
-      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+      <div className="shrink-0 w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600">
         <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8l-4 5m0 0l4 5h-8m-4-5H3m4 5v-5m-4 5h2m6-10a2 2 0 110 4 2 2 0 010-4z" />
         </svg>

@@ -170,7 +170,7 @@ export const CheckoutPage: React.FC = () => {
           className="max-w-md w-full mx-4"
         >
           <div className="bg-white rounded-3xl p-8 shadow-xl text-center">
-            <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-rose-100 to-purple-100 rounded-full flex items-center justify-center">
+            <div className="w-16 h-16 mx-auto mb-6 bg-linear-to-br from-rose-100 to-purple-100 rounded-full flex items-center justify-center">
               <svg className="w-8 h-8 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
@@ -223,7 +223,7 @@ export const CheckoutPage: React.FC = () => {
                     onChange={(e) => setGuestEmail(e.target.value)}
                     required
                     placeholder="your@email.com"
-                    className="w-full px-3 py-2 text-sm border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-sm border border-stone-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -234,7 +234,7 @@ export const CheckoutPage: React.FC = () => {
                       value={guestFirstName}
                       onChange={(e) => setGuestFirstName(e.target.value)}
                       required
-                      className="w-full px-3 py-2 text-sm border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-sm border border-stone-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                     />
                   </div>
                   <div>
@@ -244,7 +244,7 @@ export const CheckoutPage: React.FC = () => {
                       value={guestLastName}
                       onChange={(e) => setGuestLastName(e.target.value)}
                       required
-                      className="w-full px-3 py-2 text-sm border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-sm border border-stone-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -371,7 +371,7 @@ export const CheckoutPage: React.FC = () => {
                             value={formData.email}
                             onChange={handleInputChange}
                             required
-                            className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                            className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                             placeholder="your@email.com"
                           />
                         </div>
@@ -386,7 +386,7 @@ export const CheckoutPage: React.FC = () => {
                               value={formData.firstName}
                               onChange={handleInputChange}
                               required
-                              className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                              className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                             />
                           </div>
                           <div>
@@ -399,7 +399,7 @@ export const CheckoutPage: React.FC = () => {
                               value={formData.lastName}
                               onChange={handleInputChange}
                               required
-                              className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                              className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                             />
                           </div>
                         </div>
@@ -421,7 +421,7 @@ export const CheckoutPage: React.FC = () => {
                             value={formData.address}
                             onChange={handleInputChange}
                             required
-                            className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                            className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                           />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -435,7 +435,7 @@ export const CheckoutPage: React.FC = () => {
                               value={formData.city}
                               onChange={handleInputChange}
                               required
-                              className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                              className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                             />
                           </div>
                           <div>
@@ -448,7 +448,7 @@ export const CheckoutPage: React.FC = () => {
                               value={formData.state}
                               onChange={handleInputChange}
                               required
-                              className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                              className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                             />
                           </div>
                         </div>
@@ -462,7 +462,7 @@ export const CheckoutPage: React.FC = () => {
                             value={formData.zip}
                             onChange={handleInputChange}
                             required
-                            className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                            className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                           />
                         </div>
                       </div>
@@ -497,7 +497,7 @@ export const CheckoutPage: React.FC = () => {
                             value={formData.cardNumber}
                             onChange={handleInputChange}
                             required
-                            className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                            className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                             placeholder="1234 5678 9012 3456"
                           />
                         </div>
@@ -512,7 +512,7 @@ export const CheckoutPage: React.FC = () => {
                               value={formData.expiry}
                               onChange={handleInputChange}
                               required
-                              className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                              className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                               placeholder="MM/YY"
                             />
                           </div>
@@ -526,7 +526,7 @@ export const CheckoutPage: React.FC = () => {
                               value={formData.cvv}
                               onChange={handleInputChange}
                               required
-                              className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                              className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                               placeholder="123"
                             />
                           </div>
@@ -554,7 +554,7 @@ export const CheckoutPage: React.FC = () => {
                 <div className="space-y-4 mb-6">
                   {items.map((item) => (
                     <div key={item.product.id} className="flex gap-3">
-                      <div className="w-12 h-12 bg-stone-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <div className="w-12 h-12 bg-stone-50 rounded-lg flex items-center justify-center shrink-0">
                         <ProductImage
                           src={item.product.imageUrl}
                           alt={item.product.name}
@@ -598,7 +598,7 @@ export const CheckoutPage: React.FC = () => {
 
                 {/* Loyalty points preview */}
                 {customer?.loyalty && loyaltyPoints > 0 && (
-                  <div className="mt-4 p-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl">
+                  <div className="mt-4 p-3 bg-linear-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl">
                     <div className="flex items-center gap-2 text-sm">
                       <span className="text-amber-700 font-medium">
                         Earn ~{loyaltyPoints} points

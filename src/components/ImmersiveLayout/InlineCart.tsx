@@ -43,7 +43,7 @@ export const InlineCart: React.FC = () => {
                   <img
                     src={item.product.imageUrl}
                     alt={item.product.name}
-                    className="w-12 h-12 object-contain flex-shrink-0 product-blend"
+                    className="w-12 h-12 object-contain shrink-0 product-blend"
                   />
                   <div className="flex-1 min-w-0">
                     <div className="text-white text-xs font-medium truncate">
@@ -93,7 +93,7 @@ export const InlineCart: React.FC = () => {
           className="flex-1 flex items-center gap-3 text-left hover:opacity-80 transition-opacity"
           aria-label={expanded ? 'Collapse cart' : 'Expand cart'}
         >
-          <div className="relative flex-shrink-0 w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
+          <div className="relative shrink-0 w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
             <svg
               className="w-4 h-4 text-white"
               fill="none"

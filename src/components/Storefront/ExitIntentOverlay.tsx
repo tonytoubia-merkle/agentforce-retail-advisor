@@ -153,7 +153,7 @@ export const ExitIntentOverlay: React.FC = () => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 backdrop-blur-sm"
           onClick={dismiss}
         >
           <motion.div
@@ -174,7 +174,7 @@ export const ExitIntentOverlay: React.FC = () => {
             )}
 
             {/* Top gradient accent */}
-            <div className="h-1.5 bg-gradient-to-r from-rose-400 via-pink-400 to-amber-400" />
+            <div className="h-1.5 bg-linear-to-r from-rose-400 via-pink-400 to-amber-400" />
 
             {/* Close button */}
             <button
@@ -237,7 +237,7 @@ export const ExitIntentOverlay: React.FC = () => {
               {/* CTA button */}
               <button
                 onClick={handleClaim}
-                className="w-full py-3.5 px-6 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white font-semibold rounded-xl shadow-lg shadow-rose-200 hover:shadow-xl hover:shadow-rose-300 transition-all"
+                className="w-full py-3.5 px-6 bg-linear-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white font-semibold rounded-xl shadow-lg shadow-rose-200 hover:shadow-xl hover:shadow-rose-300 transition-all"
               >
                 {decision.ctaText}
               </button>

@@ -79,7 +79,7 @@ const ImmersiveLayoutInner: React.FC<ImmersiveLayoutProps> = ({ mode }) => {
   return (
     <div className="absolute inset-0 flex overflow-hidden bg-black">
       {/* ── LEFT PANE: Chat + Cart ─────────────────────────────────────── */}
-      <div className="flex-shrink-0 flex flex-col w-[420px] min-w-[380px] max-w-[480px] h-full bg-gradient-to-b from-stone-900 via-stone-950 to-black border-r border-white/5 relative">
+      <div className="shrink-0 flex flex-col w-[420px] min-w-[380px] max-w-[480px] h-full bg-linear-to-b from-stone-900 via-stone-950 to-black border-r border-white/5 relative">
         {/* Chat fills available space */}
         <div className="flex-1 min-h-0 overflow-hidden relative">
           <ChatInterface

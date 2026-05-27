@@ -62,13 +62,13 @@ export const GenerativeBackground: React.FC<GenerativeBackgroundProps> = ({
 
       {background.isLoading && (
         <>
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/70 to-black/60" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/70 to-black/60" />
           <LoadingShimmer />
         </>
       )}
 
       {!background.isLoading && (
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-black/40" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/20 to-black/40" />
       )}
     </div>
   );
