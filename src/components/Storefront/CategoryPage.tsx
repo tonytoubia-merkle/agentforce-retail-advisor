@@ -1,7 +1,9 @@
 import { motion } from 'framer-motion';
+import { useRouteLoaderData } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
 import { ProductImage } from './ProductImage';
+import type { CategoryLoaderData } from '@/routes/shopLoaders';
 import type { Product, ProductCategory } from '@/types/product';
 
 const CATEGORY_INFO: Record<ProductCategory, { name: string; description: string }> = {
@@ -33,8 +35,16 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({ category, products }
   const { navigateToProduct, goBack } = useStore();
   const { addItem, isInCart } = useCart();
 
+  // Phase 3d: prefer the route loader's already-filtered list (shop-category
+  // route's loader has done the work) and fall back to the prop-supplied
+  // catalog when this component is reached through the catch-all StorefrontPage
+  // (e.g., during demo-context switching).
+  const loaderData = useRouteLoaderData('shop-category') as CategoryLoaderData | undefined;
   const categoryInfo = CATEGORY_INFO[category] || { name: category, description: '' };
-  const filteredProducts = products.filter((p) => p.category === category);
+  const filteredProducts =
+    loaderData?.category === category && loaderData?.products
+      ? loaderData.products
+      : products.filter((p) => p.category === category);
 
   return (
     <div className="min-h-screen bg-white">
