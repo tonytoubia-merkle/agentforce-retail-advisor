@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useDemo } from '@/contexts/DemoContext';
 import { Kamon } from './Kamon';
+import { BackendToggle } from '../BackendToggle';
 
 /**
  * LuxuryFooter — three austere columns:
@@ -106,6 +107,7 @@ export const LuxuryFooter: React.FC = () => {
           style={{ marginTop: 32, flexWrap: 'wrap', gap: 16, color: 'rgba(245, 240, 230, 0.5)', fontSize: 12, letterSpacing: '0.06em' }}
         >
           <span>© {new Date().getFullYear()} {config.brandName}, Kyoto. All rights reserved.</span>
+          <BackendToggle />
           <span style={{ fontFamily: 'var(--jp)' }}>京都 — 一九二三年創業</span>
         </div>
       </div>
