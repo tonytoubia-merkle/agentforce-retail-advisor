@@ -1,7 +1,7 @@
-import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
-import { fetchProductCatalog, getProductCatalog } from '@/services/catalog/productCatalogService';
+import { createContext, useContext, useCallback, useEffect, useRef, type ReactNode } from 'react';
+import { useRouteLoaderData, useRevalidator } from 'react-router-dom';
 import { useDemo } from '@/contexts/DemoContext';
-import { loadDemoProducts } from '@/services/demoData';
+import type { CatalogLoaderData } from '@/routes/catalogLoader';
 import type { Product } from '@/types/product';
 
 interface ProductContextValue {
@@ -20,59 +20,45 @@ const ProductContext = createContext<ProductContextValue>({
 
 export const useProducts = () => useContext(ProductContext);
 
+/**
+ * Consumes the catalog from the DemoRoot's `catalogLoader` (route id `demo-root`).
+ *
+ * Replaces the useEffect-driven fetch the provider used to do — the router now
+ * owns the fetch lifecycle. This component is left in place so that the
+ * `useProducts()` API the rest of the app already calls keeps working without
+ * a sweep through every consumer.
+ *
+ * Demo-config changes (e.g. user picks a different demo via DemoPanel) are
+ * not URL navigations, so the router does not re-run loaders on its own —
+ * useRevalidator() is wired up to trigger a revalidation when config.id flips.
+ */
 export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { config, isDefault } = useDemo();
-  const [products, setProducts] = useState<Product[]>(getProductCatalog());
-  const [loading, setLoading] = useState(products.length === 0);
-  const [error, setError] = useState<Error | null>(null);
+  const { config } = useDemo();
+  const revalidator = useRevalidator();
+  const loaderData = useRouteLoaderData('demo-root') as CatalogLoaderData | undefined;
+  const products = loaderData?.products ?? [];
 
-  // Stale-fetch guard. Each `loadProducts` call increments this counter and
-  // captures its own value; before any setProducts/setLoading/setError, it
-  // checks that no newer load has started. Without this, a CRM fetch
-  // started while config.id was 'default' could resolve AFTER a Supabase
-  // fetch for the actual demo and overwrite the demo's products with the
-  // beauty CRM catalog (the bug we hit when shipping Tachibana).
-  const fetchIdRef = useRef(0);
-
-  const loadProducts = useCallback(async () => {
-    const myFetchId = ++fetchIdRef.current;
-    const isStale = () => myFetchId !== fetchIdRef.current;
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      // For custom demos, try Supabase first.
-      if (!isDefault && config.id !== 'default') {
-        const demoProducts = await loadDemoProducts(config.id);
-        if (isStale()) return;
-        if (demoProducts && demoProducts.length > 0) {
-          setProducts(demoProducts);
-          return;
-        }
-      }
-
-      // Fall back to CRM catalog (or mock data).
-      const catalog = await fetchProductCatalog();
-      if (isStale()) return;
-      setProducts(catalog);
-    } catch (err) {
-      if (isStale()) return;
-      console.error('[ProductProvider] Failed to load catalog:', err);
-      setError(err instanceof Error ? err : new Error('Failed to load products'));
-    } finally {
-      if (!isStale()) setLoading(false);
-    }
-  }, [config.id, isDefault]);
-
+  const prevDemoId = useRef(config.id);
   useEffect(() => {
-    if (products.length === 0 || !isDefault) {
-      loadProducts();
+    if (prevDemoId.current !== config.id) {
+      prevDemoId.current = config.id;
+      revalidator.revalidate();
     }
-  }, [config.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [config.id, revalidator]);
+
+  const refreshProducts = useCallback(async () => {
+    revalidator.revalidate();
+  }, [revalidator]);
 
   return (
-    <ProductContext.Provider value={{ products, loading, error, refreshProducts: loadProducts }}>
+    <ProductContext.Provider
+      value={{
+        products,
+        loading: revalidator.state === 'loading',
+        error: null,
+        refreshProducts,
+      }}
+    >
       {children}
     </ProductContext.Provider>
   );

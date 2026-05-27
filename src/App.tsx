@@ -28,6 +28,8 @@ import { pushUtmToDataLayer } from '@/services/merkury/dataLayer';
 import { DemoLog } from '@/components/DemoLog';
 import { productDetailLoader } from '@/routes/productDetailLoader';
 import { ProductDetailRoute, ProductDetailErrorBoundary } from '@/routes/ProductDetailRoute';
+import { catalogLoader } from '@/routes/catalogLoader';
+import { categoryLoader, productByCategoryLoader } from '@/routes/shopLoaders';
 import type { CampaignAttribution } from '@/types/campaign';
 
 // Lazy admin section — pulls in Supabase, not needed on the demo path
@@ -176,21 +178,40 @@ const router = createBrowserRouter([
   {
     path: '/',
     element: <DemoRoot />,
+    // Root catalog loader (Phase 2C) — replaces the useEffect fetch in
+    // ProductProvider. id is referenced by useRouteLoaderData('demo-root').
+    id: 'demo-root',
+    loader: catalogLoader,
     children: [
       { path: 'advisor', element: <AdvisorWrapper /> },
       { path: 'skin-advisor', element: <SkinAdvisorWrapper /> },
       { path: 'media-wall', element: <MediaWallPage /> },
       { path: 'history-wall', element: <HistoryWallPage /> },
-      // Phase 2B pilot: Storefront Next-style data-router route.
-      // Loader fetches via getCommerceBackend(); page renders only when ready.
+      // Phase 2B pilot: data-router route fetching a single product through
+      // getCommerceBackend() (Connect API today, SCAPI when the flag flips).
       {
         path: 'p/:salesforceId',
         element: <ProductDetailRoute />,
         loader: productDetailLoader,
         errorElement: <ProductDetailErrorBoundary />,
       },
-      // Legacy SPA catch-all — StorefrontPage derives view from URL via StoreContext.
-      // Coexists with the data-router pilot above.
+      // Phase 2C: explicit shop routes with per-route loaders. Element stays
+      // StorefrontPage so the storefront chrome (header, banners, luxury
+      // variant) renders the same as before — the loaders make the data
+      // dependency explicit and give each route its own error surface.
+      {
+        path: 'shop/:category/:productId',
+        element: <StorefrontPage />,
+        loader: productByCategoryLoader,
+      },
+      {
+        path: 'shop/:category',
+        element: <StorefrontPage />,
+        loader: categoryLoader,
+      },
+      // Catch-all — StorefrontPage derives view from URL via StoreContext
+      // for the remaining paths (/, /cart, /checkout, /account, /appointment,
+      // /order-confirmation).
       { path: '*', element: <StorefrontPage /> },
     ],
   },
