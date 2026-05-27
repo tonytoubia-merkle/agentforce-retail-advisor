@@ -54,19 +54,29 @@ export const StoreHeader: React.FC = () => {
             onClick={navigateHome}
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
-            {config.logoUrl ? (
-              <img src={config.logoUrl} alt={config.brandName} className="h-8 w-auto object-contain" />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-stone-900 flex items-center justify-center">
-                <span className="text-white font-bold text-sm">{(config.brandName || 'B')[0].toUpperCase()}</span>
-              </div>
-            )}
-            <span className="text-xl font-semibold tracking-tight text-stone-900">
-              {/* Legacy golden-template site ships as "SERENE → BEAUTÉ" display branding.
-                  For any custom demo (vertical !== beauty OR different brandName), show the
-                  configured brand name as-is — no more beauty bleed-through. */}
-              {config.id === 'default' && config.brandName === 'SERENE' ? 'BEAUTÉ' : config.brandName}
-            </span>
+            {(() => {
+              // Display name mirrors the legacy SERENE -> BEAUTÉ rename so the
+              // circle initial and the wordmark always agree (avoids a stale
+              // "S" on the circle next to a "BEAUTÉ" wordmark).
+              const displayName =
+                config.id === 'default' && config.brandName === 'SERENE'
+                  ? 'BEAUTÉ'
+                  : config.brandName || 'B';
+              return (
+                <>
+                  {config.logoUrl ? (
+                    <img src={config.logoUrl} alt={displayName} className="h-8 w-auto object-contain" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-stone-900 flex items-center justify-center">
+                      <span className="text-white font-bold text-sm">{displayName[0].toUpperCase()}</span>
+                    </div>
+                  )}
+                  <span className="text-xl font-semibold tracking-tight text-stone-900">
+                    {displayName}
+                  </span>
+                </>
+              );
+            })()}
           </button>
 
           {/* Desktop Navigation — categories are vertical-aware via verticalCopy. */}
