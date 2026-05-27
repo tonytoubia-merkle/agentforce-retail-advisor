@@ -1,0 +1,344 @@
+- generic [ref=e3]:
+  - main [ref=e4]:
+    - generic [ref=e189]:
+      - generic [ref=e191]:
+        - button "Tachibana home" [ref=e192] [cursor=pointer]:
+          - img [ref=e193]
+          - generic [ref=e202]: Tachibana橘
+        - navigation "Primary" [ref=e203]:
+          - button "Maison" [ref=e204] [cursor=pointer]
+          - button "Atelier" [ref=e205] [cursor=pointer]
+          - button "Journal" [ref=e206] [cursor=pointer]
+          - button "Restoration" [ref=e207] [cursor=pointer]
+          - button "Sign in" [ref=e208] [cursor=pointer]
+        - generic [ref=e209]:
+          - button "Speak with your Bantō" [ref=e210] [cursor=pointer]: Bantō
+          - button "Bag" [ref=e211] [cursor=pointer]
+      - generic [ref=e212]:
+        - paragraph [ref=e213]: The Houses
+        - heading "Eight doors. One atelier." [level=1] [ref=e214]
+        - paragraph [ref=e215]: Every Tachibana location is a flagship. There are no concessions, no outlets, no seasonal pop-ups. Each door operates appointment-first; walk-in is welcomed, but our Bantō program is reserved for booked time.
+        - paragraph [ref=e216]:
+          - text: The
+          - emphasis [ref=e217]: Bantō
+          - text: 番頭 is the senior figure of an Edo-era Japanese merchant house — the person who knew the customers by name and the work by hand. We have kept the title.
+      - img [ref=e220]
+      - generic [ref=e230]:
+        - article [ref=e231]:
+          - generic [ref=e232]:
+            - generic [ref=e233]:
+              - img [ref=e234]
+              - generic [ref=e243]: Gion · Kyoto
+            - generic [ref=e244]:
+              - paragraph [ref=e245]: Opened 1923
+              - heading "Kyoto Atelier 京都 アトリエ" [level=2] [ref=e246]
+              - paragraph [ref=e247]: The original house. Workshop, archive, museum, and by-appointment commissioning. The destination for top-tier private clients and the home of the Lifetime Restoration program.
+              - generic [ref=e248]:
+                - generic [ref=e249]:
+                  - paragraph [ref=e250]: Address
+                  - paragraph [ref=e251]: Gion · Kyoto
+                - generic [ref=e252]:
+                  - paragraph [ref=e253]: Hours
+                  - paragraph [ref=e254]: By appointment · 10–18
+                - generic [ref=e255]:
+                  - paragraph [ref=e256]: Bantō
+                  - paragraph [ref=e257]: Mariko Aoki
+                - generic [ref=e258]:
+                  - paragraph [ref=e259]: Languages
+                  - paragraph [ref=e260]: English · Japanese
+              - generic [ref=e261]:
+                - button "Book an appointment" [ref=e262] [cursor=pointer]
+                - paragraph [ref=e263]: Or write directly to Mariko Aoki at the kyoto atelier house.
+        - article [ref=e264]:
+          - generic [ref=e265]:
+            - generic [ref=e266]:
+              - img [ref=e267]
+              - generic [ref=e276]: Aoyama · Tokyo
+            - generic [ref=e277]:
+              - paragraph [ref=e278]: Opened 1968
+              - heading "Tokyo 東京 青山" [level=2] [ref=e279]
+              - paragraph [ref=e280]: Domestic flagship since 1968. The largest single store. Anchors the Japanese client base and serves international travelers.
+              - generic [ref=e281]:
+                - generic [ref=e282]:
+                  - paragraph [ref=e283]: Address
+                  - paragraph [ref=e284]: Aoyama · Tokyo
+                - generic [ref=e285]:
+                  - paragraph [ref=e286]: Hours
+                  - paragraph [ref=e287]: By appointment · 10–18
+                - generic [ref=e288]:
+                  - paragraph [ref=e289]: Bantō
+                  - paragraph [ref=e290]: Kenji Watanabe
+                - generic [ref=e291]:
+                  - paragraph [ref=e292]: Languages
+                  - paragraph [ref=e293]: English · Japanese
+              - generic [ref=e294]:
+                - button "Book an appointment" [ref=e295] [cursor=pointer]
+                - paragraph [ref=e296]: Or write directly to Kenji Watanabe at the tokyo house.
+        - article [ref=e297]:
+          - generic [ref=e298]:
+            - generic [ref=e299]:
+              - img [ref=e300]
+              - generic [ref=e309]: Via Montenapoleone · Milan
+            - generic [ref=e310]:
+              - paragraph [ref=e311]: Opened 1991
+              - heading "Milan ミラノ" [level=2] [ref=e312]
+              - paragraph [ref=e313]: European flagship since 1991. The leather-craft heritage door — the closest the brand has to its Italian DNA on display. Preferred for serious leather commissions in Europe.
+              - generic [ref=e314]:
+                - generic [ref=e315]:
+                  - paragraph [ref=e316]: Address
+                  - paragraph [ref=e317]: Via Montenapoleone · Milan
+                - generic [ref=e318]:
+                  - paragraph [ref=e319]: Hours
+                  - paragraph [ref=e320]: By appointment · 10–18
+                - generic [ref=e321]:
+                  - paragraph [ref=e322]: Bantō
+                  - paragraph [ref=e323]: Giulia Conti
+                - generic [ref=e324]:
+                  - paragraph [ref=e325]: Languages
+                  - paragraph [ref=e326]: English · Japanese · French · Italian
+              - generic [ref=e327]:
+                - button "Book an appointment" [ref=e328] [cursor=pointer]
+                - paragraph [ref=e329]: Or write directly to Giulia Conti at the milan house.
+        - article [ref=e330]:
+          - generic [ref=e331]:
+            - generic [ref=e332]:
+              - img [ref=e333]
+              - generic [ref=e342]: Avenue Montaigne · Paris
+            - generic [ref=e343]:
+              - paragraph [ref=e344]: Opened 2014
+              - heading "Paris パリ" [level=2] [ref=e345]
+              - paragraph [ref=e346]: The fashion door. Strongest ready-to-wear and jewelry assortment in Europe.
+              - generic [ref=e347]:
+                - generic [ref=e348]:
+                  - paragraph [ref=e349]: Address
+                  - paragraph [ref=e350]: Avenue Montaigne · Paris
+                - generic [ref=e351]:
+                  - paragraph [ref=e352]: Hours
+                  - paragraph [ref=e353]: By appointment · 10–18
+                - generic [ref=e354]:
+                  - paragraph [ref=e355]: Bantō
+                  - paragraph [ref=e356]: Henri Rousseau
+                - generic [ref=e357]:
+                  - paragraph [ref=e358]: Languages
+                  - paragraph [ref=e359]: English · Japanese · French · Italian
+              - generic [ref=e360]:
+                - button "Book an appointment" [ref=e361] [cursor=pointer]
+                - paragraph [ref=e362]: Or write directly to Henri Rousseau at the paris house.
+        - article [ref=e363]:
+          - generic [ref=e364]:
+            - generic [ref=e365]:
+              - img [ref=e366]
+              - generic [ref=e375]: Mount Street · Mayfair
+            - generic [ref=e376]:
+              - paragraph [ref=e377]: Opened 2017
+              - heading "London ロンドン" [level=2] [ref=e378]
+              - paragraph [ref=e379]: The discreet old-money door. The calmest of the European flagships, and the most reliant on the named-advisor program.
+              - generic [ref=e380]:
+                - generic [ref=e381]:
+                  - paragraph [ref=e382]: Address
+                  - paragraph [ref=e383]: Mount Street · Mayfair
+                - generic [ref=e384]:
+                  - paragraph [ref=e385]: Hours
+                  - paragraph [ref=e386]: By appointment · 10–18
+                - generic [ref=e387]:
+                  - paragraph [ref=e388]: Bantō
+                  - paragraph [ref=e389]: Edward Holborn
+                - generic [ref=e390]:
+                  - paragraph [ref=e391]: Languages
+                  - paragraph [ref=e392]: English · Japanese · French · Italian
+              - generic [ref=e393]:
+                - button "Book an appointment" [ref=e394] [cursor=pointer]
+                - paragraph [ref=e395]: Or write directly to Edward Holborn at the london house.
+        - article [ref=e396]:
+          - generic [ref=e397]:
+            - generic [ref=e398]:
+              - img [ref=e399]
+              - generic [ref=e408]: Madison Avenue at 70th
+            - generic [ref=e409]:
+              - paragraph [ref=e410]: Opened 2019
+              - heading "New York ニューヨーク" [level=2] [ref=e411]
+              - paragraph [ref=e412]: Anchors the U.S. market. Largest American share of new-client acquisition.
+              - generic [ref=e413]:
+                - generic [ref=e414]:
+                  - paragraph [ref=e415]: Address
+                  - paragraph [ref=e416]: Madison Avenue at 70th
+                - generic [ref=e417]:
+                  - paragraph [ref=e418]: Hours
+                  - paragraph [ref=e419]: By appointment · 10–18
+                - generic [ref=e420]:
+                  - paragraph [ref=e421]: Bantō
+                  - paragraph [ref=e422]: Sasha Reyes
+                - generic [ref=e423]:
+                  - paragraph [ref=e424]: Languages
+                  - paragraph [ref=e425]: English · Japanese
+              - generic [ref=e426]:
+                - button "Book an appointment" [ref=e427] [cursor=pointer]
+                - paragraph [ref=e428]: Or write directly to Sasha Reyes at the new york house.
+        - article [ref=e429]:
+          - generic [ref=e430]:
+            - generic [ref=e431]:
+              - img [ref=e432]
+              - generic [ref=e441]: Pedder Street · Central
+            - generic [ref=e442]:
+              - paragraph [ref=e443]: Opened 2022
+              - heading "Hong Kong 香港" [level=2] [ref=e444]
+              - paragraph [ref=e445]: Greater China gateway. Highest single-transaction value of any Tachibana door.
+              - generic [ref=e446]:
+                - generic [ref=e447]:
+                  - paragraph [ref=e448]: Address
+                  - paragraph [ref=e449]: Pedder Street · Central
+                - generic [ref=e450]:
+                  - paragraph [ref=e451]: Hours
+                  - paragraph [ref=e452]: By appointment · 10–18
+                - generic [ref=e453]:
+                  - paragraph [ref=e454]: Bantō
+                  - paragraph [ref=e455]: Lin Wei-Cheng
+                - generic [ref=e456]:
+                  - paragraph [ref=e457]: Languages
+                  - paragraph [ref=e458]: English · Japanese
+              - generic [ref=e459]:
+                - button "Book an appointment" [ref=e460] [cursor=pointer]
+                - paragraph [ref=e461]: Or write directly to Lin Wei-Cheng at the hong kong house.
+        - article [ref=e462]:
+          - generic [ref=e463]:
+            - generic [ref=e464]:
+              - img [ref=e465]
+              - generic [ref=e474]: Rodeo Drive (north)
+            - generic [ref=e475]:
+              - paragraph [ref=e476]: Opened 2024
+              - heading "Beverly Hills ビバリーヒルズ" [level=2] [ref=e477]
+              - paragraph [ref=e478]: The most recent door. The West Coast Patron and Gifting Patron audience; strong overlap with the entertainment-finance client.
+              - generic [ref=e479]:
+                - generic [ref=e480]:
+                  - paragraph [ref=e481]: Address
+                  - paragraph [ref=e482]: Rodeo Drive (north)
+                - generic [ref=e483]:
+                  - paragraph [ref=e484]: Hours
+                  - paragraph [ref=e485]: By appointment · 10–18
+                - generic [ref=e486]:
+                  - paragraph [ref=e487]: Bantō
+                  - paragraph [ref=e488]: Emi Tanaka
+                - generic [ref=e489]:
+                  - paragraph [ref=e490]: Languages
+                  - paragraph [ref=e491]: English · Japanese
+              - generic [ref=e492]:
+                - button "Book an appointment" [ref=e493] [cursor=pointer]
+                - paragraph [ref=e494]: Or write directly to Emi Tanaka at the beverly hills house.
+      - img [ref=e497]
+      - generic [ref=e506]:
+        - paragraph [ref=e507]: The Maison Program
+        - heading "For our most considered clients, by invitation." [level=2] [ref=e508]
+        - paragraph [ref=e509]: Private appointments outside opening hours. Remote consultation by video. In-home or in-office trunk-show visits in the client's city. Access to the Kyoto atelier for personal commissioning. An annual cultural visit, recently to a private viewing of the Imperial Palace gardens.
+        - paragraph [ref=e510]: Membership is invitation-only. If you are already a client, your advisor will write to you.
+      - generic [ref=e512]:
+        - generic [ref=e513]:
+          - generic [ref=e514]:
+            - generic [ref=e515]:
+              - img [ref=e516]
+              - generic [ref=e525]: Tachibana
+            - paragraph [ref=e526]: A Kyoto house of leather and lacquer, founded 1923
+          - generic [ref=e527]:
+            - generic [ref=e528]:
+              - paragraph [ref=e529]: The Houses
+              - list [ref=e530]:
+                - listitem [ref=e531]:
+                  - button "Kyoto Atelier 京都" [ref=e532] [cursor=pointer]
+                - listitem [ref=e533]:
+                  - button "Tokyo 東京 青山" [ref=e534] [cursor=pointer]
+                - listitem [ref=e535]:
+                  - button "Milan ミラノ" [ref=e536] [cursor=pointer]
+                - listitem [ref=e537]:
+                  - button "Paris パリ" [ref=e538] [cursor=pointer]
+                - listitem [ref=e539]:
+                  - button "London ロンドン" [ref=e540] [cursor=pointer]
+                - listitem [ref=e541]:
+                  - button "New York ニューヨーク" [ref=e542] [cursor=pointer]
+                - listitem [ref=e543]:
+                  - button "Hong Kong 香港" [ref=e544] [cursor=pointer]
+                - listitem [ref=e545]:
+                  - button "Beverly Hills ビバリーヒルズ" [ref=e546] [cursor=pointer]
+            - generic [ref=e547]:
+              - paragraph [ref=e548]: The Maison
+              - list [ref=e549]:
+                - listitem [ref=e550]:
+                  - button "Journal" [ref=e551] [cursor=pointer]
+                - listitem [ref=e552]:
+                  - button "Restoration" [ref=e553] [cursor=pointer]
+                - listitem [ref=e554]:
+                  - button "Atelier" [ref=e555] [cursor=pointer]
+                - listitem [ref=e556]:
+                  - button "My Maison" [ref=e557] [cursor=pointer]
+            - generic [ref=e558]:
+              - paragraph [ref=e559]: Care
+              - list [ref=e560]:
+                - listitem [ref=e561]:
+                  - button "Lifetime restoration" [ref=e562] [cursor=pointer]
+                - listitem [ref=e563]:
+                  - button "Product passport" [ref=e564] [cursor=pointer]
+                - listitem [ref=e565]:
+                  - button "Press" [ref=e566] [cursor=pointer]
+                - listitem [ref=e567]:
+                  - button "Privacy" [ref=e568] [cursor=pointer]
+        - separator [ref=e569]
+        - generic [ref=e570]:
+          - generic [ref=e571]: © 2026 Tachibana, Kyoto. All rights reserved.
+          - generic [ref=e572]: 京都 — 一九二三年創業
+    - button "Merkury lead score" [ref=e574] [cursor=pointer]:
+      - generic [ref=e575]: "5"
+      - generic [ref=e576]:
+        - generic [ref=e577]: Merkury Lead Score
+        - generic [ref=e578]: cold
+  - button "Demo 5":
+    - generic: Demo
+    - generic: "5"
+  - generic [ref=e161]:
+    - generic [ref=e162]:
+      - generic [ref=e163]:
+        - heading "Demo" [level=2] [ref=e166]
+        - button [ref=e167] [cursor=pointer]:
+          - img [ref=e168]
+      - generic [ref=e170]:
+        - button "Log (5)" [ref=e579] [cursor=pointer]
+        - button "Profile" [ref=e172] [cursor=pointer]
+    - generic [ref=e173]:
+      - generic [ref=e174]:
+        - button "All" [ref=e175] [cursor=pointer]
+        - button "🧭 Nav" [ref=e176] [cursor=pointer]
+        - button "🔑 ID" [ref=e177] [cursor=pointer]
+        - button "✨ Perso" [ref=e178] [cursor=pointer]
+        - button "📡 UTM" [ref=e179] [cursor=pointer]
+        - button "🤖 Agent" [ref=e180] [cursor=pointer]
+        - button "🛒 Shop" [ref=e181] [cursor=pointer]
+        - button "💾 Data" [ref=e182] [cursor=pointer]
+        - button "⚙️ Sys" [ref=e183] [cursor=pointer]
+        - button "Clear" [ref=e184] [cursor=pointer]
+      - generic [ref=e580]:
+        - generic [ref=e581]:
+          - generic [ref=e584]:
+            - generic [ref=e585]: 0:00
+            - generic [ref=e586]: 🧭 Nav
+          - generic [ref=e587]: "Page: home"
+        - generic [ref=e588]:
+          - generic [ref=e591]:
+            - generic [ref=e592]: 0:00
+            - generic [ref=e593]: ⚙️ Sys
+          - generic [ref=e594]: SF Personalization SDK Init
+          - generic [ref=e595]: "Dataset: 5c71fd40-a792-4437-b600-55aea3dd90f6"
+        - generic [ref=e596]:
+          - generic [ref=e599]:
+            - generic [ref=e600]: 0:00
+            - generic [ref=e601]: 🔑 ID
+          - generic [ref=e602]: Merkury Identity Resolution
+          - generic [ref=e603]: anonymous (0% confidence)
+        - generic [ref=e604]:
+          - generic [ref=e607]:
+            - generic [ref=e608]: 0:00
+            - generic [ref=e609]: 🔑 ID
+          - generic [ref=e610]: Anonymous Visitor
+          - generic [ref=e611]: No Merkury match — generic experience
+        - generic [ref=e612]:
+          - generic [ref=e615]:
+            - generic [ref=e616]: 0:00
+            - generic [ref=e617]: ✨ Perso
+          - generic [ref=e618]: Product Recommendations
+          - generic [ref=e619]: 12 products from SF Personalization

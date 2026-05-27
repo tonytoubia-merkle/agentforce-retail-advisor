@@ -1,0 +1,61 @@
+- generic [ref=e3]:
+  - main [ref=e4]:
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - generic [ref=e8]:
+          - text: Complimentary shipping on orders over $50 |
+          - button "Try our AI Beauty Advisor" [ref=e9] [cursor=pointer]
+        - generic [ref=e11]:
+          - button "S BEAUTÉ" [ref=e12] [cursor=pointer]:
+            - generic [ref=e14]: S
+            - generic [ref=e15]: BEAUTÉ
+          - navigation [ref=e16]:
+            - button "Skincare" [ref=e17] [cursor=pointer]
+            - button "Cleansers" [ref=e18] [cursor=pointer]
+            - button "Serums" [ref=e19] [cursor=pointer]
+            - button "Sunscreen" [ref=e20] [cursor=pointer]
+          - generic [ref=e21]:
+            - button "Search" [ref=e22] [cursor=pointer]:
+              - img [ref=e23]
+            - button [ref=e25] [cursor=pointer]:
+              - img [ref=e26]
+            - button "Shopping bag" [ref=e28] [cursor=pointer]:
+              - img [ref=e29]
+            - button "Account" [ref=e32] [cursor=pointer]:
+              - img [ref=e34]
+      - generic [ref=e36]:
+        - generic [ref=e38]:
+          - button "Back" [ref=e39] [cursor=pointer]:
+            - img [ref=e40]
+            - text: Back
+          - generic [ref=e42]:
+            - heading "leather-goods" [level=1] [ref=e43]
+            - paragraph
+            - paragraph [ref=e44]: 0 products
+        - paragraph [ref=e47]: No products found in this category.
+  - button "Open demo panel" [ref=e48] [cursor=pointer]:
+    - generic [ref=e49]: Demo
+  - generic [ref=e51]:
+    - generic [ref=e52]:
+      - generic [ref=e53]:
+        - heading "Demo" [level=2] [ref=e56]
+        - button "Collapse demo panel" [ref=e57] [cursor=pointer]:
+          - img [ref=e58]
+      - generic [ref=e60]:
+        - button "Log" [ref=e61] [cursor=pointer]
+        - button "Profile" [ref=e62] [cursor=pointer]
+    - generic [ref=e63]:
+      - generic [ref=e64]:
+        - button "All" [ref=e65] [cursor=pointer]
+        - button "🧭 Nav" [ref=e66] [cursor=pointer]
+        - button "🔑 ID" [ref=e67] [cursor=pointer]
+        - button "✨ Perso" [ref=e68] [cursor=pointer]
+        - button "📡 UTM" [ref=e69] [cursor=pointer]
+        - button "🤖 Agent" [ref=e70] [cursor=pointer]
+        - button "🛒 Shop" [ref=e71] [cursor=pointer]
+        - button "💾 Data" [ref=e72] [cursor=pointer]
+        - button "⚙️ Sys" [ref=e73] [cursor=pointer]
+        - button "Clear" [ref=e74] [cursor=pointer]
+      - generic [ref=e76]:
+        - generic [ref=e77]: 📋
+        - paragraph [ref=e78]: Events will appear here as you interact with the storefront

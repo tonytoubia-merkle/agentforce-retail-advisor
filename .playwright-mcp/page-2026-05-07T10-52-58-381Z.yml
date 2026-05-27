@@ -1,0 +1,140 @@
+- generic [ref=e3]:
+  - main [ref=e4]:
+    - generic [ref=e81]:
+      - generic [ref=e83]:
+        - button "Tachibana home" [ref=e84] [cursor=pointer]:
+          - img [ref=e85]
+          - generic [ref=e94]: Tachibana橘
+        - navigation "Primary" [ref=e95]:
+          - button "Leather goods" [ref=e96] [cursor=pointer]
+          - button "Jewelry" [ref=e97] [cursor=pointer]
+          - button "Outerwear" [ref=e98] [cursor=pointer]
+          - button "Lifestyle" [ref=e99] [cursor=pointer]
+          - button "Atelier" [ref=e100] [cursor=pointer]
+          - button "Journal" [ref=e101] [cursor=pointer]
+          - button "Restoration" [ref=e102] [cursor=pointer]
+          - button "Sign in" [ref=e103] [cursor=pointer]
+        - generic [ref=e104]:
+          - button "Speak with your Bantō" [ref=e105] [cursor=pointer]: Bantō
+          - button "Bag" [ref=e106] [cursor=pointer]
+      - generic [ref=e107]:
+        - paragraph [ref=e108]:
+          - text: Maison ·
+          - button "All categories" [ref=e109] [cursor=pointer]
+        - heading "leather-goods" [level=1] [ref=e110]
+        - paragraph [ref=e111]: The volume of the house. Hand-stitched in Kyoto by twenty-three master craftspeople. Italian-tradition saddle work, finished in our atelier since 1958. Each piece carries the name of its maker.
+      - img [ref=e114]
+      - paragraph [ref=e124]: — the bench is empty this week. write to your Bantō for the next opening —
+      - img [ref=e127]
+      - generic [ref=e136]:
+        - paragraph [ref=e137]: Commissioning
+        - heading "A piece can be made in your hand." [level=3] [ref=e138]
+        - paragraph [ref=e139]: Most of the maison is bespoke-orderable in our materials, hardware, and lining choices. Commissioning takes between eight and fourteen weeks. Speak with your Bantō at any of our houses, or write to the atelier in Kyoto.
+        - button "Book an appointment" [ref=e141] [cursor=pointer]
+      - generic [ref=e143]:
+        - generic [ref=e144]:
+          - generic [ref=e145]:
+            - generic [ref=e146]:
+              - img [ref=e147]
+              - generic [ref=e156]: Tachibana
+            - paragraph [ref=e157]: A Kyoto house of leather and lacquer, founded 1923
+          - generic [ref=e158]:
+            - generic [ref=e159]:
+              - paragraph [ref=e160]: The Houses
+              - list [ref=e161]:
+                - listitem [ref=e162]:
+                  - button "Kyoto Atelier 京都" [ref=e163] [cursor=pointer]
+                - listitem [ref=e164]:
+                  - button "Tokyo 東京 青山" [ref=e165] [cursor=pointer]
+                - listitem [ref=e166]:
+                  - button "Milan ミラノ" [ref=e167] [cursor=pointer]
+                - listitem [ref=e168]:
+                  - button "Paris パリ" [ref=e169] [cursor=pointer]
+                - listitem [ref=e170]:
+                  - button "London ロンドン" [ref=e171] [cursor=pointer]
+                - listitem [ref=e172]:
+                  - button "New York ニューヨーク" [ref=e173] [cursor=pointer]
+                - listitem [ref=e174]:
+                  - button "Hong Kong 香港" [ref=e175] [cursor=pointer]
+                - listitem [ref=e176]:
+                  - button "Beverly Hills ビバリーヒルズ" [ref=e177] [cursor=pointer]
+            - generic [ref=e178]:
+              - paragraph [ref=e179]: The Maison
+              - list [ref=e180]:
+                - listitem [ref=e181]:
+                  - button "Journal" [ref=e182] [cursor=pointer]
+                - listitem [ref=e183]:
+                  - button "Restoration" [ref=e184] [cursor=pointer]
+                - listitem [ref=e185]:
+                  - button "Atelier" [ref=e186] [cursor=pointer]
+                - listitem [ref=e187]:
+                  - button "My Maison" [ref=e188] [cursor=pointer]
+            - generic [ref=e189]:
+              - paragraph [ref=e190]: Care
+              - list [ref=e191]:
+                - listitem [ref=e192]:
+                  - button "Lifetime restoration" [ref=e193] [cursor=pointer]
+                - listitem [ref=e194]:
+                  - button "Product passport" [ref=e195] [cursor=pointer]
+                - listitem [ref=e196]:
+                  - button "Press" [ref=e197] [cursor=pointer]
+                - listitem [ref=e198]:
+                  - button "Privacy" [ref=e199] [cursor=pointer]
+        - separator [ref=e200]
+        - generic [ref=e201]:
+          - generic [ref=e202]: © 2026 Tachibana, Kyoto. All rights reserved.
+          - generic [ref=e203]: 京都 — 一九二三年創業
+    - button "Merkury lead score" [ref=e205] [cursor=pointer]:
+      - generic [ref=e206]: "5"
+      - generic [ref=e207]:
+        - generic [ref=e208]: Merkury Lead Score
+        - generic [ref=e209]: cold
+  - button "Demo 4":
+    - generic: Demo
+    - generic: "4"
+  - generic [ref=e53]:
+    - generic [ref=e54]:
+      - generic [ref=e55]:
+        - heading "Demo" [level=2] [ref=e58]
+        - button [ref=e59] [cursor=pointer]:
+          - img [ref=e60]
+      - generic [ref=e62]:
+        - button "Log (4)" [ref=e210] [cursor=pointer]
+        - button "Profile" [ref=e64] [cursor=pointer]
+    - generic [ref=e65]:
+      - generic [ref=e66]:
+        - button "All" [ref=e67] [cursor=pointer]
+        - button "🧭 Nav" [ref=e68] [cursor=pointer]
+        - button "🔑 ID" [ref=e69] [cursor=pointer]
+        - button "✨ Perso" [ref=e70] [cursor=pointer]
+        - button "📡 UTM" [ref=e71] [cursor=pointer]
+        - button "🤖 Agent" [ref=e72] [cursor=pointer]
+        - button "🛒 Shop" [ref=e73] [cursor=pointer]
+        - button "💾 Data" [ref=e74] [cursor=pointer]
+        - button "⚙️ Sys" [ref=e75] [cursor=pointer]
+        - button "Clear" [ref=e76] [cursor=pointer]
+      - generic [ref=e211]:
+        - generic [ref=e212]:
+          - generic [ref=e215]:
+            - generic [ref=e216]: 0:00
+            - generic [ref=e217]: 🧭 Nav
+          - generic [ref=e218]: "Page: category"
+          - generic [ref=e219]: leather-goods
+        - generic [ref=e220]:
+          - generic [ref=e223]:
+            - generic [ref=e224]: 0:00
+            - generic [ref=e225]: ⚙️ Sys
+          - generic [ref=e226]: SF Personalization SDK Init
+          - generic [ref=e227]: "Dataset: 5c71fd40-a792-4437-b600-55aea3dd90f6"
+        - generic [ref=e228]:
+          - generic [ref=e231]:
+            - generic [ref=e232]: 0:00
+            - generic [ref=e233]: 🔑 ID
+          - generic [ref=e234]: Merkury Identity Resolution
+          - generic [ref=e235]: anonymous (0% confidence)
+        - generic [ref=e236]:
+          - generic [ref=e239]:
+            - generic [ref=e240]: 0:00
+            - generic [ref=e241]: 🔑 ID
+          - generic [ref=e242]: Anonymous Visitor
+          - generic [ref=e243]: No Merkury match — generic experience

@@ -1,0 +1,160 @@
+- generic [ref=e3]:
+  - main [ref=e4]:
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - generic [ref=e8]:
+          - text: Complimentary shipping on orders over $50 |
+          - button "Try our AI Beauty Advisor" [ref=e9] [cursor=pointer]
+        - generic [ref=e11]:
+          - button "S BEAUTÉ" [ref=e12] [cursor=pointer]:
+            - generic [ref=e14]: S
+            - generic [ref=e15]: BEAUTÉ
+          - navigation [ref=e16]:
+            - button "Skincare" [ref=e17] [cursor=pointer]
+            - button "Cleansers" [ref=e18] [cursor=pointer]
+            - button "Serums" [ref=e19] [cursor=pointer]
+            - button "Sunscreen" [ref=e20] [cursor=pointer]
+          - generic [ref=e21]:
+            - button "Search" [ref=e22] [cursor=pointer]:
+              - img [ref=e23]
+            - button "Beauty Advisor" [ref=e25] [cursor=pointer]:
+              - img [ref=e26]
+              - generic [ref=e28]: Beauty Advisor
+            - button "Shopping bag" [ref=e29] [cursor=pointer]:
+              - img [ref=e30]
+            - button "Register" [ref=e32] [cursor=pointer]
+            - button "Account" [ref=e34] [cursor=pointer]:
+              - img [ref=e36]
+      - generic [ref=e40]:
+        - generic [ref=e41]:
+          - generic [ref=e42]: Nº 07 · 2026
+          - generic [ref=e43]: Maison de Beauté · Autumn 2026
+          - heading "Skin," [level=1] [ref=e44]
+          - heading "attended to." [level=1] [ref=e45]
+          - paragraph [ref=e46]: Small-batch skincare edited by dermatologists and worn by no one who needs convincing. Quiet rituals, loud results.
+          - generic [ref=e47]:
+            - button "Enter the Atelier" [ref=e48] [cursor=pointer]
+            - button "Beauty Advisor" [ref=e49] [cursor=pointer]:
+              - img [ref=e50]
+              - text: Beauty Advisor
+          - generic [ref=e52]:
+            - generic [ref=e53]: Made in Grasse
+            - generic [ref=e54]: ·
+            - generic [ref=e55]: Vogue Editor 2025
+            - generic [ref=e56]: ·
+            - generic [ref=e57]: Concierge Included
+        - img "Editorial close-up of porcelain skin" [ref=e59]
+      - generic [ref=e61]:
+        - heading "Shop by Category" [level=2] [ref=e62]
+        - generic [ref=e63]:
+          - button "Skincare" [ref=e64] [cursor=pointer]
+          - button "Cleansers" [ref=e65] [cursor=pointer]
+          - button "Serums" [ref=e66] [cursor=pointer]
+          - button "Sunscreen" [ref=e67] [cursor=pointer]
+          - button "Makeup" [ref=e68] [cursor=pointer]
+          - button "Lips" [ref=e69] [cursor=pointer]
+          - button "Fragrance" [ref=e70] [cursor=pointer]
+          - button "Haircare" [ref=e71] [cursor=pointer]
+      - generic [ref=e73]:
+        - img [ref=e75]
+        - heading "Not sure what to get?" [level=2] [ref=e77]
+        - paragraph [ref=e78]: Our AI-powered Beauty Advisor provides personalized recommendations based on your unique skin type, concerns, and preferences.
+        - button "Talk to Beauty Advisor" [ref=e79] [cursor=pointer]
+      - generic [ref=e81]:
+        - generic [ref=e82]:
+          - generic [ref=e83]: Fifteen years of skin science · Now in conversation
+          - heading "Your skin, attended to." [level=2] [ref=e85]:
+            - text: Your skin,
+            - text: attended to.
+          - paragraph [ref=e86]: Thirty seconds with our camera — or a few questions if you prefer. Our Concierge reads fifteen concerns, scores them, and composes a routine your skin recognizes. Then shows you where every bottle is sold, in store or online.
+          - generic [ref=e87]:
+            - button "Begin the Analysis" [ref=e88] [cursor=pointer]:
+              - generic [ref=e89]: Begin the Analysis
+            - button "Talk it Through" [ref=e90] [cursor=pointer]
+        - generic [ref=e91]:
+          - generic [ref=e92]:
+            - generic [ref=e93]: 🔬
+            - generic [ref=e94]: 15 Concerns, Scored
+            - generic [ref=e95]: Ranked by severity, not marketing
+          - generic [ref=e96]:
+            - generic [ref=e97]: 🧴
+            - generic [ref=e98]: A Real Routine
+            - generic [ref=e99]: Morning + evening, nothing extra
+          - generic [ref=e100]:
+            - generic [ref=e101]: 📍
+            - generic [ref=e102]: Sold Everywhere
+            - generic [ref=e103]: Find each bottle near you
+          - generic [ref=e104]:
+            - generic [ref=e105]: 🔒
+            - generic [ref=e106]: Photos Stay Yours
+            - generic [ref=e107]: Nothing ever leaves your device
+      - generic [ref=e109]:
+        - heading "Stay in the know" [level=3] [ref=e110]
+        - paragraph [ref=e111]: Beauty edits, new arrivals, and the occasional exclusive — delivered with care, never daily.
+        - generic [ref=e112]:
+          - textbox "Enter your email" [ref=e113]
+          - button "Subscribe" [ref=e114] [cursor=pointer]
+        - paragraph [ref=e115]: By subscribing, you agree to receive marketing emails. Unsubscribe anytime.
+      - generic [ref=e117]:
+        - generic [ref=e118]:
+          - generic [ref=e119]:
+            - generic [ref=e120]:
+              - generic [ref=e122]: S
+              - generic [ref=e123]: BEAUTÉ
+            - paragraph [ref=e124]: Your Personal Beauty Advisor
+          - generic [ref=e125]:
+            - heading "Shop" [level=4] [ref=e126]
+            - list [ref=e127]:
+              - listitem [ref=e128]:
+                - button "Skincare" [ref=e129] [cursor=pointer]
+              - listitem [ref=e130]:
+                - button "Cleansers" [ref=e131] [cursor=pointer]
+              - listitem [ref=e132]:
+                - button "Serums" [ref=e133] [cursor=pointer]
+              - listitem [ref=e134]:
+                - button "Sunscreen" [ref=e135] [cursor=pointer]
+          - generic [ref=e136]:
+            - heading "Help" [level=4] [ref=e137]
+            - list [ref=e138]:
+              - listitem [ref=e139]:
+                - button "Contact Us" [ref=e140] [cursor=pointer]
+              - listitem [ref=e141]:
+                - button "Shipping" [ref=e142] [cursor=pointer]
+              - listitem [ref=e143]:
+                - button "Returns" [ref=e144] [cursor=pointer]
+              - listitem [ref=e145]:
+                - button "FAQ" [ref=e146] [cursor=pointer]
+          - generic [ref=e147]:
+            - heading "Connect" [level=4] [ref=e148]
+            - generic [ref=e149]:
+              - button [ref=e150] [cursor=pointer]:
+                - img [ref=e151]
+              - button [ref=e153] [cursor=pointer]:
+                - img [ref=e154]
+        - paragraph [ref=e157]: © 2024 BEAUTÉ. All rights reserved. Demo site for Merkle x Agentforce.
+  - button "Demo" [ref=e158] [cursor=pointer]:
+    - generic [ref=e159]: Demo
+  - generic [ref=e161]:
+    - generic [ref=e162]:
+      - generic [ref=e163]:
+        - heading "Demo" [level=2] [ref=e166]
+        - button [ref=e167] [cursor=pointer]:
+          - img [ref=e168]
+      - generic [ref=e170]:
+        - button "Log" [ref=e171] [cursor=pointer]
+        - button "Profile" [ref=e172] [cursor=pointer]
+    - generic [ref=e173]:
+      - generic [ref=e174]:
+        - button "All" [ref=e175] [cursor=pointer]
+        - button "🧭 Nav" [ref=e176] [cursor=pointer]
+        - button "🔑 ID" [ref=e177] [cursor=pointer]
+        - button "✨ Perso" [ref=e178] [cursor=pointer]
+        - button "📡 UTM" [ref=e179] [cursor=pointer]
+        - button "🤖 Agent" [ref=e180] [cursor=pointer]
+        - button "🛒 Shop" [ref=e181] [cursor=pointer]
+        - button "💾 Data" [ref=e182] [cursor=pointer]
+        - button "⚙️ Sys" [ref=e183] [cursor=pointer]
+        - button "Clear" [ref=e184] [cursor=pointer]
+      - generic [ref=e186]:
+        - generic [ref=e187]: 📋
+        - paragraph [ref=e188]: Events will appear here as you interact with the storefront

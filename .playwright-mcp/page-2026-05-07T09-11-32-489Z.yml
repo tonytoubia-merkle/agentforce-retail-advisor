@@ -1,0 +1,247 @@
+- generic [ref=e3]:
+  - main [ref=e4]:
+    - generic [ref=e82]:
+      - generic [ref=e84]:
+        - button "Tachibana home" [ref=e85] [cursor=pointer]:
+          - img [ref=e86]
+          - generic [ref=e95]: Tachibana橘
+        - navigation "Primary" [ref=e96]:
+          - button "Maison" [ref=e97] [cursor=pointer]
+          - button "Atelier" [ref=e98] [cursor=pointer]
+          - button "Journal" [ref=e99] [cursor=pointer]
+          - button "Restoration" [ref=e100] [cursor=pointer]
+          - button "Sign in" [ref=e101] [cursor=pointer]
+        - generic [ref=e102]:
+          - button "Speak with your Bantō" [ref=e103] [cursor=pointer]: Bantō
+          - button "Bag" [ref=e104] [cursor=pointer]
+      - generic [ref=e105]:
+        - paragraph [ref=e106]:
+          - text: Maison ·
+          - button "All categories" [ref=e107] [cursor=pointer]
+        - heading "cleanser" [level=1] [ref=e108]
+        - paragraph [ref=e109]: The volume of the house. Hand-stitched in Kyoto by twenty-three master craftspeople. Italian-tradition saddle work, finished in our atelier since 1958. Each piece carries the name of its maker.
+      - img [ref=e112]
+      - generic [ref=e122]:
+        - button "cleanser Benzoyl Peroxide Wash 4% Master · DERMAFIX cleanser USD 28" [ref=e123] [cursor=pointer]:
+          - generic [ref=e124]:
+            - img [ref=e125]
+            - generic [ref=e134]: cleanser
+          - generic [ref=e135]: Benzoyl Peroxide Wash 4%
+          - generic [ref=e136]:
+            - generic [ref=e137]:
+              - strong [ref=e138]: Master
+              - text: · DERMAFIX
+            - strong [ref=e140]: cleanser
+          - generic [ref=e141]: USD 28
+        - button "cleanser Clear Start Salicylic Cleanser Master · DERMAFIX cleanser USD 32" [ref=e142] [cursor=pointer]:
+          - generic [ref=e143]:
+            - img [ref=e144]
+            - generic [ref=e153]: cleanser
+          - generic [ref=e154]: Clear Start Salicylic Cleanser
+          - generic [ref=e155]:
+            - generic [ref=e156]:
+              - strong [ref=e157]: Master
+              - text: · DERMAFIX
+            - strong [ref=e159]: cleanser
+          - generic [ref=e160]: USD 32
+        - button "cleanser Clinical Gentle Cleanser Master · DERMAFIX cleanser USD 32" [ref=e161] [cursor=pointer]:
+          - generic [ref=e162]:
+            - img [ref=e163]
+            - generic [ref=e172]: cleanser
+          - generic [ref=e173]: Clinical Gentle Cleanser
+          - generic [ref=e174]:
+            - generic [ref=e175]:
+              - strong [ref=e176]: Master
+              - text: · DERMAFIX
+            - strong [ref=e178]: cleanser
+          - generic [ref=e179]: USD 32
+        - button "cleanser Cloud Cream Cleanser Master · SERENE cleanser USD 36" [ref=e180] [cursor=pointer]:
+          - generic [ref=e181]:
+            - img [ref=e182]
+            - generic [ref=e191]: cleanser
+          - generic [ref=e192]: Cloud Cream Cleanser
+          - generic [ref=e193]:
+            - generic [ref=e194]:
+              - strong [ref=e195]: Master
+              - text: · SERENE
+            - strong [ref=e197]: cleanser
+          - generic [ref=e198]: USD 36
+        - button "cleanser Daily Micro-Exfoliating Cleanser Master · SERENE cleanser USD 32" [ref=e199] [cursor=pointer]:
+          - generic [ref=e200]:
+            - img [ref=e201]
+            - generic [ref=e210]: cleanser
+          - generic [ref=e211]: Daily Micro-Exfoliating Cleanser
+          - generic [ref=e212]:
+            - generic [ref=e213]:
+              - strong [ref=e214]: Master
+              - text: · SERENE
+            - strong [ref=e216]: cleanser
+          - generic [ref=e217]: USD 32
+        - button "cleanser Gentle Foaming Cleanser Master · SERENE cleanser USD 28" [ref=e218] [cursor=pointer]:
+          - generic [ref=e219]:
+            - img [ref=e220]
+            - generic [ref=e229]: cleanser
+          - generic [ref=e230]: Gentle Foaming Cleanser
+          - generic [ref=e231]:
+            - generic [ref=e232]:
+              - strong [ref=e233]: Master
+              - text: · SERENE
+            - strong [ref=e235]: cleanser
+          - generic [ref=e236]: USD 28
+        - button "cleanser Micellar Cleansing Water Master · SERENE cleanser USD 24" [ref=e237] [cursor=pointer]:
+          - generic [ref=e238]:
+            - img [ref=e239]
+            - generic [ref=e248]: cleanser
+          - generic [ref=e249]: Micellar Cleansing Water
+          - generic [ref=e250]:
+            - generic [ref=e251]:
+              - strong [ref=e252]: Master
+              - text: · SERENE
+            - strong [ref=e254]: cleanser
+          - generic [ref=e255]: USD 24
+        - button "cleanser Pure Cleansing Oil Master · SERENE cleanser USD 38" [ref=e256] [cursor=pointer]:
+          - generic [ref=e257]:
+            - img [ref=e258]
+            - generic [ref=e267]: cleanser
+          - generic [ref=e268]: Pure Cleansing Oil
+          - generic [ref=e269]:
+            - generic [ref=e270]:
+              - strong [ref=e271]: Master
+              - text: · SERENE
+            - strong [ref=e273]: cleanser
+          - generic [ref=e274]: USD 38
+        - button "cleanser Ultra-Gentle Hypoallergenic Cleanser Master · DERMAFIX cleanser USD 28" [ref=e275] [cursor=pointer]:
+          - generic [ref=e276]:
+            - img [ref=e277]
+            - generic [ref=e286]: cleanser
+          - generic [ref=e287]: Ultra-Gentle Hypoallergenic Cleanser
+          - generic [ref=e288]:
+            - generic [ref=e289]:
+              - strong [ref=e290]: Master
+              - text: · DERMAFIX
+            - strong [ref=e292]: cleanser
+          - generic [ref=e293]: USD 28
+        - button "cleanser Zero Fragrance Gentle Cleanser Master · SERENE cleanser USD 32" [ref=e294] [cursor=pointer]:
+          - generic [ref=e295]:
+            - img [ref=e296]
+            - generic [ref=e305]: cleanser
+          - generic [ref=e306]: Zero Fragrance Gentle Cleanser
+          - generic [ref=e307]:
+            - generic [ref=e308]:
+              - strong [ref=e309]: Master
+              - text: · SERENE
+            - strong [ref=e311]: cleanser
+          - generic [ref=e312]: USD 32
+      - img [ref=e315]
+      - generic [ref=e324]:
+        - paragraph [ref=e325]: Commissioning
+        - heading "A piece can be made in your hand." [level=3] [ref=e326]
+        - paragraph [ref=e327]: Most of the maison is bespoke-orderable in our materials, hardware, and lining choices. Commissioning takes between eight and fourteen weeks. Speak with your Bantō at any of our houses, or write to the atelier in Kyoto.
+        - button "Book an appointment" [ref=e329] [cursor=pointer]
+      - generic [ref=e331]:
+        - generic [ref=e332]:
+          - generic [ref=e333]:
+            - generic [ref=e334]:
+              - img [ref=e335]
+              - generic [ref=e344]: Tachibana
+            - paragraph [ref=e345]: A Kyoto house of leather and lacquer, founded 1923
+          - generic [ref=e346]:
+            - generic [ref=e347]:
+              - paragraph [ref=e348]: The Houses
+              - list [ref=e349]:
+                - listitem [ref=e350]:
+                  - button "Kyoto Atelier 京都" [ref=e351] [cursor=pointer]
+                - listitem [ref=e352]:
+                  - button "Tokyo 東京 青山" [ref=e353] [cursor=pointer]
+                - listitem [ref=e354]:
+                  - button "Milan ミラノ" [ref=e355] [cursor=pointer]
+                - listitem [ref=e356]:
+                  - button "Paris パリ" [ref=e357] [cursor=pointer]
+                - listitem [ref=e358]:
+                  - button "London ロンドン" [ref=e359] [cursor=pointer]
+                - listitem [ref=e360]:
+                  - button "New York ニューヨーク" [ref=e361] [cursor=pointer]
+                - listitem [ref=e362]:
+                  - button "Hong Kong 香港" [ref=e363] [cursor=pointer]
+                - listitem [ref=e364]:
+                  - button "Beverly Hills ビバリーヒルズ" [ref=e365] [cursor=pointer]
+            - generic [ref=e366]:
+              - paragraph [ref=e367]: The Maison
+              - list [ref=e368]:
+                - listitem [ref=e369]:
+                  - button "Journal" [ref=e370] [cursor=pointer]
+                - listitem [ref=e371]:
+                  - button "Restoration" [ref=e372] [cursor=pointer]
+                - listitem [ref=e373]:
+                  - button "Atelier" [ref=e374] [cursor=pointer]
+                - listitem [ref=e375]:
+                  - button "My Maison" [ref=e376] [cursor=pointer]
+            - generic [ref=e377]:
+              - paragraph [ref=e378]: Care
+              - list [ref=e379]:
+                - listitem [ref=e380]:
+                  - button "Lifetime restoration" [ref=e381] [cursor=pointer]
+                - listitem [ref=e382]:
+                  - button "Product passport" [ref=e383] [cursor=pointer]
+                - listitem [ref=e384]:
+                  - button "Press" [ref=e385] [cursor=pointer]
+                - listitem [ref=e386]:
+                  - button "Privacy" [ref=e387] [cursor=pointer]
+        - separator [ref=e388]
+        - generic [ref=e389]:
+          - generic [ref=e390]: © 2026 Tachibana, Kyoto. All rights reserved.
+          - generic [ref=e391]: 京都 — 一九二三年創業
+    - button "Merkury lead score" [ref=e393] [cursor=pointer]:
+      - generic [ref=e394]: "5"
+      - generic [ref=e395]:
+        - generic [ref=e396]: Merkury Lead Score
+        - generic [ref=e397]: cold
+  - button "Demo 4":
+    - generic: Demo
+    - generic: "4"
+  - generic [ref=e54]:
+    - generic [ref=e55]:
+      - generic [ref=e56]:
+        - heading "Demo" [level=2] [ref=e59]
+        - button [ref=e60] [cursor=pointer]:
+          - img [ref=e61]
+      - generic [ref=e63]:
+        - button "Log (4)" [ref=e398] [cursor=pointer]
+        - button "Profile" [ref=e65] [cursor=pointer]
+    - generic [ref=e66]:
+      - generic [ref=e67]:
+        - button "All" [ref=e68] [cursor=pointer]
+        - button "🧭 Nav" [ref=e69] [cursor=pointer]
+        - button "🔑 ID" [ref=e70] [cursor=pointer]
+        - button "✨ Perso" [ref=e71] [cursor=pointer]
+        - button "📡 UTM" [ref=e72] [cursor=pointer]
+        - button "🤖 Agent" [ref=e73] [cursor=pointer]
+        - button "🛒 Shop" [ref=e74] [cursor=pointer]
+        - button "💾 Data" [ref=e75] [cursor=pointer]
+        - button "⚙️ Sys" [ref=e76] [cursor=pointer]
+        - button "Clear" [ref=e77] [cursor=pointer]
+      - generic [ref=e399]:
+        - generic [ref=e400]:
+          - generic [ref=e403]:
+            - generic [ref=e404]: 0:00
+            - generic [ref=e405]: 🧭 Nav
+          - generic [ref=e406]: "Page: category"
+          - generic [ref=e407]: cleanser
+        - generic [ref=e408]:
+          - generic [ref=e411]:
+            - generic [ref=e412]: 0:00
+            - generic [ref=e413]: ⚙️ Sys
+          - generic [ref=e414]: SF Personalization SDK Init
+          - generic [ref=e415]: "Dataset: 5c71fd40-a792-4437-b600-55aea3dd90f6"
+        - generic [ref=e416]:
+          - generic [ref=e419]:
+            - generic [ref=e420]: 0:00
+            - generic [ref=e421]: 🔑 ID
+          - generic [ref=e422]: Merkury Identity Resolution
+          - generic [ref=e423]: anonymous (0% confidence)
+        - generic [ref=e424]:
+          - generic [ref=e427]:
+            - generic [ref=e428]: 0:00
+            - generic [ref=e429]: 🔑 ID
+          - generic [ref=e430]: Anonymous Visitor
+          - generic [ref=e431]: No Merkury match — generic experience

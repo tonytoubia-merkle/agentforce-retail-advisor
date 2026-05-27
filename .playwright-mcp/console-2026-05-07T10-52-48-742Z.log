@@ -1,0 +1,23 @@
+[     270ms] [LOG] [sfp] Module loaded — env check: {beaconUrl: https://cdn.c360a.salesforce.com/beacon/c360a/5c71…-a792-4437-b600-55aea3dd90f6/scripts/c360a.min.js, beaconUrlLength: 103, dataset: 5c71fd40-a792-4437-b600-55aea3dd90f6, datasetLength: 36, configured: true} @ https://tachibana.demo-combobulator.com/assets/index-W9COklDX.js:102
+[     337ms] [LOG] [sfp] Personalization campaign context updated: {utmCampaign: , utmSource: , utmMedium: } @ https://tachibana.demo-combobulator.com/assets/index-W9COklDX.js:102
+[     338ms] [LOG] [sfp] isPersonalizationConfigured() called: true @ https://tachibana.demo-combobulator.com/assets/index-W9COklDX.js:102
+[     338ms] [LOG] [sfp] isPersonalizationConfigured() called: true @ https://tachibana.demo-combobulator.com/assets/index-W9COklDX.js:102
+[     339ms] [LOG] [catalog] Fetching Product2 catalog from CRM... @ https://tachibana.demo-combobulator.com/assets/index-W9COklDX.js:104
+[     342ms] [LOG] [sfp] isPersonalizationConfigured() called: true @ https://tachibana.demo-combobulator.com/assets/index-W9COklDX.js:102
+[     342ms] [LOG] [sfp] isPersonalizationConfigured() called: true @ https://tachibana.demo-combobulator.com/assets/index-W9COklDX.js:102
+[     342ms] [LOG] [sfp] Initializing SF Personalization {dataset: 5c71fd40-a792-4437-b600-55aea3dd90f6} @ https://tachibana.demo-combobulator.com/assets/index-W9COklDX.js:102
+[     342ms] [LOG] [sfp] Loading Personalization SDK from: https://cdn.c360a.salesforce.com/beacon/c360a/5c71fd40-a792-4437-b600-55aea3dd90f6/scripts/c360a.min.js @ https://tachibana.demo-combobulator.com/assets/index-W9COklDX.js:102
+[     343ms] [LOG] [sfp] Personalization context cleared @ https://tachibana.demo-combobulator.com/assets/index-W9COklDX.js:102
+[     403ms] [LOG] [sfp] SDK script loaded @ https://tachibana.demo-combobulator.com/assets/index-W9COklDX.js:102
+[     403ms] [LOG] [sfp] SDK global found after 1 attempts @ https://tachibana.demo-combobulator.com/assets/index-W9COklDX.js:102
+[     403ms] [LOG] [sfp] SDK detected: {type: c360a, methods: Array(20)} @ https://tachibana.demo-combobulator.com/assets/index-W9COklDX.js:102
+[     406ms] [LOG] [sfp] SDK init() called with consent @ https://tachibana.demo-combobulator.com/assets/index-W9COklDX.js:102
+[     407ms] [LOG] [sfp] Sitemap registered with 7 page types @ https://tachibana.demo-combobulator.com/assets/index-W9COklDX.js:102
+[     407ms] [LOG] [sfp] SDK initialized @ https://tachibana.demo-combobulator.com/assets/index-W9COklDX.js:102
+[     784ms] [LOG] [dataLayer] Merkury data pushed: {pid: undefined, identityTier: anonymous, interests: (none), ageRange: (none)} @ https://tachibana.demo-combobulator.com/assets/index-W9COklDX.js:102
+[     784ms] [LOG] [merkury] Identity resolved: anonymous confidence: 0 @ https://tachibana.demo-combobulator.com/assets/index-W9COklDX.js:104
+[     784ms] [LOG] [customer] Anonymous — no identity resolved, staying on default experience @ https://tachibana.demo-combobulator.com/assets/index-W9COklDX.js:104
+[     819ms] [LOG] [sfp] Personalization campaign context updated: {utmCampaign: , utmSource: , utmMedium: } @ https://tachibana.demo-combobulator.com/assets/index-W9COklDX.js:102
+[     975ms] [LOG] [catalog] Fetching Product2 catalog from CRM... @ https://tachibana.demo-combobulator.com/assets/index-W9COklDX.js:104
+[    1175ms] [LOG] [catalog] Loaded 130 products from CRM @ https://tachibana.demo-combobulator.com/assets/index-W9COklDX.js:104
+[    1420ms] [LOG] [catalog] Loaded 130 products from CRM @ https://tachibana.demo-combobulator.com/assets/index-W9COklDX.js:104

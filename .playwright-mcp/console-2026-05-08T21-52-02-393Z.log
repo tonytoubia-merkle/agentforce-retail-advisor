@@ -1,0 +1,27 @@
+[     793ms] [LOG] [sfp] Module loaded — env check: {beaconUrl: https://cdn.c360a.salesforce.com/beacon/c360a/5c71…-a792-4437-b600-55aea3dd90f6/scripts/c360a.min.js, beaconUrlLength: 103, dataset: 5c71fd40-a792-4437-b600-55aea3dd90f6, datasetLength: 36, configured: true} @ https://tachibana.demo-combobulator.com/assets/index-CMd7Zew0.js:102
+[     946ms] [LOG] [sfp] Personalization campaign context updated: {utmCampaign: , utmSource: , utmMedium: } @ https://tachibana.demo-combobulator.com/assets/index-CMd7Zew0.js:102
+[     948ms] [LOG] [sfp] isPersonalizationConfigured() called: true @ https://tachibana.demo-combobulator.com/assets/index-CMd7Zew0.js:102
+[     949ms] [LOG] [sfp] isPersonalizationConfigured() called: true @ https://tachibana.demo-combobulator.com/assets/index-CMd7Zew0.js:102
+[     955ms] [LOG] [ProductProvider] loadProducts called {configId: default, isDefault: true} @ https://tachibana.demo-combobulator.com/assets/index-CMd7Zew0.js:114
+[     960ms] [LOG] [ProductProvider] falling back to CRM @ https://tachibana.demo-combobulator.com/assets/index-CMd7Zew0.js:114
+[     960ms] [LOG] [catalog] Fetching Product2 catalog from CRM... @ https://tachibana.demo-combobulator.com/assets/index-CMd7Zew0.js:104
+[     967ms] [LOG] [sfp] isPersonalizationConfigured() called: true @ https://tachibana.demo-combobulator.com/assets/index-CMd7Zew0.js:102
+[     969ms] [LOG] [sfp] isPersonalizationConfigured() called: true @ https://tachibana.demo-combobulator.com/assets/index-CMd7Zew0.js:102
+[     970ms] [LOG] [sfp] Initializing SF Personalization {dataset: 5c71fd40-a792-4437-b600-55aea3dd90f6} @ https://tachibana.demo-combobulator.com/assets/index-CMd7Zew0.js:102
+[     973ms] [LOG] [sfp] Loading Personalization SDK from: https://cdn.c360a.salesforce.com/beacon/c360a/5c71fd40-a792-4437-b600-55aea3dd90f6/scripts/c360a.min.js @ https://tachibana.demo-combobulator.com/assets/index-CMd7Zew0.js:102
+[     986ms] [LOG] [sfp] Personalization context cleared @ https://tachibana.demo-combobulator.com/assets/index-CMd7Zew0.js:102
+[    1121ms] [LOG] [sfp] SDK script loaded @ https://tachibana.demo-combobulator.com/assets/index-CMd7Zew0.js:102
+[    1121ms] [LOG] [sfp] SDK global found after 1 attempts @ https://tachibana.demo-combobulator.com/assets/index-CMd7Zew0.js:102
+[    1122ms] [LOG] [sfp] SDK detected: {type: c360a, methods: Array(20)} @ https://tachibana.demo-combobulator.com/assets/index-CMd7Zew0.js:102
+[    1139ms] [LOG] [sfp] SDK init() called with consent @ https://tachibana.demo-combobulator.com/assets/index-CMd7Zew0.js:102
+[    1144ms] [LOG] [sfp] Sitemap registered with 7 page types @ https://tachibana.demo-combobulator.com/assets/index-CMd7Zew0.js:102
+[    1144ms] [LOG] [sfp] SDK initialized @ https://tachibana.demo-combobulator.com/assets/index-CMd7Zew0.js:102
+[    1243ms] [LOG] [sfp] Personalization campaign context updated: {utmCampaign: , utmSource: , utmMedium: } @ https://tachibana.demo-combobulator.com/assets/index-CMd7Zew0.js:102
+[    1244ms] [LOG] [ProductProvider] loadProducts called {configId: ad133984-ef42-452c-a812-170e609e4ddc, isDefault: false} @ https://tachibana.demo-combobulator.com/assets/index-CMd7Zew0.js:114
+[    1245ms] [LOG] [ProductProvider] trying Supabase for ad133984-ef42-452c-a812-170e609e4ddc @ https://tachibana.demo-combobulator.com/assets/index-CMd7Zew0.js:114
+[    1293ms] [LOG] [dataLayer] Merkury data pushed: {pid: undefined, identityTier: anonymous, interests: (none), ageRange: (none)} @ https://tachibana.demo-combobulator.com/assets/index-CMd7Zew0.js:102
+[    1294ms] [LOG] [merkury] Identity resolved: anonymous confidence: 0 @ https://tachibana.demo-combobulator.com/assets/index-CMd7Zew0.js:104
+[    1294ms] [LOG] [customer] Anonymous — no identity resolved, staying on default experience @ https://tachibana.demo-combobulator.com/assets/index-CMd7Zew0.js:104
+[    1505ms] [LOG] [ProductProvider] Supabase returned 34 @ https://tachibana.demo-combobulator.com/assets/index-CMd7Zew0.js:114
+[    1505ms] [LOG] [ProductProvider] set 34 demo products @ https://tachibana.demo-combobulator.com/assets/index-CMd7Zew0.js:114
+[    1700ms] [LOG] [catalog] Loaded 130 products from CRM @ https://tachibana.demo-combobulator.com/assets/index-CMd7Zew0.js:104

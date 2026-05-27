@@ -1,0 +1,189 @@
+- generic [ref=e3]:
+  - main [ref=e4]:
+    - generic [ref=e189]:
+      - generic [ref=e191]:
+        - button "Tachibana home" [ref=e192] [cursor=pointer]:
+          - img [ref=e193]
+          - generic [ref=e202]: Tachibana橘
+        - navigation "Primary" [ref=e203]:
+          - button "Maison" [ref=e204] [cursor=pointer]
+          - button "Atelier" [ref=e205] [cursor=pointer]
+          - button "Journal" [ref=e206] [cursor=pointer]
+          - button "Restoration" [ref=e207] [cursor=pointer]
+          - button "Sign in" [ref=e208] [cursor=pointer]
+        - generic [ref=e209]:
+          - button "Speak with your Bantō" [ref=e210] [cursor=pointer]: Bantō
+          - button "Bag" [ref=e211] [cursor=pointer]
+      - generic [ref=e212]:
+        - paragraph [ref=e213]: Kyoto · Since 1923
+        - heading "A Kyoto house of leather and lacquer, founded 1923" [level=1] [ref=e214]
+        - paragraph [ref=e215]: We are a Kyoto atelier of twenty-three master craftspeople. Italian-tradition saddle work, finished by hand since 1958. Every piece carries the name of its maker, the date it left our workshop, and a passport that travels with it for the rest of its life.
+        - generic [ref=e216]:
+          - button "Walk the maison" [ref=e217] [cursor=pointer]
+          - button "Speak with your Bantō" [ref=e218] [cursor=pointer]
+      - img [ref=e221]
+      - generic [ref=e230]:
+        - paragraph [ref=e231]: The House
+        - heading "We do not chase a season. We keep a discipline." [level=2] [ref=e232]
+        - generic [ref=e233]:
+          - paragraph [ref=e234]: Our atelier follows a calendar of materials, not trends. Conceria 800 in Pisa for our kuwa-cha and sumi leathers. Nishijin silk for the linings, woven by the family our founder married into. A single 18k Japanese gold for hardware.
+          - paragraph [ref=e235]: A piece typically takes between eleven and thirty-two days, depending on the maker and the technique. We do not produce more than the atelier can finish to the standard set in 1923. Some seasons, the catalog is shorter.
+      - img [ref=e238]
+      - generic [ref=e247]:
+        - paragraph [ref=e248]: Pieces
+        - heading "In the maison this season." [level=2] [ref=e249]
+        - generic [ref=e250]:
+          - button "DERMAFIX Benzoyl Peroxide Wash 4% Master · DERMAFIX cleanser USD 28" [ref=e251] [cursor=pointer]:
+            - generic [ref=e252]:
+              - img [ref=e253]
+              - generic [ref=e262]: DERMAFIX
+            - generic [ref=e263]: Benzoyl Peroxide Wash 4%
+            - generic [ref=e264]:
+              - generic [ref=e265]:
+                - strong [ref=e266]: Master
+                - text: · DERMAFIX
+              - strong [ref=e268]: cleanser
+            - generic [ref=e269]: USD 28
+          - button "DERMAFIX Clear Start Salicylic Cleanser Master · DERMAFIX cleanser USD 32" [ref=e270] [cursor=pointer]:
+            - generic [ref=e271]:
+              - img [ref=e272]
+              - generic [ref=e281]: DERMAFIX
+            - generic [ref=e282]: Clear Start Salicylic Cleanser
+            - generic [ref=e283]:
+              - generic [ref=e284]:
+                - strong [ref=e285]: Master
+                - text: · DERMAFIX
+              - strong [ref=e287]: cleanser
+            - generic [ref=e288]: USD 32
+      - img [ref=e291]
+      - generic [ref=e301]:
+        - generic [ref=e302]:
+          - img [ref=e303]
+          - generic [ref=e312]: Hideo Mori · Kyoto
+        - generic [ref=e313]:
+          - paragraph [ref=e314]: From the atelier
+          - heading "Hideo Mori, on two stitches a minute." [level=2] [ref=e315]
+          - paragraph [ref=e316]: Thirty-one years in the atelier. A Kiri Tote takes him eleven days. He does not work faster, and the piece does not wait for the season — when it is finished, it is sent. The next one is already on the bench.
+          - button "Continue reading" [ref=e317] [cursor=pointer]: Continue reading →
+      - img [ref=e320]
+      - generic [ref=e329]:
+        - paragraph [ref=e330]: Mottainai · もったいない
+        - heading "A piece returns. A piece is restored." [level=2] [ref=e331]
+        - paragraph [ref=e332]: Lifetime restoration is included with every Tachibana piece. Edge refinishing, hardware replacement, lining repair, full re-stitching by the original maker where possible. The passport records every visit.
+        - button "Begin a restoration" [ref=e334] [cursor=pointer]
+      - img [ref=e337]
+      - generic [ref=e346]:
+        - paragraph [ref=e347]: Yuriko Tachibana, Fifth Generation
+        - blockquote [ref=e348]: “The piece you carry today must be one you can hand to your daughter. That is the discipline of the house.”
+      - generic [ref=e350]:
+        - generic [ref=e351]:
+          - generic [ref=e352]:
+            - generic [ref=e353]:
+              - img [ref=e354]
+              - generic [ref=e363]: Tachibana
+            - paragraph [ref=e364]: A Kyoto house of leather and lacquer, founded 1923
+          - generic [ref=e365]:
+            - generic [ref=e366]:
+              - paragraph [ref=e367]: The Houses
+              - list [ref=e368]:
+                - listitem [ref=e369]:
+                  - button "Kyoto Atelier 京都" [ref=e370] [cursor=pointer]
+                - listitem [ref=e371]:
+                  - button "Tokyo 東京 青山" [ref=e372] [cursor=pointer]
+                - listitem [ref=e373]:
+                  - button "Milan ミラノ" [ref=e374] [cursor=pointer]
+                - listitem [ref=e375]:
+                  - button "Paris パリ" [ref=e376] [cursor=pointer]
+                - listitem [ref=e377]:
+                  - button "London ロンドン" [ref=e378] [cursor=pointer]
+                - listitem [ref=e379]:
+                  - button "New York ニューヨーク" [ref=e380] [cursor=pointer]
+                - listitem [ref=e381]:
+                  - button "Hong Kong 香港" [ref=e382] [cursor=pointer]
+                - listitem [ref=e383]:
+                  - button "Beverly Hills ビバリーヒルズ" [ref=e384] [cursor=pointer]
+            - generic [ref=e385]:
+              - paragraph [ref=e386]: The Maison
+              - list [ref=e387]:
+                - listitem [ref=e388]:
+                  - button "Journal" [ref=e389] [cursor=pointer]
+                - listitem [ref=e390]:
+                  - button "Restoration" [ref=e391] [cursor=pointer]
+                - listitem [ref=e392]:
+                  - button "Atelier" [ref=e393] [cursor=pointer]
+                - listitem [ref=e394]:
+                  - button "My Maison" [ref=e395] [cursor=pointer]
+            - generic [ref=e396]:
+              - paragraph [ref=e397]: Care
+              - list [ref=e398]:
+                - listitem [ref=e399]:
+                  - button "Lifetime restoration" [ref=e400] [cursor=pointer]
+                - listitem [ref=e401]:
+                  - button "Product passport" [ref=e402] [cursor=pointer]
+                - listitem [ref=e403]:
+                  - button "Press" [ref=e404] [cursor=pointer]
+                - listitem [ref=e405]:
+                  - button "Privacy" [ref=e406] [cursor=pointer]
+        - separator [ref=e407]
+        - generic [ref=e408]:
+          - generic [ref=e409]: © 2026 Tachibana, Kyoto. All rights reserved.
+          - generic [ref=e410]: 京都 — 一九二三年創業
+    - button "Merkury lead score" [ref=e412] [cursor=pointer]:
+      - generic [ref=e413]: "5"
+      - generic [ref=e414]:
+        - generic [ref=e415]: Merkury Lead Score
+        - generic [ref=e416]: cold
+  - button "Demo 5":
+    - generic: Demo
+    - generic: "5"
+  - generic [ref=e161]:
+    - generic [ref=e162]:
+      - generic [ref=e163]:
+        - heading "Demo" [level=2] [ref=e166]
+        - button [ref=e167] [cursor=pointer]:
+          - img [ref=e168]
+      - generic [ref=e170]:
+        - button "Log (5)" [ref=e417] [cursor=pointer]
+        - button "Profile" [ref=e172] [cursor=pointer]
+    - generic [ref=e173]:
+      - generic [ref=e174]:
+        - button "All" [ref=e175] [cursor=pointer]
+        - button "🧭 Nav" [ref=e176] [cursor=pointer]
+        - button "🔑 ID" [ref=e177] [cursor=pointer]
+        - button "✨ Perso" [ref=e178] [cursor=pointer]
+        - button "📡 UTM" [ref=e179] [cursor=pointer]
+        - button "🤖 Agent" [ref=e180] [cursor=pointer]
+        - button "🛒 Shop" [ref=e181] [cursor=pointer]
+        - button "💾 Data" [ref=e182] [cursor=pointer]
+        - button "⚙️ Sys" [ref=e183] [cursor=pointer]
+        - button "Clear" [ref=e184] [cursor=pointer]
+      - generic [ref=e418]:
+        - generic [ref=e419]:
+          - generic [ref=e422]:
+            - generic [ref=e423]: 0:00
+            - generic [ref=e424]: 🧭 Nav
+          - generic [ref=e425]: "Page: home"
+        - generic [ref=e426]:
+          - generic [ref=e429]:
+            - generic [ref=e430]: 0:00
+            - generic [ref=e431]: ⚙️ Sys
+          - generic [ref=e432]: SF Personalization SDK Init
+          - generic [ref=e433]: "Dataset: 5c71fd40-a792-4437-b600-55aea3dd90f6"
+        - generic [ref=e434]:
+          - generic [ref=e437]:
+            - generic [ref=e438]: 0:00
+            - generic [ref=e439]: 🔑 ID
+          - generic [ref=e440]: Merkury Identity Resolution
+          - generic [ref=e441]: anonymous (0% confidence)
+        - generic [ref=e442]:
+          - generic [ref=e445]:
+            - generic [ref=e446]: 0:00
+            - generic [ref=e447]: 🔑 ID
+          - generic [ref=e448]: Anonymous Visitor
+          - generic [ref=e449]: No Merkury match — generic experience
+        - generic [ref=e450]:
+          - generic [ref=e453]:
+            - generic [ref=e454]: 0:01
+            - generic [ref=e455]: ✨ Perso
+          - generic [ref=e456]: Product Recommendations
+          - generic [ref=e457]: 12 products from SF Personalization

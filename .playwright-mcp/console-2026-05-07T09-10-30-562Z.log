@@ -1,0 +1,184 @@
+[     172ms] [LOG] [sfp] Module loaded — env check: {beaconUrl: https://cdn.c360a.salesforce.com/beacon/c360a/5c71…-a792-4437-b600-55aea3dd90f6/scripts/c360a.min.js, beaconUrlLength: 103, dataset: 5c71fd40-a792-4437-b600-55aea3dd90f6, datasetLength: 36, configured: true} @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     250ms] [LOG] [sfp] isPersonalizationConfigured() called: true @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     250ms] [LOG] [sfp] isPersonalizationConfigured() called: true @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     250ms] [LOG] [sfp] isPersonalizationConfigured() called: true @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     253ms] [LOG] [sfp] Personalization campaign context updated: {utmCampaign: , utmSource: , utmMedium: } @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     254ms] [LOG] [sfp] isPersonalizationConfigured() called: true @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     254ms] [LOG] [sfp] isPersonalizationConfigured() called: true @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     254ms] [LOG] [catalog] Fetching Product2 catalog from CRM... @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:104
+[     256ms] [LOG] [sfp] isPersonalizationConfigured() called: true @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     256ms] [LOG] [sfp] isPersonalizationConfigured() called: true @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     256ms] [LOG] [sfp] Initializing SF Personalization {dataset: 5c71fd40-a792-4437-b600-55aea3dd90f6} @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     257ms] [LOG] [sfp] Loading Personalization SDK from: https://cdn.c360a.salesforce.com/beacon/c360a/5c71fd40-a792-4437-b600-55aea3dd90f6/scripts/c360a.min.js @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     258ms] [LOG] [sfp] Personalization context cleared @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     323ms] [LOG] [sfp] SDK script loaded @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     323ms] [LOG] [sfp] SDK global found after 1 attempts @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     324ms] [LOG] [sfp] SDK detected: {type: c360a, methods: Array(20)} @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     329ms] [LOG] [sfp] SDK init() called with consent @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     330ms] [LOG] [sfp] Sitemap registered with 7 page types @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     330ms] [LOG] [sfp] SDK initialized @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     616ms] [LOG] [sfp] Personalization campaign context updated: {utmCampaign: , utmSource: , utmMedium: } @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     687ms] [LOG] [dataLayer] Merkury data pushed: {pid: undefined, identityTier: anonymous, interests: (none), ageRange: (none)} @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     687ms] [LOG] [merkury] Identity resolved: anonymous confidence: 0 @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:104
+[     687ms] [LOG] [customer] Anonymous — no identity resolved, staying on default experience @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:104
+[     803ms] [LOG] [catalog] Loaded 130 products from CRM @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:104
+[     832ms] [LOG] [catalog] Fetching Product2 catalog from CRM... @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:104
+[    1121ms] [LOG] [sfp] Personalization.fetch() response: {personalizations: Array(1), requestId: 335a8bbd-6758-4ded-a0e8-b948525b6ab3} @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[    1122ms] [LOG] [sfp] Product_Recommendations RAW response: {
+  "personalizationId": "77b4d8ec-174a-4fa1-800b-fa75e52f73e5",
+  "personalizationPointId": "9ppKa000000k9egIAA",
+  "personalizationPointName": "Product_Recommendations",
+  "decisionId": "9pbKa000000k9eqIAA",
+  "data": [
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "77b4d8ec-174a-4fa1-800b-fa75e52f73e5:0",
+      "ssot__PrimaryProductCategory__c": "Cleanser",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Clear Start Salicylic Cleanser",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098TGvIAM",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "DERMAFIX"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "77b4d8ec-174a-4fa1-800b-fa75e52f73e5:1",
+      "ssot__PrimaryProductCategory__c": "Toner",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Cooling Facial Mist",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098TyNIAU",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "SERENE"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "77b4d8ec-174a-4fa1-800b-fa75e52f73e5:2",
+      "ssot__PrimaryProductCategory__c": "Eye Care",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Bright Eyes Caffeine Cream",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098TySIAU",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "SERENE"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "77b4d8ec-174a-4fa1-800b-fa75e52f73e5:3",
+      "ssot__PrimaryProductCategory__c": "Mask",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Pore Purifying Clay Mask",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098W09IAE",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "SERENE"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "77b4d8ec-174a-4fa1-800b-fa75e52f73e5:4",
+      "ssot__PrimaryProductCategory__c": "Shampoo",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Refresh & Go Dry Shampoo",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098W13IAE",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "MAISON"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "77b4d8ec-174a-4fa1-800b-fa75e52f73e5:5",
+      "ssot__PrimaryProductCategory__c": "Blush",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Soft Focus Powder Blush",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098W1gIAE",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "LUMIERE"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "77b4d8ec-174a-4fa1-800b-fa75e52f73e5:6",
+      "ssot__PrimaryProductCategory__c": "Foundation",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Brightening Under-Eye Concealer",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098W3XIAU",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "LUMIERE"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "77b4d8ec-174a-4fa1-800b-fa75e52f73e5:7",
+      "ssot__PrimaryProductCategory__c": "Foundation",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Full Coverage Concealer",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098W3cIAE",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "LUMIERE"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "77b4d8ec-174a-4fa1-800b-fa75e52f73e5:8",
+      "ssot__PrimaryProductCategory__c": "Moisturizer",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Pure Comfort Daily Moisturizer",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098W5JIAU",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "SERENE"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "77b4d8ec-174a-4fa1-800b-fa75e52f73e5:9",
+      "ssot__PrimaryProductCategory__c": "Lipstick",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Botanical Lip Color",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098W5iIAE",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "LUMIERE"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "77b4d8ec-174a-4fa1-800b-fa75e52f73e5:10",
+      "ssot__PrimaryProductCategory__c": "Shampoo",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Scalp Comfort Fragrance-Free Shampoo",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098W6RIAU",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "MAISON"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "77b4d8ec-174a-4fa1-800b-fa75e52f73e5:11",
+      "ssot__PrimaryProductCategory__c": "",
+      "ssot__ProductCode__c": "moisturizer-rich",
+      "ssot__Name__c": "Ultra Rich Barrier Cream",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "SERENE",
+      "ssot__Id__c": "01tKa0000098Y55IAE",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": ""
+    }
+  ],
+  "attributes": {
+    "Introduction_Text": "Recommended for you..."
+  }
+} @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:104
+[    1122ms] [LOG] [sfp] Product_Recommendations attributes: {Introduction_Text: Recommended for you...} @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:104
+[    1122ms] [LOG] [sfp] Product_Recommendations parsed products: 12 [Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object] @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:104
+[    1191ms] [LOG] [catalog] Loaded 130 products from CRM @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:104

@@ -1,0 +1,348 @@
+- generic [ref=e3]:
+  - main [ref=e4]:
+    - generic [ref=e79]:
+      - generic [ref=e81]:
+        - button "Tachibana home" [ref=e82] [cursor=pointer]:
+          - img [ref=e83]
+          - generic [ref=e92]: Tachibana橘
+        - navigation "Primary" [ref=e93]:
+          - button "Leather goods" [ref=e94] [cursor=pointer]
+          - button "Jewelry" [ref=e95] [cursor=pointer]
+          - button "Outerwear" [ref=e96] [cursor=pointer]
+          - button "Lifestyle" [ref=e97] [cursor=pointer]
+          - button "Atelier" [ref=e98] [cursor=pointer]
+          - button "Journal" [ref=e99] [cursor=pointer]
+          - button "Restoration" [ref=e100] [cursor=pointer]
+          - button "Sign in" [ref=e101] [cursor=pointer]
+        - generic [ref=e102]:
+          - button "Speak with your Bantō" [ref=e103] [cursor=pointer]: Bantō
+          - button "Bag" [ref=e104] [cursor=pointer]
+      - generic [ref=e105]:
+        - paragraph [ref=e106]:
+          - text: Maison ·
+          - button "All categories" [ref=e107] [cursor=pointer]
+        - heading "Leather goods" [level=1] [ref=e108]
+        - paragraph [ref=e109]: The volume of the house. Hand-stitched in Kyoto by twenty-three master craftspeople. Italian-tradition saddle work, finished in our atelier since 1958. Each piece carries the name of its maker.
+      - img [ref=e112]
+      - generic [ref=e122]:
+        - button "Kiri Tote Kuwa-cha · Pisa Kiri Tote桐 トート Master · Hideo Mori Kuwa-cha · Pisa USD 4,800" [ref=e123] [cursor=pointer]:
+          - generic [ref=e124]:
+            - img "Kiri Tote" [ref=e125]
+            - generic [ref=e126]: Kuwa-cha · Pisa
+          - generic [ref=e127]: Kiri Tote桐 トート
+          - generic [ref=e128]:
+            - generic [ref=e129]:
+              - strong [ref=e130]: Master
+              - text: · Hideo Mori
+            - generic [ref=e131]:
+              - strong [ref=e132]: Kuwa-cha
+              - text: · Pisa
+          - generic [ref=e133]: USD 4,800
+        - button "Kiri Tote Mini Kuwa-cha · Pisa Kiri Tote Mini桐 ミニ Master · Hideo Mori Kuwa-cha · Pisa USD 3,400" [ref=e134] [cursor=pointer]:
+          - generic [ref=e135]:
+            - img "Kiri Tote Mini" [ref=e136]
+            - generic [ref=e137]: Kuwa-cha · Pisa
+          - generic [ref=e138]: Kiri Tote Mini桐 ミニ
+          - generic [ref=e139]:
+            - generic [ref=e140]:
+              - strong [ref=e141]: Master
+              - text: · Hideo Mori
+            - generic [ref=e142]:
+              - strong [ref=e143]: Kuwa-cha
+              - text: · Pisa
+          - generic [ref=e144]: USD 3,400
+        - button "Sumi Briefcase Sumi · Pisa Sumi Briefcase墨 Master · Akiko Tanaka Sumi · Pisa USD 5,400" [ref=e145] [cursor=pointer]:
+          - generic [ref=e146]:
+            - img "Sumi Briefcase" [ref=e147]
+            - generic [ref=e148]: Sumi · Pisa
+          - generic [ref=e149]: Sumi Briefcase墨
+          - generic [ref=e150]:
+            - generic [ref=e151]:
+              - strong [ref=e152]: Master
+              - text: · Akiko Tanaka
+            - generic [ref=e153]:
+              - strong [ref=e154]: Sumi
+              - text: · Pisa
+          - generic [ref=e155]: USD 5,400
+        - button "Sumi Slim Folio Sumi · Pisa Sumi Slim Folio墨 薄 Master · Akiko Tanaka Sumi · Pisa USD 3,900" [ref=e156] [cursor=pointer]:
+          - generic [ref=e157]:
+            - img "Sumi Slim Folio" [ref=e158]
+            - generic [ref=e159]: Sumi · Pisa
+          - generic [ref=e160]: Sumi Slim Folio墨 薄
+          - generic [ref=e161]:
+            - generic [ref=e162]:
+              - strong [ref=e163]: Master
+              - text: · Akiko Tanaka
+            - generic [ref=e164]:
+              - strong [ref=e165]: Sumi
+              - text: · Pisa
+          - generic [ref=e166]: USD 3,900
+        - button "Tachibana Voyage Kuwa-cha · Pisa Tachibana Voyage橘 旅 Master · Junji Okada Kuwa-cha · Pisa USD 7,200" [ref=e167] [cursor=pointer]:
+          - generic [ref=e168]:
+            - img "Tachibana Voyage" [ref=e169]
+            - generic [ref=e170]: Kuwa-cha · Pisa
+          - generic [ref=e171]: Tachibana Voyage橘 旅
+          - generic [ref=e172]:
+            - generic [ref=e173]:
+              - strong [ref=e174]: Master
+              - text: · Junji Okada
+            - generic [ref=e175]:
+              - strong [ref=e176]: Kuwa-cha
+              - text: · Pisa
+          - generic [ref=e177]: USD 7,200
+        - button "Sumi · Pisa Tachibana Voyage 24h橘 旅 24 Master · Junji Okada Sumi · Pisa USD 5,800" [ref=e178] [cursor=pointer]:
+          - generic [ref=e179]:
+            - img [ref=e180]
+            - generic [ref=e189]: Sumi · Pisa
+          - generic [ref=e190]: Tachibana Voyage 24h橘 旅 24
+          - generic [ref=e191]:
+            - generic [ref=e192]:
+              - strong [ref=e193]: Master
+              - text: · Junji Okada
+            - generic [ref=e194]:
+              - strong [ref=e195]: Sumi
+              - text: · Pisa
+          - generic [ref=e196]: USD 5,800
+        - button "Hana Minaudière Sumi · Lucca Hana Minaudière花 Master · Yuki Sato Sumi · Lucca USD 3,600" [ref=e197] [cursor=pointer]:
+          - generic [ref=e198]:
+            - img "Hana Minaudière" [ref=e199]
+            - generic [ref=e200]: Sumi · Lucca
+          - generic [ref=e201]: Hana Minaudière花
+          - generic [ref=e202]:
+            - generic [ref=e203]:
+              - strong [ref=e204]: Master
+              - text: · Yuki Sato
+            - generic [ref=e205]:
+              - strong [ref=e206]: Sumi
+              - text: · Lucca
+          - generic [ref=e207]: USD 3,600
+        - button "Hana Mini Akakuchiba · Lucca Hana Mini花 ミニ Master · Yuki Sato Akakuchiba · Lucca USD 2,400" [ref=e208] [cursor=pointer]:
+          - generic [ref=e209]:
+            - img "Hana Mini" [ref=e210]
+            - generic [ref=e211]: Akakuchiba · Lucca
+          - generic [ref=e212]: Hana Mini花 ミニ
+          - generic [ref=e213]:
+            - generic [ref=e214]:
+              - strong [ref=e215]: Master
+              - text: · Yuki Sato
+            - generic [ref=e216]:
+              - strong [ref=e217]: Akakuchiba
+              - text: · Lucca
+          - generic [ref=e218]: USD 2,400
+        - button "Hana Tote Akakuchiba · Lucca Hana Tote花 トート Master · Yuki Sato Akakuchiba · Lucca USD 4,200" [ref=e219] [cursor=pointer]:
+          - generic [ref=e220]:
+            - img "Hana Tote" [ref=e221]
+            - generic [ref=e222]: Akakuchiba · Lucca
+          - generic [ref=e223]: Hana Tote花 トート
+          - generic [ref=e224]:
+            - generic [ref=e225]:
+              - strong [ref=e226]: Master
+              - text: · Yuki Sato
+            - generic [ref=e227]:
+              - strong [ref=e228]: Akakuchiba
+              - text: · Lucca
+          - generic [ref=e229]: USD 4,200
+        - button "Camellia Backpack Kuwa-cha · Pisa Camellia Backpack椿 リュック Master · Hideo Mori Kuwa-cha · Pisa USD 5,600" [ref=e230] [cursor=pointer]:
+          - generic [ref=e231]:
+            - img "Camellia Backpack" [ref=e232]
+            - generic [ref=e233]: Kuwa-cha · Pisa
+          - generic [ref=e234]: Camellia Backpack椿 リュック
+          - generic [ref=e235]:
+            - generic [ref=e236]:
+              - strong [ref=e237]: Master
+              - text: · Hideo Mori
+            - generic [ref=e238]:
+              - strong [ref=e239]: Kuwa-cha
+              - text: · Pisa
+          - generic [ref=e240]: USD 5,600
+        - button "Sumi Card Case Sumi · Pisa Sumi Card Case墨 札 Master · Hideo Mori Sumi · Pisa USD 680" [ref=e241] [cursor=pointer]:
+          - generic [ref=e242]:
+            - img "Sumi Card Case" [ref=e243]
+            - generic [ref=e244]: Sumi · Pisa
+          - generic [ref=e245]: Sumi Card Case墨 札
+          - generic [ref=e246]:
+            - generic [ref=e247]:
+              - strong [ref=e248]: Master
+              - text: · Hideo Mori
+            - generic [ref=e249]:
+              - strong [ref=e250]: Sumi
+              - text: · Pisa
+          - generic [ref=e251]: USD 680
+        - button "Sumi Bifold Wallet Sumi · Pisa Sumi Bifold Wallet墨 二折 Master · Akiko Tanaka Sumi · Pisa USD 1,200" [ref=e252] [cursor=pointer]:
+          - generic [ref=e253]:
+            - img "Sumi Bifold Wallet" [ref=e254]
+            - generic [ref=e255]: Sumi · Pisa
+          - generic [ref=e256]: Sumi Bifold Wallet墨 二折
+          - generic [ref=e257]:
+            - generic [ref=e258]:
+              - strong [ref=e259]: Master
+              - text: · Akiko Tanaka
+            - generic [ref=e260]:
+              - strong [ref=e261]: Sumi
+              - text: · Pisa
+          - generic [ref=e262]: USD 1,200
+        - button "Kuwa-cha Long Wallet Kuwa-cha · Pisa Kuwa-cha Long Wallet桑茶 長財布 Master · Akiko Tanaka Kuwa-cha · Pisa USD 1,400" [ref=e263] [cursor=pointer]:
+          - generic [ref=e264]:
+            - img "Kuwa-cha Long Wallet" [ref=e265]
+            - generic [ref=e266]: Kuwa-cha · Pisa
+          - generic [ref=e267]: Kuwa-cha Long Wallet桑茶 長財布
+          - generic [ref=e268]:
+            - generic [ref=e269]:
+              - strong [ref=e270]: Master
+              - text: · Akiko Tanaka
+            - generic [ref=e271]:
+              - strong [ref=e272]: Kuwa-cha
+              - text: · Pisa
+          - generic [ref=e273]: USD 1,400
+        - button "Kuwa-cha Belt 35mm Kuwa-cha · Pisa Kuwa-cha Belt 35mm桑茶 帯 Master · Hideo Mori Kuwa-cha · Pisa USD 1,100" [ref=e274] [cursor=pointer]:
+          - generic [ref=e275]:
+            - img "Kuwa-cha Belt 35mm" [ref=e276]
+            - generic [ref=e277]: Kuwa-cha · Pisa
+          - generic [ref=e278]: Kuwa-cha Belt 35mm桑茶 帯
+          - generic [ref=e279]:
+            - generic [ref=e280]:
+              - strong [ref=e281]: Master
+              - text: · Hideo Mori
+            - generic [ref=e282]:
+              - strong [ref=e283]: Kuwa-cha
+              - text: · Pisa
+          - generic [ref=e284]: USD 1,100
+        - button "Hisashi Document Folio Sumi · Pisa Hisashi Document Folio久 書類入れ Master · Junji Okada Sumi · Pisa USD 2,200" [ref=e285] [cursor=pointer]:
+          - generic [ref=e286]:
+            - img "Hisashi Document Folio" [ref=e287]
+            - generic [ref=e288]: Sumi · Pisa
+          - generic [ref=e289]: Hisashi Document Folio久 書類入れ
+          - generic [ref=e290]:
+            - generic [ref=e291]:
+              - strong [ref=e292]: Master
+              - text: · Junji Okada
+            - generic [ref=e293]:
+              - strong [ref=e294]: Sumi
+              - text: · Pisa
+          - generic [ref=e295]: USD 2,200
+        - button "Edo Pen Roll Kuwa-cha · Pisa Edo Pen Roll江戸 ペンロール Master · Akiko Tanaka Kuwa-cha · Pisa USD 620" [ref=e296] [cursor=pointer]:
+          - generic [ref=e297]:
+            - img "Edo Pen Roll" [ref=e298]
+            - generic [ref=e299]: Kuwa-cha · Pisa
+          - generic [ref=e300]: Edo Pen Roll江戸 ペンロール
+          - generic [ref=e301]:
+            - generic [ref=e302]:
+              - strong [ref=e303]: Master
+              - text: · Akiko Tanaka
+            - generic [ref=e304]:
+              - strong [ref=e305]: Kuwa-cha
+              - text: · Pisa
+          - generic [ref=e306]: USD 620
+      - img [ref=e309]
+      - generic [ref=e318]:
+        - paragraph [ref=e319]: Commissioning
+        - heading "A piece can be made in your hand." [level=3] [ref=e320]
+        - paragraph [ref=e321]: Most of the maison is bespoke-orderable in our materials, hardware, and lining choices. Commissioning takes between eight and fourteen weeks. Speak with your Bantō at any of our houses, or write to the atelier in Kyoto.
+        - button "Book an appointment" [ref=e323] [cursor=pointer]
+      - generic [ref=e325]:
+        - generic [ref=e326]:
+          - generic [ref=e327]:
+            - generic [ref=e328]:
+              - img [ref=e329]
+              - generic [ref=e338]: Tachibana
+            - paragraph [ref=e339]: A Kyoto house of leather and lacquer, founded 1923
+          - generic [ref=e340]:
+            - generic [ref=e341]:
+              - paragraph [ref=e342]: The Houses
+              - list [ref=e343]:
+                - listitem [ref=e344]:
+                  - button "Kyoto Atelier 京都" [ref=e345] [cursor=pointer]
+                - listitem [ref=e346]:
+                  - button "Tokyo 東京 青山" [ref=e347] [cursor=pointer]
+                - listitem [ref=e348]:
+                  - button "Milan ミラノ" [ref=e349] [cursor=pointer]
+                - listitem [ref=e350]:
+                  - button "Paris パリ" [ref=e351] [cursor=pointer]
+                - listitem [ref=e352]:
+                  - button "London ロンドン" [ref=e353] [cursor=pointer]
+                - listitem [ref=e354]:
+                  - button "New York ニューヨーク" [ref=e355] [cursor=pointer]
+                - listitem [ref=e356]:
+                  - button "Hong Kong 香港" [ref=e357] [cursor=pointer]
+                - listitem [ref=e358]:
+                  - button "Beverly Hills ビバリーヒルズ" [ref=e359] [cursor=pointer]
+            - generic [ref=e360]:
+              - paragraph [ref=e361]: The Maison
+              - list [ref=e362]:
+                - listitem [ref=e363]:
+                  - button "Journal" [ref=e364] [cursor=pointer]
+                - listitem [ref=e365]:
+                  - button "Restoration" [ref=e366] [cursor=pointer]
+                - listitem [ref=e367]:
+                  - button "Atelier" [ref=e368] [cursor=pointer]
+                - listitem [ref=e369]:
+                  - button "My Maison" [ref=e370] [cursor=pointer]
+            - generic [ref=e371]:
+              - paragraph [ref=e372]: Care
+              - list [ref=e373]:
+                - listitem [ref=e374]:
+                  - button "Lifetime restoration" [ref=e375] [cursor=pointer]
+                - listitem [ref=e376]:
+                  - button "Product passport" [ref=e377] [cursor=pointer]
+                - listitem [ref=e378]:
+                  - button "Press" [ref=e379] [cursor=pointer]
+                - listitem [ref=e380]:
+                  - button "Privacy" [ref=e381] [cursor=pointer]
+        - separator [ref=e382]
+        - generic [ref=e383]:
+          - generic [ref=e384]: © 2026 Tachibana, Kyoto. All rights reserved.
+          - generic [ref=e385]: 京都 — 一九二三年創業
+    - button "Merkury lead score" [ref=e387] [cursor=pointer]:
+      - generic [ref=e388]: "5"
+      - generic [ref=e389]:
+        - generic [ref=e390]: Merkury Lead Score
+        - generic [ref=e391]: cold
+  - button "Open demo panel":
+    - generic: Demo
+    - generic: "4"
+  - generic [ref=e51]:
+    - generic [ref=e52]:
+      - generic [ref=e53]:
+        - heading "Demo" [level=2] [ref=e56]
+        - button "Collapse demo panel" [ref=e57] [cursor=pointer]:
+          - img [ref=e58]
+      - generic [ref=e60]:
+        - button "Log (4)" [ref=e392] [cursor=pointer]
+        - button "Profile" [ref=e62] [cursor=pointer]
+    - generic [ref=e63]:
+      - generic [ref=e64]:
+        - button "All" [ref=e65] [cursor=pointer]
+        - button "🧭 Nav" [ref=e66] [cursor=pointer]
+        - button "🔑 ID" [ref=e67] [cursor=pointer]
+        - button "✨ Perso" [ref=e68] [cursor=pointer]
+        - button "📡 UTM" [ref=e69] [cursor=pointer]
+        - button "🤖 Agent" [ref=e70] [cursor=pointer]
+        - button "🛒 Shop" [ref=e71] [cursor=pointer]
+        - button "💾 Data" [ref=e72] [cursor=pointer]
+        - button "⚙️ Sys" [ref=e73] [cursor=pointer]
+        - button "Clear" [ref=e74] [cursor=pointer]
+      - generic [ref=e393]:
+        - generic [ref=e394]:
+          - generic [ref=e397]:
+            - generic [ref=e398]: 0:00
+            - generic [ref=e399]: 🧭 Nav
+          - generic [ref=e400]: "Page: category"
+          - generic [ref=e401]: leather-goods
+        - generic [ref=e402]:
+          - generic [ref=e405]:
+            - generic [ref=e406]: 0:00
+            - generic [ref=e407]: ⚙️ Sys
+          - generic [ref=e408]: SF Personalization SDK Init
+          - generic [ref=e409]: "Dataset: 5c71fd40-a792-4437-b600-55aea3dd90f6"
+        - generic [ref=e410]:
+          - generic [ref=e413]:
+            - generic [ref=e414]: 0:00
+            - generic [ref=e415]: 🔑 ID
+          - generic [ref=e416]: Merkury Identity Resolution
+          - generic [ref=e417]: anonymous (0% confidence)
+        - generic [ref=e418]:
+          - generic [ref=e421]:
+            - generic [ref=e422]: 0:00
+            - generic [ref=e423]: 🔑 ID
+          - generic [ref=e424]: Anonymous Visitor
+          - generic [ref=e425]: No Merkury match — generic experience

@@ -1,0 +1,343 @@
+[     596ms] [LOG] [sfp] Module loaded — env check: {beaconUrl: https://cdn.c360a.salesforce.com/beacon/c360a/5c71…-a792-4437-b600-55aea3dd90f6/scripts/c360a.min.js, beaconUrlLength: 103, dataset: 5c71fd40-a792-4437-b600-55aea3dd90f6, datasetLength: 36, configured: true} @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     724ms] [LOG] [sfp] isPersonalizationConfigured() called: true @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     724ms] [LOG] [sfp] isPersonalizationConfigured() called: true @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     725ms] [LOG] [sfp] isPersonalizationConfigured() called: true @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     727ms] [LOG] [sfp] Personalization campaign context updated: {utmCampaign: , utmSource: , utmMedium: } @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     728ms] [LOG] [sfp] isPersonalizationConfigured() called: true @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     728ms] [LOG] [sfp] isPersonalizationConfigured() called: true @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     728ms] [LOG] [catalog] Fetching Product2 catalog from CRM... @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:104
+[     730ms] [LOG] [sfp] isPersonalizationConfigured() called: true @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     731ms] [LOG] [sfp] isPersonalizationConfigured() called: true @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     731ms] [LOG] [sfp] Initializing SF Personalization {dataset: 5c71fd40-a792-4437-b600-55aea3dd90f6} @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     732ms] [LOG] [sfp] Loading Personalization SDK from: https://cdn.c360a.salesforce.com/beacon/c360a/5c71fd40-a792-4437-b600-55aea3dd90f6/scripts/c360a.min.js @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     733ms] [LOG] [sfp] Personalization context cleared @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     923ms] [LOG] [sfp] SDK script loaded @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     923ms] [LOG] [sfp] SDK global found after 1 attempts @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     924ms] [LOG] [sfp] SDK detected: {type: c360a, methods: Array(20)} @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     939ms] [LOG] [sfp] SDK init() called with consent @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     941ms] [LOG] [sfp] Sitemap registered with 7 page types @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[     941ms] [LOG] [sfp] SDK initialized @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[    1140ms] [LOG] [dataLayer] Merkury data pushed: {pid: undefined, identityTier: anonymous, interests: (none), ageRange: (none)} @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[    1140ms] [LOG] [merkury] Identity resolved: anonymous confidence: 0 @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:104
+[    1141ms] [LOG] [customer] Anonymous — no identity resolved, staying on default experience @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:104
+[    1169ms] [LOG] [catalog] Loaded 130 products from CRM @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:104
+[    1251ms] [LOG] [sfp] isPersonalizationConfigured() called: true @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[    1401ms] [LOG] [sfp] Personalization campaign context updated: {utmCampaign: , utmSource: , utmMedium: } @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[    1585ms] [LOG] [catalog] Fetching Product2 catalog from CRM... @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:104
+[    1613ms] [LOG] [sfp] Personalization.fetch() response: {personalizations: Array(1), requestId: d42190a7-4876-46ad-9595-d772e5458c6b} @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[    1614ms] [LOG] [sfp] Product_Recommendations RAW response: {
+  "personalizationId": "58602f5e-356d-4182-8527-f2727fc244f3",
+  "personalizationPointId": "9ppKa000000k9egIAA",
+  "personalizationPointName": "Product_Recommendations",
+  "decisionId": "9pbKa000000k9eqIAA",
+  "data": [
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "58602f5e-356d-4182-8527-f2727fc244f3:0",
+      "ssot__PrimaryProductCategory__c": "Cleanser",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Clear Start Salicylic Cleanser",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098TGvIAM",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "DERMAFIX"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "58602f5e-356d-4182-8527-f2727fc244f3:1",
+      "ssot__PrimaryProductCategory__c": "Toner",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Cooling Facial Mist",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098TyNIAU",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "SERENE"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "58602f5e-356d-4182-8527-f2727fc244f3:2",
+      "ssot__PrimaryProductCategory__c": "Eye Care",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Bright Eyes Caffeine Cream",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098TySIAU",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "SERENE"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "58602f5e-356d-4182-8527-f2727fc244f3:3",
+      "ssot__PrimaryProductCategory__c": "Mask",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Pore Purifying Clay Mask",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098W09IAE",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "SERENE"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "58602f5e-356d-4182-8527-f2727fc244f3:4",
+      "ssot__PrimaryProductCategory__c": "Shampoo",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Refresh & Go Dry Shampoo",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098W13IAE",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "MAISON"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "58602f5e-356d-4182-8527-f2727fc244f3:5",
+      "ssot__PrimaryProductCategory__c": "Blush",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Soft Focus Powder Blush",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098W1gIAE",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "LUMIERE"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "58602f5e-356d-4182-8527-f2727fc244f3:6",
+      "ssot__PrimaryProductCategory__c": "Foundation",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Brightening Under-Eye Concealer",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098W3XIAU",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "LUMIERE"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "58602f5e-356d-4182-8527-f2727fc244f3:7",
+      "ssot__PrimaryProductCategory__c": "Foundation",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Full Coverage Concealer",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098W3cIAE",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "LUMIERE"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "58602f5e-356d-4182-8527-f2727fc244f3:8",
+      "ssot__PrimaryProductCategory__c": "Moisturizer",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Pure Comfort Daily Moisturizer",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098W5JIAU",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "SERENE"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "58602f5e-356d-4182-8527-f2727fc244f3:9",
+      "ssot__PrimaryProductCategory__c": "Lipstick",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Botanical Lip Color",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098W5iIAE",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "LUMIERE"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "58602f5e-356d-4182-8527-f2727fc244f3:10",
+      "ssot__PrimaryProductCategory__c": "Shampoo",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Scalp Comfort Fragrance-Free Shampoo",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098W6RIAU",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "MAISON"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "58602f5e-356d-4182-8527-f2727fc244f3:11",
+      "ssot__PrimaryProductCategory__c": "",
+      "ssot__ProductCode__c": "moisturizer-rich",
+      "ssot__Name__c": "Ultra Rich Barrier Cream",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "SERENE",
+      "ssot__Id__c": "01tKa0000098Y55IAE",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": ""
+    }
+  ],
+  "attributes": {
+    "Introduction_Text": "Recommended for you..."
+  }
+} @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:104
+[    1614ms] [LOG] [sfp] Product_Recommendations attributes: {Introduction_Text: Recommended for you...} @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:104
+[    1614ms] [LOG] [sfp] Product_Recommendations parsed products: 12 [Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object] @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:104
+[    1634ms] [LOG] [sfp] Personalization.fetch() response: {personalizations: Array(1), requestId: 1323dafe-6486-4437-acad-eab15bf35779} @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:102
+[    1635ms] [LOG] [sfp] Product_Recommendations RAW response: {
+  "personalizationId": "cb45d887-d749-4b26-b66c-0dc3e59edfec",
+  "personalizationPointId": "9ppKa000000k9egIAA",
+  "personalizationPointName": "Product_Recommendations",
+  "decisionId": "9pbKa000000k9eqIAA",
+  "data": [
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "cb45d887-d749-4b26-b66c-0dc3e59edfec:0",
+      "ssot__PrimaryProductCategory__c": "Cleanser",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Clear Start Salicylic Cleanser",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098TGvIAM",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "DERMAFIX"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "cb45d887-d749-4b26-b66c-0dc3e59edfec:1",
+      "ssot__PrimaryProductCategory__c": "Toner",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Cooling Facial Mist",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098TyNIAU",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "SERENE"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "cb45d887-d749-4b26-b66c-0dc3e59edfec:2",
+      "ssot__PrimaryProductCategory__c": "Eye Care",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Bright Eyes Caffeine Cream",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098TySIAU",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "SERENE"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "cb45d887-d749-4b26-b66c-0dc3e59edfec:3",
+      "ssot__PrimaryProductCategory__c": "Mask",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Pore Purifying Clay Mask",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098W09IAE",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "SERENE"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "cb45d887-d749-4b26-b66c-0dc3e59edfec:4",
+      "ssot__PrimaryProductCategory__c": "Shampoo",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Refresh & Go Dry Shampoo",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098W13IAE",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "MAISON"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "cb45d887-d749-4b26-b66c-0dc3e59edfec:5",
+      "ssot__PrimaryProductCategory__c": "Blush",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Soft Focus Powder Blush",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098W1gIAE",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "LUMIERE"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "cb45d887-d749-4b26-b66c-0dc3e59edfec:6",
+      "ssot__PrimaryProductCategory__c": "Foundation",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Brightening Under-Eye Concealer",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098W3XIAU",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "LUMIERE"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "cb45d887-d749-4b26-b66c-0dc3e59edfec:7",
+      "ssot__PrimaryProductCategory__c": "Foundation",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Full Coverage Concealer",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098W3cIAE",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "LUMIERE"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "cb45d887-d749-4b26-b66c-0dc3e59edfec:8",
+      "ssot__PrimaryProductCategory__c": "Moisturizer",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Pure Comfort Daily Moisturizer",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098W5JIAU",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "SERENE"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "cb45d887-d749-4b26-b66c-0dc3e59edfec:9",
+      "ssot__PrimaryProductCategory__c": "Lipstick",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Botanical Lip Color",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098W5iIAE",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "LUMIERE"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "cb45d887-d749-4b26-b66c-0dc3e59edfec:10",
+      "ssot__PrimaryProductCategory__c": "Shampoo",
+      "ssot__ProductCode__c": "",
+      "ssot__Name__c": "Scalp Comfort Fragrance-Free Shampoo",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "",
+      "ssot__Id__c": "01tKa0000098W6RIAU",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": "MAISON"
+    },
+    {
+      "ssot__PrimaryProductImageURL__c": "",
+      "personalizationContentId": "cb45d887-d749-4b26-b66c-0dc3e59edfec:11",
+      "ssot__PrimaryProductCategory__c": "",
+      "ssot__ProductCode__c": "moisturizer-rich",
+      "ssot__Name__c": "Ultra Rich Barrier Cream",
+      "ssot__Description__c": "",
+      "ssot__ProductFamily__c": "SERENE",
+      "ssot__Id__c": "01tKa0000098Y55IAE",
+      "ssot__ProductSKU__c": "",
+      "ssot__BrandId__c": ""
+    }
+  ],
+  "attributes": {
+    "Introduction_Text": "Recommended for you..."
+  }
+} @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:104
+[    1635ms] [LOG] [sfp] Product_Recommendations attributes: {Introduction_Text: Recommended for you...} @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:104
+[    1635ms] [LOG] [sfp] Product_Recommendations parsed products: 12 [Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object] @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:104
+[    1983ms] [LOG] [catalog] Loaded 130 products from CRM @ https://tachibana.demo-combobulator.com/assets/index-CQax_1ac.js:104
