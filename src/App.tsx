@@ -145,6 +145,23 @@ function DemoRoot() {
   );
 }
 
+// ── Hydrate fallback ────────────────────────────────────────────────────────
+// React Router 7 requires a HydrateFallback whenever a route has a loader in
+// SPA mode. Without it, the route renders null during initial hydration and
+// can stay blank if the re-render after the loader resolves doesn't apply
+// the element (the symptom we hit: a fully white page on the production
+// build despite the catalog loading successfully).
+function HydrateFallback() {
+  return (
+    <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+      <div className="flex items-center gap-3 text-stone-400 text-sm">
+        <div className="w-4 h-4 border-2 border-stone-300 border-t-stone-600 rounded-full animate-spin" />
+        Loading…
+      </div>
+    </div>
+  );
+}
+
 // ── Admin root — no demo providers ──────────────────────────────────────────
 
 function AdminRoot() {
@@ -182,6 +199,7 @@ const router = createBrowserRouter([
     // ProductProvider. id is referenced by useRouteLoaderData('demo-root').
     id: 'demo-root',
     loader: catalogLoader,
+    HydrateFallback: HydrateFallback,
     children: [
       { path: 'advisor', element: <AdvisorWrapper /> },
       { path: 'skin-advisor', element: <SkinAdvisorWrapper /> },
