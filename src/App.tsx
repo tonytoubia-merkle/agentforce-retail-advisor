@@ -1,5 +1,11 @@
-import { lazy, useState, useMemo } from 'react';
-import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { lazy, Suspense, useState, useMemo } from 'react';
+import {
+  createBrowserRouter,
+  RouterProvider,
+  Outlet,
+  Navigate,
+  useLocation,
+} from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SceneProvider } from '@/contexts/SceneContext';
 import { ConversationProvider } from '@/contexts/ConversationContext';
@@ -20,18 +26,18 @@ import { resolveUTMToCampaign } from '@/mocks/adCreatives';
 import { setPersonalizationCampaign } from '@/services/personalization';
 import { pushUtmToDataLayer } from '@/services/merkury/dataLayer';
 import { DemoLog } from '@/components/DemoLog';
+import { productDetailLoader } from '@/routes/productDetailLoader';
+import { ProductDetailRoute, ProductDetailErrorBoundary } from '@/routes/ProductDetailRoute';
 import type { CampaignAttribution } from '@/types/campaign';
 
-// Lazy-load admin components — they pull in Supabase which isn't needed for the demo path
+// Lazy admin section — pulls in Supabase, not needed on the demo path
 const AdminLayout = lazy(() => import('@/components/Admin/AdminLayout').then(m => ({ default: m.AdminLayout })));
 const DemoDashboard = lazy(() => import('@/components/Admin/DemoDashboard').then(m => ({ default: m.DemoDashboard })));
 const NewDemoWizard = lazy(() => import('@/components/Admin/NewDemoWizard').then(m => ({ default: m.NewDemoWizard })));
 const DemoDetail = lazy(() => import('@/components/Admin/DemoDetail').then(m => ({ default: m.DemoDetail })));
 
+// ── Advisor wrappers ────────────────────────────────────────────────────────
 
-/**
- * AdvisorWrapper — wraps AdvisorPage (beauty mode) with ConversationProvider.
- */
 function AdvisorWrapper() {
   return (
     <ConversationProvider>
@@ -40,15 +46,6 @@ function AdvisorWrapper() {
   );
 }
 
-/**
- * SkinAdvisorWrapper — wraps AdvisorPage in skin-concierge mode.
- * Uses its own ConversationProvider (with skin concierge agent ID) so history
- * and session are fully isolated from the beauty advisor.
- *
- * Gated by `copy.secondaryAdvisorRoute === 'skin'` — a non-beauty demo
- * (e.g. travel) that deep-links to `/skin-advisor` gets redirected to the
- * main advisor instead of rendering a beauty-only flow.
- */
 function SkinAdvisorWrapper() {
   const { copy } = useDemo();
   if (copy.secondaryAdvisorRoute !== 'skin') {
@@ -62,11 +59,9 @@ function SkinAdvisorWrapper() {
   );
 }
 
-/**
- * AnimatedRoutes — wraps Routes in AnimatePresence.
- * Uses a section-level key so only storefront ↔ advisor ↔ media transitions fade.
- */
-function AnimatedRoutes() {
+// ── Animated outlet — fades between top-level sections ──────────────────────
+
+function AnimatedOutlet() {
   const location = useLocation();
 
   const animationKey = useMemo(() => {
@@ -74,6 +69,7 @@ function AnimatedRoutes() {
     if (location.pathname === '/skin-advisor') return 'skin-advisor';
     if (location.pathname === '/media-wall') return 'media';
     if (location.pathname === '/history-wall') return 'history-wall';
+    if (location.pathname.startsWith('/p/')) return 'product-detail';
     return 'storefront';
   }, [location.pathname]);
 
@@ -87,45 +83,15 @@ function AnimatedRoutes() {
         transition={{ duration: 0.2 }}
         className={animationKey === 'advisor' || animationKey === 'skin-advisor' ? 'relative' : undefined}
       >
-        <Routes location={location}>
-          <Route path="/advisor" element={<AdvisorWrapper />} />
-          <Route path="/skin-advisor" element={<SkinAdvisorWrapper />} />
-          <Route path="/media-wall" element={<MediaWallPage />} />
-          <Route path="/history-wall" element={<HistoryWallPage />} />
-          <Route path="*" element={<StorefrontPage />} />
-        </Routes>
+        <Outlet />
       </motion.div>
     </AnimatePresence>
   );
 }
 
-/**
- * AppShell — provider tree + animated routes.
- */
-function AppShell() {
-  return (
-    <ProductProvider>
-      <CartProvider>
-        <StoreProvider>
-          <SceneProvider>
-            <ActivityToastProvider>
-              <AnimatedRoutes />
-              {/* Floating Merkury lead-score badge — self-gates on
-                  featureFlags.leadScoreCard, renders null otherwise. */}
-              <LeadScoreBadge />
-            </ActivityToastProvider>
-          </SceneProvider>
-        </StoreProvider>
-      </CartProvider>
-    </ProductProvider>
-  );
-}
+// ── Demo root — provider stack + animated outlet ────────────────────────────
 
-/**
- * Root App — parses UTM params once on mount (before any providers),
- * then hands the result to AppShell as initialCampaign.
- */
-function App() {
+function DemoRoot() {
   // Parse UTM from URL once on mount (lazy initializer — no re-renders).
   // UTM demoLog entries are NOT logged here — they fire from useBrowseTracking
   // (inside StorefrontPage) after DemoLog is mounted and polling.
@@ -137,7 +103,6 @@ function App() {
       const utmMedium = params.get('utm_medium') || '';
       setPersonalizationCampaign(utmCampaign, utmSource, utmMedium);
       pushUtmToDataLayer(utmCampaign, utmSource, utmMedium);
-
       const attribution = resolveUTMToCampaign(params);
       window.history.replaceState({}, '', window.location.pathname);
       return attribution;
@@ -147,24 +112,6 @@ function App() {
 
   const [demoLogOpen, setDemoLogOpen] = useState(false);
 
-  const isAdminRoute = window.location.pathname.startsWith('/admin');
-
-  // Admin routes — completely separate UI, no demo providers needed
-  if (isAdminRoute) {
-    return (
-      <ErrorBoundary>
-        <Routes>
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<DemoDashboard />} />
-            <Route path="new" element={<NewDemoWizard />} />
-            <Route path="demo/:demoId" element={<DemoDetail />} />
-          </Route>
-        </Routes>
-      </ErrorBoundary>
-    );
-  }
-
-  // Demo routes — original app with DemoProvider wrapper
   return (
     <ErrorBoundary>
       <DemoProvider>
@@ -172,7 +119,20 @@ function App() {
           <CampaignProvider initialCampaign={initialCampaign}>
             <div className="h-screen overflow-hidden flex">
               <main className={`relative h-full flex-1 min-w-0 overflow-y-scroll overflow-x-hidden ${demoLogOpen ? 'w-[calc(100%-380px)]' : 'w-full'}`}>
-                <AppShell />
+                <ProductProvider>
+                  <CartProvider>
+                    <StoreProvider>
+                      <SceneProvider>
+                        <ActivityToastProvider>
+                          <AnimatedOutlet />
+                          {/* Floating Merkury lead-score badge — self-gates on
+                              featureFlags.leadScoreCard, renders null otherwise. */}
+                          <LeadScoreBadge />
+                        </ActivityToastProvider>
+                      </SceneProvider>
+                    </StoreProvider>
+                  </CartProvider>
+                </ProductProvider>
               </main>
               <DemoLog onOpenChange={setDemoLogOpen} />
             </div>
@@ -181,6 +141,63 @@ function App() {
       </DemoProvider>
     </ErrorBoundary>
   );
+}
+
+// ── Admin root — no demo providers ──────────────────────────────────────────
+
+function AdminRoot() {
+  return (
+    <ErrorBoundary>
+      <Suspense fallback={null}>
+        <AdminLayout />
+      </Suspense>
+    </ErrorBoundary>
+  );
+}
+
+const lazyAdmin = (El: React.ComponentType) => (
+  <Suspense fallback={null}>
+    <El />
+  </Suspense>
+);
+
+// ── Router definition ───────────────────────────────────────────────────────
+
+const router = createBrowserRouter([
+  {
+    path: '/admin',
+    element: <AdminRoot />,
+    children: [
+      { index: true, element: lazyAdmin(DemoDashboard) },
+      { path: 'new', element: lazyAdmin(NewDemoWizard) },
+      { path: 'demo/:demoId', element: lazyAdmin(DemoDetail) },
+    ],
+  },
+  {
+    path: '/',
+    element: <DemoRoot />,
+    children: [
+      { path: 'advisor', element: <AdvisorWrapper /> },
+      { path: 'skin-advisor', element: <SkinAdvisorWrapper /> },
+      { path: 'media-wall', element: <MediaWallPage /> },
+      { path: 'history-wall', element: <HistoryWallPage /> },
+      // Phase 2B pilot: Storefront Next-style data-router route.
+      // Loader fetches via getCommerceBackend(); page renders only when ready.
+      {
+        path: 'p/:salesforceId',
+        element: <ProductDetailRoute />,
+        loader: productDetailLoader,
+        errorElement: <ProductDetailErrorBoundary />,
+      },
+      // Legacy SPA catch-all — StorefrontPage derives view from URL via StoreContext.
+      // Coexists with the data-router pilot above.
+      { path: '*', element: <StorefrontPage /> },
+    ],
+  },
+]);
+
+function App() {
+  return <RouterProvider router={router} />;
 }
 
 export default App;
