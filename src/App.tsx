@@ -231,9 +231,14 @@ const router = createBrowserRouter([
         element: <StorefrontPage />,
         loader: categoryLoader,
       },
+      // Index route handles the empty path (/) explicitly. React Router 7's
+      // splat ('*') only matches one-or-more segments, so without this the
+      // root URL has no matching child and the Outlet renders nothing — the
+      // bug behind the "white page at / but /atelier works fine" symptom.
+      { index: true, element: <StorefrontPage /> },
       // Catch-all — StorefrontPage derives view from URL via StoreContext
-      // for the remaining paths (/, /cart, /checkout, /account, /appointment,
-      // /order-confirmation).
+      // for the remaining paths (/cart, /checkout, /account, /appointment,
+      // /order-confirmation, /atelier, /journal, /restoration).
       { path: '*', element: <StorefrontPage /> },
     ],
   },
