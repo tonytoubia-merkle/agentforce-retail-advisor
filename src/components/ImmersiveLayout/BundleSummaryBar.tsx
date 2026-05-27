@@ -92,7 +92,7 @@ export const BundleSummaryBar: React.FC<BundleSummaryBarProps> = ({ products, ti
         </button>
 
         {/* Total */}
-        <div className="flex-shrink-0 text-right">
+        <div className="shrink-0 text-right">
           <div className="text-[9px] uppercase tracking-widest text-white/40">Total</div>
           <div className="text-white text-sm font-medium">${total.toFixed(2)}</div>
         </div>
@@ -101,7 +101,7 @@ export const BundleSummaryBar: React.FC<BundleSummaryBarProps> = ({ products, ti
         <button
           onClick={addBundle}
           disabled={allInCart}
-          className="flex-shrink-0 px-4 py-2 bg-white text-black rounded-full text-xs font-medium hover:bg-white/90 disabled:bg-white/30 disabled:text-white/50 transition-colors"
+          className="shrink-0 px-4 py-2 bg-white text-black rounded-full text-xs font-medium hover:bg-white/90 disabled:bg-white/30 disabled:text-white/50 transition-colors"
         >
           {allInCart ? 'In cart' : bundleCta}
         </button>

@@ -66,7 +66,7 @@ export const EmailSignup: React.FC = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
                 required
-                className="flex-1 px-4 py-3 border border-stone-200 rounded-full focus:outline-none focus:border-transparent bg-white text-sm"
+                className="flex-1 px-4 py-3 border border-stone-200 rounded-full focus:outline-hidden focus:border-transparent bg-white text-sm"
                 style={{ boxShadow: 'none' }}
                 onFocus={(e) => (e.currentTarget.style.boxShadow = `0 0 0 2px ${config.theme.accentColor}`)}
                 onBlur={(e) => (e.currentTarget.style.boxShadow = 'none')}

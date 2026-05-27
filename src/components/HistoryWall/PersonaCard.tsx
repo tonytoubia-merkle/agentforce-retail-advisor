@@ -127,7 +127,7 @@ function ClaimModal({ persona, onSeed, onDone, onCancel }: ClaimModalProps) {
               <div className="relative w-16 h-16">
                 <div className="absolute inset-0 rounded-full border-2 border-white/10" />
                 <div className="absolute inset-0 rounded-full border-2 border-t-violet-400 animate-spin" />
-                <div className={`absolute inset-2 rounded-full bg-gradient-to-br ${persona.avatarGradient} flex items-center justify-center`}>
+                <div className={`absolute inset-2 rounded-full bg-linear-to-br ${persona.avatarGradient} flex items-center justify-center`}>
                   <span className="text-white text-sm font-bold">{persona.avatarInitials}</span>
                 </div>
               </div>
@@ -144,7 +144,7 @@ function ClaimModal({ persona, onSeed, onDone, onCancel }: ClaimModalProps) {
                   { label: `${seedData.orders.length} orders`, done: seedData.orders.length > 0 },
                 ].map(({ label }) => (
                   <div key={label} className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-full border border-white/20 flex items-center justify-center flex-shrink-0">
+                    <div className="w-3 h-3 rounded-full border border-white/20 flex items-center justify-center shrink-0">
                       <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
                     </div>
                     <span className="text-xs text-white/50">{label}</span>
@@ -164,7 +164,7 @@ function ClaimModal({ persona, onSeed, onDone, onCancel }: ClaimModalProps) {
               className="px-6 py-8 space-y-6"
             >
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 rounded-full bg-indigo-500/20 flex items-center justify-center shrink-0">
                   <svg className="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
@@ -208,7 +208,7 @@ function ClaimModal({ persona, onSeed, onDone, onCancel }: ClaimModalProps) {
               className="px-6 py-8 space-y-6"
             >
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
                   <svg className="w-6 h-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
@@ -225,7 +225,7 @@ function ClaimModal({ persona, onSeed, onDone, onCancel }: ClaimModalProps) {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/8 hover:bg-white/15 text-white/60 hover:text-white text-xs font-medium transition-all border border-white/10"
+                    className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/8 hover:bg-white/15 text-white/60 hover:text-white text-xs font-medium transition-all border border-white/10"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -289,7 +289,7 @@ function ClaimModal({ persona, onSeed, onDone, onCancel }: ClaimModalProps) {
               className="px-6 py-8 space-y-4"
             >
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
                   <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
@@ -452,7 +452,7 @@ function ClaimModal({ persona, onSeed, onDone, onCancel }: ClaimModalProps) {
               <p className="text-[11px] text-white/30">
                 Writes Contact + custom objects + Orders to Salesforce via server-side OAuth
               </p>
-              <div className="flex items-center gap-3 flex-shrink-0">
+              <div className="flex items-center gap-3 shrink-0">
                 <button
                   onClick={onCancel}
                   className="px-4 py-2 rounded-full text-sm text-white/50 hover:text-white/80 transition-colors"
@@ -519,7 +519,7 @@ export function PersonaCard({ persona, claimCount, isClaimed, onSeed, onClaimCom
         transition={{ duration: 0.15 }}
         onClick={() => setShowModal(true)}
       >
-        <div className={`h-0.5 w-full bg-gradient-to-r ${persona.avatarGradient}`} />
+        <div className={`h-0.5 w-full bg-linear-to-r ${persona.avatarGradient}`} />
 
         <div className="flex flex-col flex-1 p-5 gap-4">
           {/* Archetype badge + claim count */}
@@ -537,7 +537,7 @@ export function PersonaCard({ persona, claimCount, isClaimed, onSeed, onClaimCom
 
           {/* Avatar + name */}
           <div className="flex items-center gap-3">
-            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${persona.avatarGradient} flex items-center justify-center flex-shrink-0`}>
+            <div className={`w-12 h-12 rounded-xl bg-linear-to-br ${persona.avatarGradient} flex items-center justify-center shrink-0`}>
               <span className="text-white font-bold text-sm">{persona.avatarInitials}</span>
             </div>
             <div className="min-w-0">

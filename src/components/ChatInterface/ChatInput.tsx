@@ -93,7 +93,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             'bg-white/10 backdrop-blur-md',
             'border border-white/20',
             'text-white placeholder-white/50',
-            'focus:outline-none focus:ring-2 focus:ring-white/30',
+            'focus:outline-hidden focus:ring-2 focus:ring-white/30',
             'transition-all duration-200',
             isCentered && 'text-lg',
             isListening && 'border-red-400/50'

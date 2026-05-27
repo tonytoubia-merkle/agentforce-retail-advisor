@@ -142,7 +142,7 @@ export const MerkuryProfilePicker: React.FC<MerkuryProfilePickerProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          className="fixed inset-0 z-100 flex items-center justify-center p-4"
         >
           {/* Backdrop */}
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
@@ -211,7 +211,7 @@ export const MerkuryProfilePicker: React.FC<MerkuryProfilePickerProps> = ({
                           }`}
                         >
                           <div className="flex items-start gap-3">
-                            <div className={`mt-0.5 w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${
+                            <div className={`mt-0.5 w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center ${
                               selectedId === profile.id
                                 ? 'border-rose-500'
                                 : 'border-stone-300'
@@ -254,7 +254,7 @@ export const MerkuryProfilePicker: React.FC<MerkuryProfilePickerProps> = ({
                         }`}
                       >
                         <div className="flex items-start gap-3">
-                          <div className={`mt-0.5 w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${
+                          <div className={`mt-0.5 w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center ${
                             selectedId === 'no-match'
                               ? 'border-stone-500'
                               : 'border-stone-300'
@@ -300,7 +300,7 @@ export const MerkuryProfilePicker: React.FC<MerkuryProfilePickerProps> = ({
                   {selectedProfile && (
                     <div className="mb-6 p-4 bg-rose-50/50 border border-rose-100 rounded-xl">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-400 flex items-center justify-center text-white font-medium">
+                        <div className="w-10 h-10 rounded-full bg-linear-to-br from-amber-400 to-orange-400 flex items-center justify-center text-white font-medium">
                           {selectedProfile.label.charAt(0)}
                         </div>
                         <div>
@@ -329,7 +329,7 @@ export const MerkuryProfilePicker: React.FC<MerkuryProfilePickerProps> = ({
                         onChange={(e) => setRegEmail(e.target.value)}
                         required
                         placeholder="your@email.com"
-                        className="w-full px-4 py-2.5 text-sm border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 text-sm border border-stone-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
@@ -340,7 +340,7 @@ export const MerkuryProfilePicker: React.FC<MerkuryProfilePickerProps> = ({
                           value={regFirstName}
                           onChange={(e) => setRegFirstName(e.target.value)}
                           required
-                          className="w-full px-4 py-2.5 text-sm border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                          className="w-full px-4 py-2.5 text-sm border border-stone-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                         />
                       </div>
                       <div>
@@ -350,7 +350,7 @@ export const MerkuryProfilePicker: React.FC<MerkuryProfilePickerProps> = ({
                           value={regLastName}
                           onChange={(e) => setRegLastName(e.target.value)}
                           required
-                          className="w-full px-4 py-2.5 text-sm border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                          className="w-full px-4 py-2.5 text-sm border border-stone-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                         />
                       </div>
                     </div>

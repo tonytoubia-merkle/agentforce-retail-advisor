@@ -61,7 +61,7 @@ const Toast: React.FC<{ item: ToastItem; onDismiss: (id: string) => void }> = ({
     transition={{ type: 'spring', damping: 20, stiffness: 300 }}
     className={`
       flex items-center gap-2.5 pl-3 pr-2 py-2.5 rounded-xl
-      bg-gradient-to-r ${accentColors[item.type]}
+      bg-linear-to-r ${accentColors[item.type]}
       backdrop-blur-xl border border-white/15
       shadow-xl shadow-black/30
       pointer-events-auto cursor-pointer select-none

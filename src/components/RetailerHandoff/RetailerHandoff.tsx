@@ -20,7 +20,7 @@ const RETAILER_COLORS: Record<string, string> = {
 function RetailerBadge({ name }: { name: string }) {
   const cls = RETAILER_COLORS[name] ?? 'bg-gray-700 text-white';
   return (
-    <span className={`inline-flex items-center justify-center w-9 h-9 rounded-lg text-[10px] font-bold ${cls} flex-shrink-0`}>
+    <span className={`inline-flex items-center justify-center w-9 h-9 rounded-lg text-[10px] font-bold ${cls} shrink-0`}>
       {name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()}
     </span>
   );
@@ -66,10 +66,10 @@ export const RetailerHandoff: React.FC = () => {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Drag handle */}
-        <div className="w-12 h-1 bg-gray-200 rounded-full mx-auto mt-3 mb-1 flex-shrink-0" />
+        <div className="w-12 h-1 bg-gray-200 rounded-full mx-auto mt-3 mb-1 shrink-0" />
 
         {/* Header */}
-        <div className="px-5 pt-3 pb-4 flex-shrink-0">
+        <div className="px-5 pt-3 pb-4 shrink-0">
           <div className="flex items-start justify-between">
             <div>
               <h2 className="text-lg font-semibold text-gray-900">Where to Buy</h2>
@@ -111,10 +111,10 @@ export const RetailerHandoff: React.FC = () => {
 
         {/* Product summary strip */}
         {products.length > 1 && (
-          <div className="px-5 pb-3 flex-shrink-0">
+          <div className="px-5 pb-3 shrink-0">
             <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
               {products.map((p) => (
-                <div key={p.id} className="flex-shrink-0 flex items-center gap-2 px-2.5 py-1.5 bg-gray-50 rounded-lg border border-gray-100">
+                <div key={p.id} className="shrink-0 flex items-center gap-2 px-2.5 py-1.5 bg-gray-50 rounded-lg border border-gray-100">
                   <img src={p.imageUrl} alt={p.name} className="w-6 h-6 object-contain" />
                   <span className="text-xs text-gray-700 font-medium whitespace-nowrap max-w-[120px] truncate">{p.name}</span>
                 </div>
@@ -167,7 +167,7 @@ export const RetailerHandoff: React.FC = () => {
                       )}
                     </div>
 
-                    <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                     </svg>
                   </motion.button>

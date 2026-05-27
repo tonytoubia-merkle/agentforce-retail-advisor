@@ -72,7 +72,7 @@ export const BundleCanvas: React.FC<BundleCanvasProps> = ({ products }) => {
       />
 
       {/* Product stage — each product floats in its allocated region */}
-      <div className="relative w-full max-w-4xl aspect-[4/3]">
+      <div className="relative w-full max-w-4xl aspect-4/3">
         {products.slice(0, 6).map((product, idx) => {
           const pos = HOTSPOT_POSITIONS[idx];
           const isActive = activeIdx === idx;
@@ -115,12 +115,12 @@ export const BundleCanvas: React.FC<BundleCanvasProps> = ({ products }) => {
             initial={{ y: 40, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 40, opacity: 0 }}
-            className="absolute bottom-8 left-1/2 -translate-x-1/2 w-[32rem] max-w-[90%] bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-5 flex gap-4 shadow-2xl"
+            className="absolute bottom-8 left-1/2 -translate-x-1/2 w-lg max-w-[90%] bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-5 flex gap-4 shadow-2xl"
           >
             <img
               src={active.imageUrl}
               alt={active.name}
-              className="w-20 h-20 object-contain flex-shrink-0 product-blend"
+              className="w-20 h-20 object-contain shrink-0 product-blend"
             />
             <div className="flex-1 text-white">
               <div className="text-[10px] uppercase tracking-widest text-white/50 mb-0.5">

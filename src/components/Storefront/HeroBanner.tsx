@@ -97,7 +97,7 @@ const EditorialFallback: React.FC<{
         initial={{ x: 40, y: -20, opacity: 0.35 }}
         animate={{ x: 0, y: 0, opacity: 0.5 }}
         transition={{ duration: 2.4, ease: 'easeOut' }}
-        className="absolute top-[18%] right-[12%] w-[44%] h-[44%] rounded-full blur-[64px]"
+        className="absolute top-[18%] right-[12%] w-[44%] h-[44%] rounded-full blur-3xl"
         style={{ background: accent }}
       />
       <motion.div
@@ -319,7 +319,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onShopNow, customer, isA
             style={{ width: '58%' }}
           >
             {/* Soft edge blend between text + image */}
-            <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-stone-50/90 to-transparent z-[5] pointer-events-none" />
+            <div className="absolute left-0 top-0 bottom-0 w-24 bg-linear-to-r from-stone-50/90 to-transparent z-5 pointer-events-none" />
             {useImageFallback ? (
               <EditorialFallback
                 primary={primaryColor}

@@ -59,7 +59,7 @@ export const FrequentlyBoughtCard: React.FC = () => {
         <img
           src={suggestion.imageUrl}
           alt={suggestion.name}
-          className="w-14 h-14 object-contain flex-shrink-0 rounded-lg bg-stone-50"
+          className="w-14 h-14 object-contain shrink-0 rounded-lg bg-stone-50"
         />
       )}
       <div className="flex-1 min-w-0">

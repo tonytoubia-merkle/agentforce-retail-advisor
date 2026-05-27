@@ -50,7 +50,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     <motion.div
       whileHover={{ y: -4, scale: 1.03 }}
       transition={{ duration: 0.2 }}
-      className="w-36 flex-shrink-0 rounded-xl overflow-hidden bg-white/5 backdrop-blur-sm border border-white/10 cursor-pointer"
+      className="w-36 shrink-0 rounded-xl overflow-hidden bg-white/5 backdrop-blur-sm border border-white/10 cursor-pointer"
       onClick={isSkinConcierge ? () => openRetailerHandoff([product]) : undefined}
     >
       <div className="relative w-full h-28">
@@ -70,7 +70,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <span className="text-white/50 text-[9px] uppercase tracking-wider block truncate">
           {product.brand}
         </span>
-        <h3 className="font-medium text-[11px] mt-0.5 line-clamp-2 leading-tight min-h-[2.25rem]">
+        <h3 className="font-medium text-[11px] mt-0.5 line-clamp-2 leading-tight min-h-9">
           {product.name}
         </h3>
 

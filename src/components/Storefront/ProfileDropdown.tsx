@@ -46,7 +46,7 @@ export const ProfileDropdown: React.FC = () => {
             isAuthenticated && isKnown
               ? 'bg-stone-900'
               : isAuthenticated && isAppended
-                ? 'bg-gradient-to-br from-amber-400 to-orange-400'
+                ? 'bg-linear-to-br from-amber-400 to-orange-400'
                 : 'bg-stone-400'
           }`}>
             {isAuthenticated && customer?.name && customer?.name !== 'Guest' ? firstName.charAt(0).toUpperCase() : (
@@ -75,7 +75,7 @@ export const ProfileDropdown: React.FC = () => {
                 className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50"
               >
                 {/* ─── GREETING ─── */}
-                <div className="px-4 py-4 bg-gradient-to-br from-stone-50 to-rose-50 border-b border-gray-100">
+                <div className="px-4 py-4 bg-linear-to-br from-stone-50 to-rose-50 border-b border-gray-100">
                   {isAuthenticated && isKnown ? (
                     <p className="text-lg font-medium text-stone-900">
                       Hello, {firstName}

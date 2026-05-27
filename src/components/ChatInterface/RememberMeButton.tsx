@@ -75,7 +75,7 @@ export const RememberMeButton: React.FC<RememberMeButtonProps> = ({ onSubmit }) 
               className="fixed inset-0 flex items-center justify-center z-50 p-4"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl border border-white/10">
+              <div className="bg-linear-to-br from-slate-900 to-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl border border-white/10">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
@@ -118,7 +118,7 @@ export const RememberMeButton: React.FC<RememberMeButtonProps> = ({ onSubmit }) 
                         'w-full px-4 py-2.5 rounded-lg',
                         'bg-white/5 border border-white/10',
                         'text-white placeholder-white/30',
-                        'focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50',
+                        'focus:outline-hidden focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50',
                         'transition-all duration-200'
                       )}
                     />
@@ -138,7 +138,7 @@ export const RememberMeButton: React.FC<RememberMeButtonProps> = ({ onSubmit }) 
                         'w-full px-4 py-2.5 rounded-lg',
                         'bg-white/5 border border-white/10',
                         'text-white placeholder-white/30',
-                        'focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50',
+                        'focus:outline-hidden focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50',
                         'transition-all duration-200'
                       )}
                     />
