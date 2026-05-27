@@ -11,6 +11,7 @@ import type { MockAgentSnapshot } from '@/services/mock/mockAgent';
 import type { AgentResponse } from '@/types/agent';
 import { getAgentforceClient, createAgentforceClient } from '@/services/agentforce/client';
 import type { AgentforceClient } from '@/services/agentforce/client';
+import { parseUIDirective } from '@/services/agentforce/parseDirectives';
 import { getDataCloudWriteService } from '@/services/datacloud';
 import type { SceneSnapshot } from './SceneContext';
 import { demoLog } from '@/services/demoLog';
@@ -709,41 +710,92 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode; agentId
 
     try {
       // ── Streaming path (real Agentforce only) ──────────────────
-      // Text chunks arrive before the full response. We display them
-      // progressively, stopping once JSON directive content begins.
-      // When the stream completes, we replace the placeholder with the
-      // fully-parsed response (clean text + uiDirective).
+      // Text chunks arrive before the full response. Two things stream
+      // progressively now:
+      //   1. The human-readable text portion -> updates msg.content
+      //   2. The JSON directive after the first '{' -> parsed incrementally
+      //      via parseUIDirective (which already handles truncated JSON from
+      //      Phase 3b). As soon as a directive with products is parseable,
+      //      msg.uiDirective is populated mid-stream so product cards
+      //      materialize alongside the text instead of waiting for the
+      //      whole response to land.
+      // When the stream completes, the message is finalized with the
+      // canonical response.message + response.uiDirective.
       let streamingContent = '';
       let jsonStarted = false;
+      let jsonBuffer = '';
+      let lastEmittedProductsKey: string | null = null;
 
       const response = await getAgentResponseStreaming(content, (chunk: string) => {
-        if (jsonStarted) return;
-        streamingContent += chunk;
-        // Safety: stop streaming to UI if JSON slips through
-        const braceIdx = streamingContent.indexOf('{');
-        if (braceIdx !== -1) {
-          jsonStarted = true;
-          streamingContent = streamingContent.slice(0, braceIdx).trim();
-        }
-        if (!streamingContent.trim()) return;
-        // First chunk: switch from typing indicator to streaming message
-        setIsAgentTyping(false);
-        setMessages(prev => {
-          const idx = prev.findIndex(m => m.id === agentMsgId);
-          if (idx === -1) {
-            // First chunk — insert the streaming placeholder
-            return [...prev, {
-              id: agentMsgId,
-              role: 'agent' as const,
-              content: streamingContent,
-              timestamp: new Date(),
-              isStreaming: true,
-            }];
+        // Phase 1: streaming pre-JSON text
+        if (!jsonStarted) {
+          const next = streamingContent + chunk;
+          const braceIdx = next.indexOf('{');
+          if (braceIdx !== -1) {
+            jsonStarted = true;
+            streamingContent = next.slice(0, braceIdx).trim();
+            jsonBuffer = next.slice(braceIdx);
+          } else {
+            streamingContent = next;
           }
-          const updated = [...prev];
-          updated[idx] = { ...updated[idx], content: streamingContent };
-          return updated;
-        });
+          if (streamingContent.trim()) {
+            // First text chunk: swap typing indicator for the streaming bubble.
+            setIsAgentTyping(false);
+            setMessages(prev => {
+              const idx = prev.findIndex(m => m.id === agentMsgId);
+              if (idx === -1) {
+                return [...prev, {
+                  id: agentMsgId,
+                  role: 'agent' as const,
+                  content: streamingContent,
+                  timestamp: new Date(),
+                  isStreaming: true,
+                }];
+              }
+              const updated = [...prev];
+              updated[idx] = { ...updated[idx], content: streamingContent };
+              return updated;
+            });
+          }
+          if (!jsonStarted) return; // still pre-JSON, fall through to next chunk
+        } else {
+          // Phase 2: keep accumulating JSON for incremental parse below
+          jsonBuffer += chunk;
+        }
+
+        // Phase 3: try to extract a uiDirective from the partial JSON.
+        // parseUIDirective handles truncated input — if products are already
+        // present in the partial payload, we surface them now even though
+        // more JSON may still be on the wire.
+        const partial = parseUIDirective({ message: '', rawText: jsonBuffer });
+        const products = partial?.payload?.products;
+        if (products && products.length > 0) {
+          const key = products.map((p) => p.id || p.salesforceId || p.name).join('|');
+          if (key !== lastEmittedProductsKey) {
+            lastEmittedProductsKey = key;
+            // Drop the typing indicator the moment any rendered content
+            // (text OR product cards) appears — covers the JSON-arrives-first
+            // edge case where streamingContent is still empty.
+            setIsAgentTyping(false);
+            setMessages(prev => {
+              const idx = prev.findIndex(m => m.id === agentMsgId);
+              if (idx === -1) {
+                // Edge: directive arrived before any text chunk. Insert placeholder.
+                return [...prev, {
+                  id: agentMsgId,
+                  role: 'agent' as const,
+                  content: streamingContent,
+                  timestamp: new Date(),
+                  uiDirective: partial,
+                  isStreaming: true,
+                }];
+              }
+              const updated = [...prev];
+              updated[idx] = { ...updated[idx], uiDirective: partial };
+              return updated;
+            });
+          }
+        }
       }, agentClientRef.current, sessionInitializedRef);
 
       // If the agent returns a WELCOME_SCENE during a normal conversation
