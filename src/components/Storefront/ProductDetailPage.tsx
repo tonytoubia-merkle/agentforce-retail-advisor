@@ -37,7 +37,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product })
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
         <button
           onClick={goBack}
           className="flex items-center gap-2 text-stone-600 hover:text-stone-900 transition-colors"
@@ -47,6 +47,22 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product })
           </svg>
           Back
         </button>
+
+        {/* Demo affordance — opens the same product through the data-router
+            loader route (/p/:salesforceId). Same UI, different architecture:
+            this path uses React Router 7 + useLoaderData() + getCommerceBackend(),
+            i.e. the Storefront Next pattern. */}
+        {product.salesforceId && (
+          <button
+            onClick={() => navigate(`/p/${product.salesforceId}`)}
+            title={`Open via the /p/:salesforceId loader route (Storefront Next pattern). Same product, fetched by route loader instead of read from the in-memory catalog.`}
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono text-stone-500 border border-stone-200 hover:border-stone-400 hover:text-stone-700 transition-colors"
+          >
+            <span aria-hidden>⚡</span>
+            <span>loader path</span>
+            <span className="text-stone-400">/p/{product.salesforceId.slice(0, 6)}…</span>
+          </button>
+        )}
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-16">
