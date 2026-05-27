@@ -2,6 +2,7 @@ import { useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LuxuryStorefrontPage } from './luxury/LuxuryStorefrontPage';
 import { StoreHeader } from './StoreHeader';
+import { BackendToggle } from './BackendToggle';
 import { HeroBanner } from './HeroBanner';
 import { ProductSection } from './ProductSection';
 import { CategoryPage } from './CategoryPage';
@@ -425,8 +426,9 @@ const DefaultStorefrontBody: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <div className="border-t border-stone-800 mt-12 pt-8 text-center text-sm text-stone-500">
-                  <p>© 2024 BEAUTÉ. All rights reserved. Demo site for Merkle x Agentforce.</p>
+                <div className="border-t border-stone-800 mt-12 pt-8 text-sm text-stone-500 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+                  <p>© {new Date().getFullYear()} BEAUTÉ. All rights reserved. Demo site for Merkle x Agentforce.</p>
+                  <BackendToggle className="text-stone-400" />
                 </div>
               </div>
             </footer>
