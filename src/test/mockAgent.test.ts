@@ -36,26 +36,28 @@ describe('generateMockResponse', () => {
 
   it('returns sunscreen for SPF query', async () => {
     const response = await generateMockResponse('I need sunscreen');
-    expect(response.uiDirective?.action).toBe('SHOW_PRODUCT');
+    expect(response.uiDirective?.action).toBe('SHOW_PRODUCTS');
     expect(response.uiDirective?.payload.products![0].id).toBe('sunscreen-lightweight');
   });
 
   it('returns acne products for breakout query', async () => {
     const response = await generateMockResponse('I have acne');
-    expect(response.uiDirective?.action).toBe('SHOW_PRODUCT');
+    expect(response.uiDirective?.action).toBe('SHOW_PRODUCTS');
     expect(response.uiDirective?.payload.products![0].id).toBe('cleanser-acne');
   });
 
   it('returns anti-aging products for wrinkle query', async () => {
     const response = await generateMockResponse('help with wrinkles');
     expect(response.uiDirective?.action).toBe('SHOW_PRODUCTS');
-    expect(response.uiDirective?.payload.products!.length).toBe(2);
+    // retinol + peptide lift + eye cream
+    expect(response.uiDirective?.payload.products!.length).toBe(3);
   });
 
   it('returns routine for routine query', async () => {
     const response = await generateMockResponse('build me a skincare routine');
     expect(response.uiDirective?.action).toBe('SHOW_PRODUCTS');
-    expect(response.uiDirective?.payload.products!.length).toBe(4);
+    // cleanse + tone + serum + moisturize + SPF
+    expect(response.uiDirective?.payload.products!.length).toBe(5);
   });
 
   it('resets scene for goodbye', async () => {
